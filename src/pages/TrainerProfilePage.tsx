@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Users, Calendar, MessageCircle, CheckCircle, ArrowLeft } from "lucide-react";
+import { Star, MapPin, Users, Calendar, MessageCircle, CheckCircle, ArrowLeft, Video, Clock, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
 const trainersData: Record<string, any> = {
@@ -29,6 +30,11 @@ const trainersData: Record<string, any> = {
       "24/7 messaging support",
       "Progress tracking",
       "Monthly video call",
+    ],
+    virtualSessions: [
+      { type: "1-on-1 Virtual Session", duration: "30 min", price: "KES 800" },
+      { type: "1-on-1 Virtual Session", duration: "60 min", price: "KES 1,400" },
+      { type: "Group Virtual Class", duration: "45 min", price: "KES 400" },
     ],
     testimonials: [
       {
@@ -67,6 +73,11 @@ const trainersData: Record<string, any> = {
       "Weekly progress reviews",
       "Flexible scheduling",
     ],
+    virtualSessions: [
+      { type: "1-on-1 Virtual Session", duration: "30 min", price: "KES 600" },
+      { type: "1-on-1 Virtual Session", duration: "60 min", price: "KES 1,100" },
+      { type: "Group Virtual Class", duration: "45 min", price: "KES 300" },
+    ],
     testimonials: [
       {
         name: "Grace N.",
@@ -85,11 +96,19 @@ const trainersData: Record<string, any> = {
 export default function TrainerProfilePage() {
   const { id } = useParams();
   const trainer = trainersData[id || "1"] || trainersData["1"];
+  const [selectedSession, setSelectedSession] = useState<number | null>(null);
 
   const handleRequestCoaching = () => {
     toast.success("Request sent! 🎉", {
       description: `${trainer.name} will respond within 24 hours.`,
     });
+  };
+
+  const handleBookSession = (sessionType: string) => {
+    toast.success("Session booked! 📅", {
+      description: `Your ${sessionType} with ${trainer.name} has been requested. Check your messages for confirmation.`,
+    });
+    setSelectedSession(null);
   };
 
   return (
@@ -187,6 +206,76 @@ export default function TrainerProfilePage() {
                     </li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+
+            {/* Virtual Training Booking */}
+            <Card className="border-2 border-primary/20 bg-primary/5">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Video className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-lg">Book Virtual Training</h2>
+                    <p className="text-sm text-muted-foreground">Train from anywhere</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  {trainer.virtualSessions.map((session: any, index: number) => (
+                    <div 
+                      key={index}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        selectedSession === index 
+                          ? 'border-primary bg-primary/10' 
+                          : 'border-border hover:border-primary/50 bg-background'
+                      }`}
+                      onClick={() => setSelectedSession(index)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-semibold">{session.type}</p>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{session.duration}</span>
+                          </div>
+                        </div>
+                        <p className="font-bold text-primary">{session.price}</p>
+                      </div>
+                      {selectedSession === index && (
+                        <div className="mt-3 pt-3 border-t border-border animate-slide-up">
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Select a time that works for you. {trainer.name} will confirm within 24 hours.
+                          </p>
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            {["Today 6pm", "Tomorrow 7am", "Tomorrow 6pm", "Sat 10am"].map((time) => (
+                              <button
+                                key={time}
+                                className="px-3 py-2 text-sm rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
+                              >
+                                {time}
+                              </button>
+                            ))}
+                          </div>
+                          <Button 
+                            variant="hero" 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => handleBookSession(session.type)}
+                          >
+                            <CalendarDays className="w-4 h-4" />
+                            Book This Session
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <p className="text-xs text-muted-foreground mt-4 text-center">
+                  💡 Virtual sessions via Google Meet or Zoom
+                </p>
               </CardContent>
             </Card>
 
