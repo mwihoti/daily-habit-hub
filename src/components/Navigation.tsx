@@ -1,4 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
+'use client';
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Home, Users, CheckCircle, Dumbbell, BarChart3, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -11,17 +14,17 @@ const navItems = [
 ];
 
 export function MobileNav() {
-  const location = useLocation();
+  const pathname = usePathname();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border shadow-lg md:hidden">
       <div className="flex items-center justify-around py-2 px-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
-              to={item.href}
+              href={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200",
                 isActive 
@@ -40,12 +43,12 @@ export function MobileNav() {
 }
 
 export function DesktopNav() {
-  const location = useLocation();
+  const pathname = usePathname();
 
   return (
     <header className="hidden md:block sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border shadow-soft">
       <div className="container flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl gradient-hero flex items-center justify-center">
             <span className="text-xl">💪</span>
           </div>
@@ -54,11 +57,11 @@ export function DesktopNav() {
 
         <nav className="flex items-center gap-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
-                to={item.href}
+                href={item.href}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200",
                   isActive 
@@ -75,13 +78,13 @@ export function DesktopNav() {
 
         <div className="flex items-center gap-2">
           <Link
-            to="/messages"
+            href="/messages"
             className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <MessageCircle className="w-5 h-5" />
           </Link>
           <Link
-            to="/login"
+            href="/login"
             className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <User className="w-4 h-4" />
