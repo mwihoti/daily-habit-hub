@@ -83,16 +83,16 @@ export function WeekCalendar({ checkedDays }: WeekCalendarProps) {
   
   return (
     <div className="flex items-center justify-between gap-2">
-      {days.map((day, index) => (
+      {days.map((day,index) => (
         <div key={index} className="flex flex-col items-center gap-1">
           <span className="text-xs text-muted-foreground font-medium">{day}</span>
           <div className={cn(
             "w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all duration-200",
-            checkedDays[index] 
+            checkedDays?.[index] 
               ? "gradient-hero shadow-glow" 
               : "bg-muted"
           )}>
-            {checkedDays[index] ? "✓" : ""}
+            {checkedDays?.[index] ? "✓" : ""}
           </div>
         </div>
       ))}
