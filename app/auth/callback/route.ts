@@ -9,22 +9,29 @@ export async function GET(request: Request) {
   const safeNext = next.startsWith('/') ? next : '/dashboard'
 
   if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    try {
+      const supabase = await createClient()
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (!error) {
-      return NextResponse.redirect(`${origin}${safeNext}`)
+      if (!error) {
+        return NextResponse.redirect(`${origin}${safeNext}`)
+      }
+
+      console.error('OAuth callback exchange failed:', error.message)
+
+      const errorParams = new URLSearchParams({
+        error: 'auth_error',
+        message: error.message,
+        code: error.code ?? 'unknown',
+      })
+
+      return NextResponse.redirect(`${origin}/login?${errorParams.toString()}`)
+    } catch (err: any) {
+      console.error('OAuth callback unexpected error:', err)
+      return NextResponse.redirect(
+        `${origin}/login?error=auth_error&message=${encodeURIComponent(err?.message ?? 'Unexpected error')}`
+      )
     }
-
-    console.error('OAuth callback exchange failed:', error.message)
-
-    const errorParams = new URLSearchParams({
-      error: 'auth_error',
-      message: error.message,
-      code: error.code ?? 'unknown',
-    })
-
-    return NextResponse.redirect(`${origin}/login?${errorParams.toString()}`)
   }
 
   return NextResponse.redirect(

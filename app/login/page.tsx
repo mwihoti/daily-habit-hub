@@ -1,45 +1,127 @@
 'use client';
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useNavigate } from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+
+// Isolated into its own component so useSearchParams sits inside a Suspense
+// boundary — required by Next 16 / React 19 to avoid defer-hydration issues
+// that silently freeze all event handlers on the page.
+function AuthErrorBanner() {
+  const searchParams = useSearchParams();
+  const authError = searchParams.get("error");
+  const authErrorCode = searchParams.get("code");
+  const authErrorMessage = searchParams.get("message");
+
+  if (!authError) return null;
+
+  return (
+    <Alert variant="destructive" className="mb-6">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Authentication failed</AlertTitle>
+      <AlertDescription>
+        {authErrorMessage ?? "We could not complete sign-in. Check your provider and redirect URL settings."}
+        {authErrorCode ? ` (code: ${authErrorCode})` : ""}
+      </AlertDescription>
+    </Alert>
+  );
+}
 
 export default function LoginPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  // createClient is only called inside event handlers (runs in browser only)
+  const handleEmailLogin = async () => {
     if (!email || !password) {
       toast.error("Please fill in all fields");
       return;
     }
 
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    
-    toast.success("Welcome back! 🎉");
-    navigate("/dashboard");
+    try {
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        toast.error(payload?.error || "Invalid email or password");
+        return;
+      }
+
+      if (!payload?.session) {
+        toast.error("Login succeeded but no session was returned");
+        return;
+      }
+
+      // Keep browser auth state in sync with server route result.
+      const supabase = createClient();
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: payload.session.access_token,
+        refresh_token: payload.session.refresh_token,
+      });
+
+      if (sessionError) {
+        toast.error(sessionError.message || "Could not persist login session");
+        return;
+      }
+
+      toast.success("Welcome back! 🎉");
+      router.push("/dashboard");
+    } catch (err: any) {
+      toast.error("Auth error: " + (err?.message ?? "Unknown error"));
+      console.error("Login error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    toast.success("Welcome back! 🎉");
-    navigate("/dashboard");
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      // Manually redirect if Supabase returns the URL (some configs require this)
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast.error("Google sign-in failed: " + (err?.message ?? "Unknown error"));
+      console.error("Google OAuth error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -62,10 +144,15 @@ export default function LoginPage() {
               <p className="text-muted-foreground">Sign in to continue your journey</p>
             </div>
 
+            <Suspense fallback={null}>
+              <AuthErrorBanner />
+            </Suspense>
+
             {/* Google Sign In */}
-            <Button 
-              variant="outline" 
-              className="w-full mb-6" 
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mb-6"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
             >
@@ -78,11 +165,12 @@ export default function LoginPage() {
                 <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email inputs — no <form> tag */}
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -111,6 +199,9 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
                     disabled={isLoading}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleEmailLogin();
+                    }}
                   />
                   <button
                     type="button"
@@ -123,18 +214,16 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-end">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-sm text-primary hover:underline"
-                >
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
 
-              <Button 
-                variant="hero" 
-                className="w-full" 
-                type="submit"
+              <Button
+                type="button"
+                variant="hero"
+                className="w-full"
+                onClick={handleEmailLogin}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -149,10 +238,10 @@ export default function LoginPage() {
                   </>
                 )}
               </Button>
-            </form>
+            </div>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/register" className="text-primary font-medium hover:underline">
                 Sign up
               </Link>

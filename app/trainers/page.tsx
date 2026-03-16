@@ -147,7 +147,7 @@ export default function TrainersPage() {
           {trainers.map((trainer, index) => (
             <Link 
               key={trainer.id} 
-              to={`/trainers/${trainer.id}`}
+              href={`/trainers/${trainer.id}`}
               className="block"
             >
               <Card 
