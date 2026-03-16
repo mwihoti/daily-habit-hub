@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Layout } from "@/components/Layout";
@@ -82,13 +82,13 @@ export default function LandingPage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button variant="hero" size="xl" asChild>
-                <Link to="/register">
+                <Link href="/register">
                   Start Your Journey
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               </Button>
               <Button variant="outline" size="xl" asChild>
-                <Link to="/community">
+                <Link href="/community">
                   <Users className="w-5 h-5" />
                   View Community
                 </Link>
@@ -122,7 +122,7 @@ export default function LandingPage() {
             </div>
             <WeekCalendar checkedDays={[true, true, false, true, true, true, false]} />
             <Button variant="checkin" className="w-full" asChild>
-              <Link to="/check-in">
+              <Link href="/check-in">
                 <CheckCircle className="w-5 h-5" />
                 Check in today
               </Link>
@@ -213,7 +213,7 @@ export default function LandingPage() {
                 className="bg-card text-foreground border-0 hover:bg-card/90"
                 asChild
               >
-                <Link to="/register">
+                <Link href="/register">
                   Get Started Free
                   <ArrowRight className="w-5 h-5" />
                 </Link>
@@ -224,7 +224,7 @@ export default function LandingPage() {
                 className="text-primary-foreground hover:bg-primary-foreground/10"
                 asChild
               >
-                <Link to="/trainers">Find a Coach</Link>
+                <Link href="/trainers">Find a Coach</Link>
               </Button>
             </div>
           </CardContent>

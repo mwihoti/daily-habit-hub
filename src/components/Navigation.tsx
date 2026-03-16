@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, CheckCircle, Dumbbell, BarChart3, MessageCircle, User } from "lucide-react";
+import { Home, Users, CheckCircle, Dumbbell, BarChart3, MessageCircle, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
@@ -11,6 +16,7 @@ const navItems = [
   { href: "/check-in", icon: CheckCircle, label: "Check-in" },
   { href: "/trainers", icon: Dumbbell, label: "Trainers" },
   { href: "/dashboard", icon: BarChart3, label: "Dashboard" },
+  { href: "/progress", icon: BarChart3, label: "Progress" },
 ];
 
 export function MobileNav() {
@@ -44,6 +50,28 @@ export function MobileNav() {
 
 export function DesktopNav() {
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/login");
+    toast.success("Logged out successfully");
+  };
 
   return (
     <header className="hidden md:block sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border shadow-soft">
@@ -83,13 +111,39 @@ export function DesktopNav() {
           >
             <MessageCircle className="w-5 h-5" />
           </Link>
-          <Link
-            href="/login"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <User className="w-4 h-4" />
-            <span>Sign In</span>
-          </Link>
+          
+          {user ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/profile"
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200",
+                  pathname === "/profile"
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <User className="w-4 h-4" />
+                <span>Profile</span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <User className="w-4 h-4" />
+              <span>Sign In</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>

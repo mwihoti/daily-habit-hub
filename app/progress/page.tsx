@@ -2,56 +2,106 @@
 
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { StreakBadge, WeekCalendar } from "@/components/StreakComponents";
 import { 
   TrendingUp, TrendingDown, Minus, Calendar, 
-  Flame, Target, BarChart3, Scale, Ruler
+  Flame, Target, BarChart3, Trophy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const monthlyData = [
-  { month: "Jul", workouts: 12 },
-  { month: "Aug", workouts: 15 },
-  { month: "Sep", workouts: 18 },
-  { month: "Oct", workouts: 14 },
-  { month: "Nov", workouts: 20 },
-  { month: "Dec", workouts: 17 },
-];
-
-const milestones = [
-  { title: "First Week", description: "Complete 7 days", achieved: true, emoji: "🌱" },
-  { title: "Getting Stronger", description: "30 total workouts", achieved: true, emoji: "💪" },
-  { title: "Consistency King", description: "14 day streak", achieved: false, emoji: "👑" },
-  { title: "Century Club", description: "100 total workouts", achieved: false, emoji: "🏆" },
-];
-
-const metrics = [
-  { 
-    label: "Weight", 
-    current: "72 kg", 
-    change: "-3 kg", 
-    trend: "down" as const,
-    icon: Scale,
-  },
-  { 
-    label: "Avg Workouts/Week", 
-    current: "4.2", 
-    change: "+0.5", 
-    trend: "up" as const,
-    icon: BarChart3,
-  },
-  { 
-    label: "Best Streak", 
-    current: "12 days", 
-    change: "Current!", 
-    trend: "up" as const,
-    icon: Flame,
-  },
-];
+import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { format, startOfMonth, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSameDay } from "date-fns";
 
 export default function ProgressPage() {
-  const maxWorkouts = Math.max(...monthlyData.map(d => d.workouts));
+  const supabase = createClient();
+
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
+      return data;
+    }
+  });
+
+  const { data: workouts = [] } = useQuery({
+    queryKey: ['workouts', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+  });
+
+  // Calculate monthly data for the last 6 months
+  const months = eachMonthOfInterval({
+    start: subMonths(new Date(), 5),
+    end: new Date()
+  });
+
+  const monthlyWorkouts = months.map(month => {
+    const count = workouts.filter(w => isSameMonth(new Date(w.created_at), month)).length;
+    return {
+      month: format(month, "MMM"),
+      workouts: count
+    };
+  });
+
+  const maxWorkouts = Math.max(...monthlyWorkouts.map(d => d.workouts), 1);
+  const totalWorkouts = workouts.length;
+  const avgWorkoutsPerMonth = Math.round((totalWorkouts / Math.max(1, monthlyWorkouts.length)) * 10) / 10;
+
+  // This week's data
+  const startOfThisWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weeklyWorkoutCount = workouts.filter(w => new Date(w.created_at) >= startOfThisWeek).length;
+  const checkedDays = [0, 1, 2, 3, 4, 5, 6].map(dayIndex => {
+    const date = new Date(startOfThisWeek);
+    date.setDate(date.getDate() + dayIndex);
+    return workouts.some(w => isSameDay(new Date(w.created_at), date));
+  });
+
+  const milestones = [
+    { title: "First Step", description: "Complete 1 workout", achieved: totalWorkouts >= 1, emoji: "🌱" },
+    { title: "Getting Stronger", description: "10 total workouts", achieved: totalWorkouts >= 10, emoji: "💪" },
+    { title: "Consistency", description: "7 day streak", achieved: (profile?.streak || 0) >= 7, emoji: "👑" },
+    { title: "Century Club", description: "100 total workouts", achieved: totalWorkouts >= 100, emoji: "🏆" },
+  ];
+
+  const metrics = [
+    { 
+      label: "Total Workouts", 
+      current: totalWorkouts, 
+      change: `+${monthlyWorkouts[5].workouts} this month`, 
+      trend: "up" as const,
+      icon: Trophy,
+    },
+    { 
+      label: "Avg Workouts/Month", 
+      current: avgWorkoutsPerMonth, 
+      change: "Stable", 
+      trend: "up" as const,
+      icon: BarChart3,
+    },
+    { 
+      label: "Best Streak", 
+      current: `${profile?.streak || 0} days`, 
+      change: "Keep it up!", 
+      trend: "up" as const,
+      icon: Flame,
+    },
+  ];
 
   return (
     <Layout>
@@ -103,29 +153,31 @@ export default function ProgressPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-end justify-between h-48 gap-4">
-                {monthlyData.map((month, index) => (
-                  <div key={month.month} className="flex-1 flex flex-col items-center gap-2">
-                    <span className="text-sm font-bold">{month.workouts}</span>
+                {monthlyWorkouts.map((data, index) => (
+                  <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
+                    <span className="text-sm font-bold">{data.workouts}</span>
                     <div 
                       className="w-full rounded-t-xl gradient-hero transition-all duration-500"
                       style={{ 
-                        height: `${(month.workouts / maxWorkouts) * 100}%`,
+                        height: `${(data.workouts / maxWorkouts) * 100}%`,
                         animationDelay: `${index * 100}ms`
                       }}
                     />
-                    <span className="text-xs text-muted-foreground font-medium">{month.month}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{data.month}</span>
                   </div>
                 ))}
               </div>
               
               <div className="mt-6 p-4 rounded-xl bg-muted flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Workouts</p>
-                  <p className="text-2xl font-bold">96</p>
+                  <p className="text-sm text-muted-foreground">Total Journey</p>
+                  <p className="text-2xl font-bold">{totalWorkouts}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Monthly Average</p>
-                  <p className="text-2xl font-bold">16</p>
+                  <p className="text-sm text-muted-foreground">Journey Start</p>
+                  <p className="text-2xl font-bold">
+                    {user?.created_at ? format(new Date(user.created_at), "MMM yyyy") : "N/A"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -138,12 +190,12 @@ export default function ProgressPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <StreakBadge streak={12} size="lg" />
+                <StreakBadge streak={profile?.streak || 0} size="lg" />
               </div>
-              <WeekCalendar checkedDays={[true, true, false, true, true, true, false]} />
+              <WeekCalendar checkedDays={checkedDays} />
               <div className="text-center p-4 rounded-xl bg-primary/10">
-                <p className="text-sm text-muted-foreground">Weekly Goal</p>
-                <p className="text-xl font-bold text-primary">5/5 ✓</p>
+                <p className="text-sm text-muted-foreground">Weekly Progress</p>
+                <p className="text-xl font-bold text-primary">{weeklyWorkoutCount}/7 Days</p>
               </div>
             </CardContent>
           </Card>

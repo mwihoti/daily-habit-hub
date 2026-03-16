@@ -1,31 +1,27 @@
 'use client';
 
+import { useState, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StreakBadge, StatCard, WeekCalendar } from "@/components/StreakComponents";
+import { StatCard, WeekCalendar } from "@/components/StreakComponents";
 import Link from "next/link";
 import { 
   Flame, Trophy, Target, TrendingUp, Calendar, 
-  CheckCircle, Plus, BarChart3, Users 
+  CheckCircle, Plus, BarChart3, Users, Camera, X, Upload, Globe, Lock
 } from "lucide-react";
-
-const weeklyData = [
-  { day: "Mon", workouts: 1 },
-  { day: "Tue", workouts: 1 },
-  { day: "Wed", workouts: 0 },
-  { day: "Thu", workouts: 1 },
-  { day: "Fri", workouts: 1 },
-  { day: "Sat", workouts: 1 },
-  { day: "Sun", workouts: 0 },
-];
-
-const recentActivity = [
-  { type: "gym", date: "Today", note: "Leg day 🦵" },
-  { type: "run", date: "Yesterday", note: "Morning 5K run" },
-  { type: "home", date: "2 days ago", note: "HIIT workout" },
-  { type: "yoga", date: "3 days ago", note: "Stretch session" },
-];
+import { createClient } from "@/lib/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, differenceInWeeks, startOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const workoutEmojis: Record<string, string> = {
   gym: "🏋️",
@@ -37,13 +33,165 @@ const workoutEmojis: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
+  const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+      return data;
+    }
+  });
+
+  const { data: workouts = [] } = useQuery({
+    queryKey: ['workouts', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+  });
+
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async ({ workoutId, file }: { workoutId: string, file: File }) => {
+      if (!user) return;
+      
+      setIsUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${workoutId}_${Math.random()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('workout-photos')
+        .upload(fileName, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('workout-photos')
+        .getPublicUrl(fileName);
+      
+      const { error: updateError } = await supabase
+        .from('workouts')
+        .update({ photo_url: publicUrl })
+        .eq('id', workoutId);
+      
+      if (updateError) throw updateError;
+      
+      return publicUrl;
+    },
+    onSuccess: () => {
+      toast.success("Proof photo added! 🔥");
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      handleCloseDialog();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Upload failed");
+    },
+    onSettled: () => {
+      setIsUploading(false);
+    }
+  });
+
+  const togglePrivacyMutation = useMutation({
+    mutationFn: async ({ workoutId, isPublic }: { workoutId: string, isPublic: boolean }) => {
+      const { error } = await supabase
+        .from('workouts')
+        .update({ is_public: isPublic })
+        .eq('id', workoutId);
+      
+      if (error) throw error;
+      return isPublic;
+    },
+    onSuccess: (isPublic) => {
+      toast.success(isPublic ? "Activity is now public! 🌍" : "Activity is now private! 🔒");
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update privacy");
+    }
+  });
+
+  const handleOpenPhotoDialog = (workout: any) => {
+    setSelectedWorkout(workout);
+    setIsPhotoDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsPhotoDialogOpen(false);
+    setSelectedWorkout(null);
+    setPhoto(null);
+    setPhotoPreview(null);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmitPhoto = () => {
+    if (selectedWorkout && photo) {
+      uploadPhotoMutation.mutate({ workoutId: selectedWorkout.id, file: photo });
+    }
+  };
+
+  // Calculate weeks since joined
+  const weeksSinceJoined = user?.created_at 
+    ? differenceInWeeks(new Date(), new Date(user.created_at)) + 1
+    : 0;
+
+  // Calculate this week's activity
+  const startOfThisWeek = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday
+  const checkedDays = [0, 1, 2, 3, 4, 5, 6].map(dayIndex => {
+    const date = new Date(startOfThisWeek);
+    date.setDate(date.getDate() + dayIndex);
+    return workouts.some((w: any) => isSameDay(new Date(w.created_at), date));
+  });
+
+  const weeklyWorkoutCount = workouts.filter((w: any) => 
+    new Date(w.created_at) >= startOfThisWeek
+  ).length;
+
   return (
     <Layout>
       <div className="container py-6 md:py-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-slide-up">
           <div>
-            <h1 className="text-3xl font-bold mb-1">Hey there! 👋</h1>
+            <h1 className="text-3xl font-bold mb-1">
+              Hey {profile?.full_name?.split(' ')[0] || 'there'}! 👋
+            </h1>
             <p className="text-muted-foreground">Keep showing up. You're doing amazing!</p>
           </div>
           <Button variant="hero" asChild>
@@ -58,25 +206,25 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard 
             icon={Flame} 
-            value={12} 
+            value={profile?.streak || 0} 
             label="Day Streak" 
             variant="streak" 
           />
           <StatCard 
             icon={Target} 
-            value={5} 
+            value={weeklyWorkoutCount} 
             label="This Week" 
             variant="primary" 
           />
           <StatCard 
             icon={Trophy} 
-            value={47} 
+            value={workouts.length} 
             label="Total Workouts" 
           />
           <StatCard 
-            icon={TrendingUp} 
-            value="+23%" 
-            label="vs Last Month" 
+            icon={Calendar} 
+            value={weeksSinceJoined} 
+            label="Weeks Count" 
           />
         </div>
 
@@ -91,35 +239,46 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <WeekCalendar checkedDays={[true, true, false, true, true, true, false]} />
+              <WeekCalendar checkedDays={checkedDays} />
               
               {/* Weekly Chart */}
               <div className="flex items-end justify-between h-32 gap-2 pt-4">
-                {weeklyData.map((day, index) => (
-                  <div key={day.day} className="flex-1 flex flex-col items-center gap-2">
-                    <div 
-                      className={`w-full rounded-t-lg transition-all duration-500 ${
-                        day.workouts > 0 
-                          ? "gradient-hero" 
-                          : "bg-muted"
-                      }`}
-                      style={{ 
-                        height: day.workouts > 0 ? "100%" : "20%",
-                        animationDelay: `${index * 100}ms`
-                      }}
-                    />
-                    <span className="text-xs text-muted-foreground font-medium">{day.day}</span>
-                  </div>
-                ))}
+                {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
+                   const date = new Date(startOfThisWeek);
+                   date.setDate(date.getDate() + dayIndex);
+                   const hasWorkout = workouts.some((w: any) => isSameDay(new Date(w.created_at), date));
+                   const dayLabel = format(date, "EEE");
+                   
+                   return (
+                    <div key={dayIndex} className="flex-1 flex flex-col items-center gap-2">
+                      <div 
+                        className={`w-full rounded-t-lg transition-all duration-500 ${
+                          hasWorkout 
+                            ? "gradient-hero" 
+                            : "bg-muted"
+                        }`}
+                        style={{ 
+                          height: hasWorkout ? "100%" : "20%",
+                          animationDelay: `${dayIndex * 100}ms`
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground font-medium">{dayLabel}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-xl bg-muted">
                 <div>
                   <p className="text-sm text-muted-foreground">Weekly Goal</p>
-                  <p className="text-xl font-bold">5/5 Complete! 🎉</p>
+                  <p className="text-xl font-bold">
+                    {weeklyWorkoutCount >= 5 ? "Goal Complete! 🎉" : `${weeklyWorkoutCount}/5 Complete`}
+                  </p>
                 </div>
                 <div className="w-16 h-16 rounded-full border-4 border-primary flex items-center justify-center">
-                  <span className="text-xl font-bold text-primary">100%</span>
+                  <span className="text-xl font-bold text-primary">
+                    {Math.min(100, Math.round((weeklyWorkoutCount / 5) * 100))}%
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -137,20 +296,55 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentActivity.map((activity, index) => (
-                    <div 
-                      key={index} 
-                      className="flex items-center gap-3 p-3 rounded-xl bg-muted/50"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl">
-                        {workoutEmojis[activity.type]}
+                  {workouts.length > 0 ? (
+                    workouts.slice(0, 4).map((activity: any, index: number) => (
+                      <div 
+                        key={activity.id} 
+                        className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 group transition-all hover:bg-muted cursor-pointer"
+                        onClick={() => togglePrivacyMutation.mutate({ 
+                          workoutId: activity.id, 
+                          isPublic: !activity.is_public 
+                        })}
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl">
+                          {workoutEmojis[activity.type] || "💪"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{activity.note || "Workout session"}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            {format(new Date(activity.created_at), "MMM d, h:mm a")}
+                            <span className="mx-1">•</span>
+                            <span className="flex items-center gap-1 text-primary/80 font-medium">
+                              {activity.is_public ? (
+                                <><Globe className="w-3 h-3" /> Public</>
+                              ) : (
+                                <><Lock className="w-3 h-3" /> Private</>
+                              )}
+                            </span>
+                          </p>
+                        </div>
+                        {activity.photo_url ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-border">
+                            <img src={activity.photo_url} alt="Proof" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="w-8 h-8 rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Don't trigger privacy toggle
+                              handleOpenPhotoDialog(activity);
+                            }}
+                          >
+                            <Camera className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{activity.note}</p>
-                        <p className="text-xs text-muted-foreground">{activity.date}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-center text-muted-foreground py-4">No recent activity</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -162,21 +356,15 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link href="/progress">
+                  <Link href="/progress" className="flex items-center gap-2">
                     <BarChart3 className="w-4 h-4" />
                     View Progress
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link href="/community">
+                  <Link href="/community" className="flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     Community Feed
-                  </Link>
-                </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <Link href="/trainers">
-                    <Target className="w-4 h-4" />
-                    Find a Coach
                   </Link>
                 </Button>
               </CardContent>
@@ -184,6 +372,60 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Photo Upload Dialog */}
+      <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Proof of Workout</DialogTitle>
+            <DialogDescription>
+              Upload a photo to verify your {selectedWorkout?.type} session from {selectedWorkout && format(new Date(selectedWorkout.created_at), "MMM d")}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center gap-4 py-4">
+            {!photoPreview ? (
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full h-40 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all"
+              >
+                <Upload className="w-8 h-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Click to upload photo</p>
+              </div>
+            ) : (
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border">
+                <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                <button 
+                  onClick={() => { setPhoto(null); setPhotoPreview(null); }}
+                  className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handlePhotoChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
+          </div>
+
+          <DialogFooter className="sm:justify-end">
+            <Button variant="outline" onClick={handleCloseDialog}>
+              Cancel
+            </Button>
+            <Button 
+              variant="hero" 
+              onClick={handleSubmitPhoto}
+              disabled={!photo || isUploading}
+            >
+              {isUploading ? "Uploading..." : "Save Proof"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

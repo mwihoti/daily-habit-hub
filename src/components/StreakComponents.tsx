@@ -37,9 +37,10 @@ interface StatCardProps {
   value: string | number;
   label: string;
   variant?: "default" | "primary" | "streak";
+  trend?: string;
 }
 
-export function StatCard({ icon: Icon, value, label, variant = "default" }: StatCardProps) {
+export function StatCard({ icon: Icon, value, label, variant = "default", trend }: StatCardProps) {
   const variants = {
     default: "bg-card border-border",
     primary: "bg-primary/10 border-primary/20",
@@ -69,6 +70,12 @@ export function StatCard({ icon: Icon, value, label, variant = "default" }: Stat
           "text-sm",
           variant === "streak" ? "text-secondary-foreground/80" : "text-muted-foreground"
         )}>{label}</p>
+        {trend && (
+          <p className={cn(
+            "text-[10px] mt-0.5",
+            variant === "streak" ? "text-secondary-foreground/60" : "text-primary font-medium"
+          )}>{trend}</p>
+        )}
       </div>
     </div>
   );

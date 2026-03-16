@@ -97,7 +97,8 @@ const trainersData: Record<string, any> = {
 };
 
 export default function TrainerProfilePage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const trainer = trainersData[id || "1"] || trainersData["1"];
   const [selectedSession, setSelectedSession] = useState<number | null>(null);
 
@@ -119,7 +120,7 @@ export default function TrainerProfilePage() {
       <div className="container py-6 md:py-12 max-w-4xl">
         {/* Back Button */}
         <Link 
-          to="/trainers" 
+          href="/trainers" 
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
