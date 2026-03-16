@@ -27,7 +27,7 @@ export default function AuthCompletePage() {
       localStorage.removeItem("pending_signup_role");
 
       // Redirect based on role
-      router.replace(role === "trainer" ? "/dashboard" : "/dashboard");
+      router.replace(role === "trainer" ? "/dashboard" : "/check-in");
     };
 
     finish();
