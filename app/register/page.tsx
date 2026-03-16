@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome, User } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome, User, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [role, setRole] = useState<"user" | "trainer">("user");
 
   const handleEmailRegister = async () => {
@@ -106,10 +107,10 @@ export default function RegisterPage() {
   };
 
   const handleGoogleRegister = async () => {
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     try {
-      // FIX 1: Persist the selected role before leaving the page so
-      // the /auth/callback handler can read it after Google redirects back.
+      // Persist the selected role before leaving the page so the /auth/callback
+      // handler can read it after Google redirects back.
       localStorage.setItem("pending_signup_role", role);
 
       const supabase = createClient();
@@ -117,32 +118,37 @@ export default function RegisterPage() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/auth/complete`,
+          // Prevent the library from auto-redirecting so we can keep the
+          // loading state visible until the browser actually navigates away.
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) {
-        // Clean up if OAuth failed immediately
         localStorage.removeItem("pending_signup_role");
         toast.error(error.message);
+        setIsGoogleLoading(false);
         return;
       }
 
       if (data?.url) {
-        window.location.href = data.url;
+        // Navigate to Google — button stays in loading state until the page unloads.
+        window.location.assign(data.url);
+      } else {
+        localStorage.removeItem("pending_signup_role");
+        toast.error("Could not start Google sign-up. Please try again.");
+        setIsGoogleLoading(false);
       }
     } catch (err: any) {
       localStorage.removeItem("pending_signup_role");
       toast.error("Google sign-up failed: " + (err?.message ?? "Unknown error"));
       console.error("Google OAuth error:", err);
-    } finally {
-      setIsLoading(false);
+      setIsGoogleLoading(false);
     }
   };
 
-  // FIX 2: Extracted role selection handler to guarantee state updates
-  // and avoid any inline closure/stale-state issues.
   const handleRoleSelect = (selected: "user" | "trainer") => {
-    if (!isLoading) {
+    if (!isLoading && !isGoogleLoading) {
       setRole(selected);
     }
   };
@@ -167,12 +173,11 @@ export default function RegisterPage() {
               <p className="text-muted-foreground">Start your consistency journey today</p>
             </div>
 
-            {/* FIX 2: Role Selection — added cursor-pointer and z-10 to ensure
-                clicks register correctly regardless of parent styling */}
+            {/* Role Selection */}
             <div className="grid grid-cols-2 gap-2 mb-6">
               <button
                 type="button"
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
                 onClick={() => handleRoleSelect("user")}
                 className={cn(
                   "p-4 rounded-xl border-2 text-center transition-all cursor-pointer z-10",
@@ -187,7 +192,7 @@ export default function RegisterPage() {
               </button>
               <button
                 type="button"
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
                 onClick={() => handleRoleSelect("trainer")}
                 className={cn(
                   "p-4 rounded-xl border-2 text-center transition-all cursor-pointer z-10",
@@ -208,10 +213,19 @@ export default function RegisterPage() {
               variant="outline"
               className="w-full mb-6"
               onClick={handleGoogleRegister}
-              disabled={isLoading}
+              disabled={isLoading || isGoogleLoading}
             >
-              <Chrome className="w-5 h-5" />
-              Continue with Google
+              {isGoogleLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Redirecting to Google…
+                </>
+              ) : (
+                <>
+                  <Chrome className="w-5 h-5" />
+                  Continue with Google
+                </>
+              )}
             </Button>
 
             <div className="relative mb-6">
@@ -235,7 +249,7 @@ export default function RegisterPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="pl-10"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                   />
                 </div>
               </div>
@@ -251,7 +265,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                   />
                 </div>
               </div>
@@ -267,7 +281,7 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleEmailRegister();
                     }}
@@ -287,7 +301,7 @@ export default function RegisterPage() {
                 variant="hero"
                 className="w-full"
                 onClick={handleEmailRegister}
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
               >
                 {isLoading ? (
                   <>

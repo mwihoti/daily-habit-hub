@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome, AlertCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
@@ -41,6 +41,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // createClient is only called inside event handlers (runs in browser only)
   const handleEmailLogin = async () => {
@@ -97,30 +98,36 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     try {
       const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          // Prevent the library from auto-redirecting so we can keep the
+          // loading state visible until the browser actually navigates away.
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) {
         toast.error(error.message);
+        setIsGoogleLoading(false);
         return;
       }
 
-      // Manually redirect if Supabase returns the URL (some configs require this)
       if (data?.url) {
-        window.location.href = data.url;
+        // Navigate to Google — button stays in loading state until the page unloads.
+        window.location.assign(data.url);
+      } else {
+        toast.error("Could not start Google sign-in. Please try again.");
+        setIsGoogleLoading(false);
       }
     } catch (err: any) {
       toast.error("Google sign-in failed: " + (err?.message ?? "Unknown error"));
       console.error("Google OAuth error:", err);
-    } finally {
-      setIsLoading(false);
+      setIsGoogleLoading(false);
     }
   };
 
@@ -154,10 +161,19 @@ export default function LoginPage() {
               variant="outline"
               className="w-full mb-6"
               onClick={handleGoogleSignIn}
-              disabled={isLoading}
+              disabled={isLoading || isGoogleLoading}
             >
-              <Chrome className="w-5 h-5" />
-              Continue with Google
+              {isGoogleLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Redirecting to Google…
+                </>
+              ) : (
+                <>
+                  <Chrome className="w-5 h-5" />
+                  Continue with Google
+                </>
+              )}
             </Button>
 
             <div className="relative mb-6">
@@ -182,7 +198,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                   />
                 </div>
               </div>
@@ -198,7 +214,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleEmailLogin();
                     }}
@@ -224,7 +240,7 @@ export default function LoginPage() {
                 variant="hero"
                 className="w-full"
                 onClick={handleEmailLogin}
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
               >
                 {isLoading ? (
                   <>
