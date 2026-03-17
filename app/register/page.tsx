@@ -11,6 +11,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome, User } from "lucide-react"
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { getOAuthRedirectTo } from "@/lib/utils";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -116,7 +117,7 @@ export default function RegisterPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getOAuthRedirectTo(),
         },
       });
 

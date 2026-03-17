@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Chrome, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { getOAuthRedirectTo } from "@/lib/utils";
 
 // Isolated into its own component so useSearchParams sits inside a Suspense
 // boundary — required by Next 16 / React 19 to avoid defer-hydration issues
@@ -103,7 +104,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getOAuthRedirectTo(),
         },
       });
 
