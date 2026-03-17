@@ -37,13 +37,13 @@ export default function CheckInPage() {
   const [recordOnChain, setRecordOnChain] = useState(false);
   const { isConnected, address } = useAccount();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const supabase = createClient();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   // Fetch current user
-  const { data: user } = useQuery({
+  const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -100,7 +100,7 @@ export default function CheckInPage() {
   const checkInMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("No user");
-      
+
       let photo_url = null;
       if (photo) {
         const fileExt = photo.name.split('.').pop();
@@ -108,13 +108,13 @@ export default function CheckInPage() {
         const { error: uploadError, data } = await supabase.storage
           .from('workout-photos')
           .upload(fileName, photo);
-        
+
         if (uploadError) throw uploadError;
-        
+
         const { data: { publicUrl } } = supabase.storage
           .from('workout-photos')
           .getPublicUrl(fileName);
-        
+
         photo_url = publicUrl;
       }
 
@@ -175,6 +175,55 @@ export default function CheckInPage() {
 
   const hasCheckedInToday = workouts.some(w => isSameDay(new Date(w.created_at), new Date()));
 
+  if (isUserLoading) {
+    return (
+      <Layout>
+        <div className="container min-h-[60vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-muted-foreground animate-pulse font-medium">Loading your progress...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className="container py-12 md:py-24 max-w-md mx-auto px-4">
+          <Card className="border-2 border-primary/20 shadow-xl overflow-hidden animate-slide-up bg-card/50 backdrop-blur-sm">
+            <div className="h-2 bg-gradient-hero" />
+            <CardContent className="p-8 text-center space-y-8">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-4xl shadow-glow transition-transform hover:scale-110 duration-300">
+                🔒
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight">Access Denied</h1>
+                <p className="text-muted-foreground leading-relaxed">
+                  You need to be authenticated to access the check-in page and record your habits.
+                </p>
+              </div>
+              <div className="flex flex-col gap-4">
+                <Button asChild size="xl" variant="hero" className="w-full shadow-lg">
+                  <Link href="/login">Sign In to Continue</Link>
+                </Button>
+                <div className="flex items-center gap-2 py-2">
+                  <div className="h-px bg-border flex-1" />
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">or</span>
+                  <div className="h-px bg-border flex-1" />
+                </div>
+                <Button asChild variant="outline" size="xl" className="w-full hover:bg-primary/5 border-primary/20">
+                  <Link href="/register">Create New Account</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="container py-6 md:py-12 max-w-2xl">
@@ -187,8 +236,8 @@ export default function CheckInPage() {
             {hasCheckedInToday ? "You showed up!" : "Did you work out today?"}
           </h1>
           <p className="text-muted-foreground">
-            {hasCheckedInToday 
-              ? "Amazing! Keep the streak going tomorrow." 
+            {hasCheckedInToday
+              ? "Amazing! Keep the streak going tomorrow."
               : "Just checking in keeps you accountable."}
           </p>
         </div>
@@ -264,31 +313,31 @@ export default function CheckInPage() {
                   className="w-full p-4 rounded-xl border-2 border-border bg-background resize-none h-24 focus:border-primary focus:outline-none transition-colors"
                   maxLength={200}
                 />
-                
+
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       className="gap-2"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <Camera className="w-4 h-4" />
                       Add Proof Photo
                     </Button>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handlePhotoChange} 
-                      accept="image/*" 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handlePhotoChange}
+                      accept="image/*"
+                      className="hidden"
                     />
                   </div>
 
                   {photoPreview && (
                     <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-border group">
                       <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                      <button 
+                      <button
                         onClick={removePhoto}
                         className="absolute top-2 right-2 p-1.5 bg-background/80 hover:bg-background rounded-full transition-colors"
                       >
@@ -317,10 +366,10 @@ export default function CheckInPage() {
                     </p>
                   </div>
                 </div>
-                <Switch 
-                  id="public-toggle" 
-                  checked={isPublic} 
-                  onCheckedChange={setIsPublic} 
+                <Switch
+                  id="public-toggle"
+                  checked={isPublic}
+                  onCheckedChange={setIsPublic}
                 />
               </CardContent>
             </Card>
@@ -340,10 +389,10 @@ export default function CheckInPage() {
                       </p>
                     </div>
                   </div>
-                  <Switch 
-                    id="chain-toggle" 
-                    checked={recordOnChain} 
-                    onCheckedChange={setRecordOnChain} 
+                  <Switch
+                    id="chain-toggle"
+                    checked={recordOnChain}
+                    onCheckedChange={setRecordOnChain}
                   />
                 </CardContent>
               </Card>
@@ -377,8 +426,8 @@ export default function CheckInPage() {
               <div className="text-6xl animate-bounce-soft">🔥</div>
               <h2 className="text-2xl font-bold">{profile?.streak || 0} Day Streak!</h2>
               <p className="opacity-90">You've completed your activity for today. Well done!</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="bg-card text-foreground border-0 mx-auto"
                 asChild
               >
