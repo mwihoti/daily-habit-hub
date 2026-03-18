@@ -105,18 +105,7 @@ Originally inspired to help fitness enthusiasts in Kenya build lasting habits, D
 
 ---
 
-## 🌐 Deployment
-
-### Vercel (Recommended)
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
-
-1. Connect your GitHub repository to Vercel.
-2. Configure the Environment Variables (`NEXT_PUBLIC_SUPABASE_URL`, etc.).
-3. Deploy!
-
-### Lovable
-If you are using [Lovable](https://lovable.dev/), you can simply click on **Share -> Publish** within the Lovable editor.
-
+live app: https://daily-habit-hub.vercel.app/
 ---
 
 ## 📄 License
