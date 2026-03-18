@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, CheckCircle, Dumbbell, BarChart3, MessageCircle, User, LogOut } from "lucide-react";
+import { Home, Users, CheckCircle, Dumbbell, BarChart3, MessageCircle, User, LogOut, Target, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -14,9 +14,10 @@ const navItems = [
   { href: "/", icon: Home, label: "Home" },
   { href: "/community", icon: Users, label: "Community" },
   { href: "/check-in", icon: CheckCircle, label: "Check-in" },
+  { href: "/tasks", icon: ListTodo, label: "Tasks" },
+  { href: "/goals", icon: Target, label: "Goals" },
   { href: "/trainers", icon: Dumbbell, label: "Trainers" },
   { href: "/dashboard", icon: BarChart3, label: "Dashboard" },
-  { href: "/progress", icon: BarChart3, label: "Progress" },
 ];
 
 export function MobileNav() {
