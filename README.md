@@ -1,73 +1,124 @@
-# Welcome to your Lovable project
+# 🔥 Daily Habit Hub
 
-## Project info
+**Build exercise habits through daily accountability, community support, and affordable coaching.**
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Daily Habit Hub is a modern fitness tracking application designed to help users stay consistent with their exercise routines. Built with a focus on community and progress, it combines social accountability with cutting-edge Web3 rewards.
 
-## How can I edit this code?
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Avalanche](https://img.shields.io/badge/Avalanche-E84142?style=for-the-badge&logo=avalanche&logoColor=white)](https://www.avax.network/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## ✨ Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### ✅ Daily Check-ins
+Easily log your workouts with a single tap. Support for various activities including:
+- 🏋️ Gym
+- 🏃 Run/Walk
+- 🏠 Home Workout
+- 🚴 Cycling
+- 🧘 Yoga/Stretch
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🔥 Streak Tracking
+Stay motivated with visual streak badges and a weekly activity calendar. Never break the chain!
 
-**Use your preferred IDE**
+### 👥 Community Support
+Connect with friends and the wider community. See others working out in real-world time to stay inspired.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🎯 Professional Coaching
+Find and connect with certified trainers to take your fitness journey to the next level.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### ⛓️ Web3 Rewards (Avalanche)
+Connect your wallet to:
+- Earn **$HABIT tokens** for your consistency.
+- Mint **"Proof of Progress"** on the Avalanche network.
+- Record your fitness journey permanently on-chain.
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🚀 Tech Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **Framework**: [Next.js](https://nextjs.org/) (App Router, React 19)
+- **Backend & Auth**: [Supabase](https://supabase.com/)
+- **State Management**: [TanStack Query](https://tanstack.com/query)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Web3**: [Wagmi](https://wagmi.sh/), [RainbowKit](https://www.rainbowkit.com/), [viem](https://viem.sh/) (Avalanche)
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 🛠️ Getting Started
 
-**Edit a file directly in GitHub**
+### Prerequisites
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Node.js (Latest LTS recommended)
+- npm or bun
 
-**Use GitHub Codespaces**
+### Local Setup
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd daily-habit-hub
+   ```
 
-## What technologies are used for this project?
+2. **Install dependencies:**
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
 
-This project is built with:
+3. **Environment Variables:**
+   Create a `.env` file in the root directory and add your Supabase and WalletConnect credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
+   ```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   # or
+   bun dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## 🗄️ Database Schema
 
-## Can I connect a custom domain to my Lovable project?
+The project uses Supabase as its primary database. Key tables include:
 
-Yes, you can!
+- `profiles`: User information, streak data, and wallet addresses.
+- `workouts`: Logged physical activities with notes and proof photos.
+- `trainers`: Profiles for certified fitness coaches.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🇰🇪 Built for Consistency
+
+Originally inspired to help fitness enthusiasts in Kenya build lasting habits, Daily Habit Hub is designed for anyone who wants to turn "someday" into "today".
+
+---
+
+## 🌐 Deployment
+
+### Vercel (Recommended)
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+
+1. Connect your GitHub repository to Vercel.
+2. Configure the Environment Variables (`NEXT_PUBLIC_SUPABASE_URL`, etc.).
+3. Deploy!
+
+### Lovable
+If you are using [Lovable](https://lovable.dev/), you can simply click on **Share -> Publish** within the Lovable editor.
+
+---
+
+## 📄 License
+
+This project is private and intended for the Daily Habit Hub startup.
