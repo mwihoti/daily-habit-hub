@@ -163,7 +163,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-primary" />
-                  <span>Join 1,000+ members</span>
+                  <span>Join our community</span>
                 </div>
               </div>
             )}
@@ -177,21 +177,21 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
             <StatCard 
               label={user ? "Your Day Streak" : "Active members"} 
-              value={user ? (profile?.streak || 0).toString() : "1,234"}
+              value={user ? (profile?.streak || 0).toString() : "+"}
               icon={user ? Flame : Users}
               trend={user ? "Keep it burning! 🔥" : "+23% this month"}
             />
             <StatCard 
               label={user ? "Your Workouts" : "Workouts logged"} 
-              value={user ? workouts.length.toString() : "45.6K"}
+              value={user ? workouts.length.toString() : ""}
               icon={CheckCircle}
-              trend={user ? "Great consistency!" : "+156 today"}
+              trend={user ? "Great consistency!" : "+ today"}
             />
             <StatCard 
               label="Certified trainers" 
-              value="48"
+              value=""
               icon={Trophy}
-              trend="All verified"
+              trend=""
             />
           </div>
         </div>
