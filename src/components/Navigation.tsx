@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, CheckCircle, Dumbbell, BarChart3, MessageCircle, User, LogOut, Target, ListTodo } from "lucide-react";
+import { Home, Users, CheckCircle, Dumbbell, BarChart3, MessageCircle, User, LogOut, Target, ListTodo, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -16,8 +16,10 @@ const navItems = [
   { href: "/check-in", icon: CheckCircle, label: "Check-in" },
   { href: "/tasks", icon: ListTodo, label: "Tasks" },
   { href: "/goals", icon: Target, label: "Goals" },
-  { href: "/trainers", icon: Dumbbell, label: "Trainers" },
+  //{ href: "/trainers", icon: Dumbbell, label: "Trainers" },
   { href: "/dashboard", icon: BarChart3, label: "Dashboard" },
+    { href: "/progress", icon: BarChart3, label: "Progress" },
+
 ];
 
 export function MobileNav() {
@@ -34,8 +36,8 @@ export function MobileNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200",
-                isActive 
-                  ? "text-primary bg-primary/10" 
+                isActive
+                  ? "text-primary bg-primary/10"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -79,7 +81,7 @@ export function DesktopNav() {
       <div className="container flex items-center justify-between h-16">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-xl gradient-hero flex items-center justify-center">
-            <span className="text-xl">💪</span>
+            <span className="text-xl"></span>
           </div>
           <span className="font-bold text-xl">FitTribe</span>
         </Link>
@@ -93,8 +95,8 @@ export function DesktopNav() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200",
-                  isActive 
-                    ? "text-primary bg-primary/10" 
+                  isActive
+                    ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
               >
@@ -112,7 +114,7 @@ export function DesktopNav() {
           >
             <MessageCircle className="w-5 h-5" />
           </Link>
-          
+
           {user ? (
             <div className="flex items-center gap-2">
               <Link

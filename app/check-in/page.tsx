@@ -17,7 +17,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Globe, Lock, Coins } from "lucide-react";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount } from 'wagmi';
+import { useAccount, useWriteContract } from 'wagmi';
+import { HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS } from "@/lib/web3/habitRegistry";
 
 const workoutTypes = [
   { id: "gym", icon: Dumbbell, label: "Gym", emoji: "🏋️" },
@@ -35,7 +36,8 @@ export default function CheckInPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [recordOnChain, setRecordOnChain] = useState(false);
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chain } = useAccount();
+  const { writeContractAsync } = useWriteContract();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const supabase = createClient();
@@ -131,6 +133,30 @@ export default function CheckInPage() {
         .single();
 
       if (error) throw error;
+
+      // On-chain recording
+      if (recordOnChain && isConnected) {
+        try {
+          // You might want to generate a metadata URI properly here, maybe pins on IPFS?
+          // For now we'll just use the note or a placeholder.
+          const metadataUri = photo_url || note || "Daily habit completion";
+          
+          await writeContractAsync({
+            address: HABIT_REGISTRY_ADDRESS,
+            abi: HABIT_REGISTRY_ABI,
+            functionName: 'recordHabit',
+            args: [selectedType || "unknown", metadataUri],
+            account: address,
+            chain: chain,
+          });
+          toast.info("On-chain record created! ⛓️");
+        } catch (web3Error: any) {
+          console.error("Web3 record failed:", web3Error);
+          // We don't necessarily want to fail the whole check-in if on-chain fails,
+          // but we should inform the user.
+          toast.warning("Check-in saved, but on-chain record failed.");
+        }
+      }
 
       // Update streak and total workouts in profile
       await supabase.rpc('increment_workout_count', { user_id: user.id });
