@@ -18,7 +18,10 @@ contract HabitRegistry is Ownable {
     
     event  HabitRecorded(uint256 indexed id, address indexed user, string habitType);
     constructor() Ownable(msg.sender) {}
-
+        /**
+         * record habit completion
+         * @param habitType - type of habit
+         */
     function recordHabit(string memory habitType, string memory metadataUri)
     public {
             _recordIds++;

@@ -1,6 +1,8 @@
 # 🔥 Daily Habit Hub
 
-**Build exercise habits through daily accountability, community support, and affordable coaching.**
+**Build exercise habits through daily accountability, community support, and affordable coaching.
+: Focus · Ignite · Tenacity · Transform · Resilience · Inspire · Believe · Endure 💪
+**
 
 Daily Habit Hub is a modern fitness tracking application designed to help users stay consistent with their exercise routines. Built with a focus on community and progress, it combines social accountability with cutting-edge Web3 rewards.
 

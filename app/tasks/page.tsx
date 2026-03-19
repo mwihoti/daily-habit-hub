@@ -152,7 +152,7 @@ export default function TasksPage() {
             if (!sessionStorage.getItem(key)) {
               new Notification(`FitTribe Task Reminder: ${task.title}`, {
                 body: "Time to complete your task!",
-                icon: "/favicon.ico" // Placeholder
+                icon: "" // Placeholder
               });
               sessionStorage.setItem(key, "true");
               toast.info(`Reminder: ${task.title} 🔔`);

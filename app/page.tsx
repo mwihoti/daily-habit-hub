@@ -131,6 +131,10 @@ export default function LandingPage() {
               }
             </p>
             
+            <p className="text-sm font-bold tracking-widest text-primary uppercase animate-fade-in mt-4">
+              Focus · Ignite · Tenacity · Transform · Resilience · Inspire · Believe · Endure 💪
+            </p>
+            
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               {user ? (
                 <Button variant="hero" size="xl" asChild>
