@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Target, Plus, Target as TargetIcon, Calendar, TrendingUp } from "lucide-react";
+import { Target, Plus, Target as TargetIcon, Calendar, TrendingUp, CheckCircle2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -76,6 +76,31 @@ export default function GoalsPage() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to add goal");
+    }
+  });
+
+  // Update goal mutation
+  const updateGoalMutation = useMutation({
+    mutationFn: async ({ id, status, progress }: { id: string, status?: string, progress?: number }) => {
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (progress !== undefined) updates.progress = progress;
+      if (status === 'completed') updates.progress = 100; // Auto-fill 100% when marked completed
+
+      const { data, error } = await supabase
+        .from('goals')
+        .update(updates)
+        .eq('id', id);
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Goal status updated! Keep it up! 🚀");
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update goal");
     }
   });
 
@@ -173,6 +198,7 @@ export default function GoalsPage() {
                     <CardTitle className="flex items-center gap-2">
                       {goal.title}
                       {goal.status === 'completed' && <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-500">Completed</span>}
+                      {goal.status === 'in_progress' && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500">In Progress</span>}
                     </CardTitle>
                     <CardDescription>{goal.description}</CardDescription>
                   </div>
@@ -180,6 +206,27 @@ export default function GoalsPage() {
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
                       {goal.target_date ? format(new Date(goal.target_date), 'MMM d, yyyy') : 'No target date'}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Button 
+                        variant={goal.status === 'in_progress' ? 'default' : 'outline'} 
+                        size="sm" 
+                        className="h-7 text-xs"
+                        onClick={() => updateGoalMutation.mutate({ id: goal.id, status: 'in_progress' })}
+                        disabled={updateGoalMutation.isPending}
+                      >
+                        In Progress
+                      </Button>
+                      <Button 
+                        variant={goal.status === 'completed' ? 'default' : 'outline'} 
+                        size="sm" 
+                        className="h-7 text-xs"
+                        onClick={() => updateGoalMutation.mutate({ id: goal.id, status: 'completed' })}
+                        disabled={updateGoalMutation.isPending}
+                      >
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        Done
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
