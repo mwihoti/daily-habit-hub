@@ -3,6 +3,10 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   transpilePackages: ['@rainbow-me/rainbowkit', 'wagmi', 'viem'],
   webpack: (config, { isServer }) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
+    };
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
