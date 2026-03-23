@@ -17,6 +17,9 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
     "plugins": [
       {
         "name": "next"
@@ -43,6 +46,7 @@
     "node_modules",
     "hardhat.config.ts",
     "scripts",
-    "test",    "typechain-types"
+    "test",
+    "typechain-types"
   ]
 }
