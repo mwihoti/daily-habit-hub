@@ -44,10 +44,12 @@ export default function GoalsPage() {
     queryKey: ['goals', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('goals')
         .select('*')
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
+      if (error) throw error;
       return data || [];
     }
   });
@@ -90,7 +92,9 @@ export default function GoalsPage() {
       const { data, error } = await supabase
         .from('goals')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user!.id)
+        .select();
         
       if (error) throw error;
       return data;
