@@ -13,7 +13,21 @@ import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSameDay } from "date-fns";
 import { useAccount, useReadContracts } from "wagmi";
-import { ACHIEVEMENT_NFT_ABI, ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
+import { ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
+
+// Minimal ABI — only the function we call here. Avoids type-depth error with full ABI.
+const HAS_ACHIEVEMENT_ABI = [
+  {
+    inputs: [
+      { internalType: 'address', name: '', type: 'address' as const },
+      { internalType: 'uint8',   name: '', type: 'uint8'   as const },
+    ],
+    name: 'hasAchievement',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' as const }],
+    stateMutability: 'view' as const,
+    type: 'function' as const,
+  },
+] as const;
 
 export default function ProgressPage() {
   const supabase = createClient();
@@ -50,11 +64,11 @@ export default function ProgressPage() {
   });
 
   // On-chain achievement status (reads from AchievementNFT contract)
-  const walletAddress = address ?? '0x0000000000000000000000000000000000000000';
+  const walletAddress = (address ?? '0x0000000000000000000000000000000000000000') as `0x${string}`;
   const { data: onChainAchievements } = useReadContracts({
     contracts: ACHIEVEMENTS.map((a) => ({
       address: ACHIEVEMENT_NFT_ADDRESS,
-      abi: ACHIEVEMENT_NFT_ABI,
+      abi: HAS_ACHIEVEMENT_ABI,
       functionName: 'hasAchievement' as const,
       args: [walletAddress, a.type] as [`0x${string}`, number],
     })),
