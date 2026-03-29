@@ -50,15 +50,14 @@ export default function ProgressPage() {
   });
 
   // On-chain achievement status (reads from AchievementNFT contract)
+  const walletAddress = address ?? '0x0000000000000000000000000000000000000000';
   const { data: onChainAchievements } = useReadContracts({
-    contracts: address
-      ? ACHIEVEMENTS.map((a) => ({
-          address: ACHIEVEMENT_NFT_ADDRESS,
-          abi: ACHIEVEMENT_NFT_ABI,
-          functionName: 'hasAchievement' as const,
-          args: [address, a.type] as [`0x${string}`, number],
-        }))
-      : [],
+    contracts: ACHIEVEMENTS.map((a) => ({
+      address: ACHIEVEMENT_NFT_ADDRESS,
+      abi: ACHIEVEMENT_NFT_ABI,
+      functionName: 'hasAchievement' as const,
+      args: [walletAddress, a.type] as [`0x${string}`, number],
+    })),
     query: { enabled: !!address },
   });
 
