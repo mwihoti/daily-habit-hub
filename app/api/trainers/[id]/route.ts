@@ -4,15 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/trainers/[id] — fetch a single trainer profile by its UUID
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('trainer_profiles')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('is_active', true)
       .single()
 

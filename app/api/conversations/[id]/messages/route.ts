@@ -4,9 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/conversations/[id]/messages — fetch all messages in a conversation
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -18,7 +19,7 @@ export async function GET(
     const { data: conv, error: convError } = await supabase
       .from('conversations')
       .select('id, trainer_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .or(`user_id.eq.${user.id},trainer_id.eq.${user.id}`)
       .single()
 
@@ -32,7 +33,7 @@ export async function GET(
         *,
         sender:profiles!messages_sender_id_fkey(full_name, avatar_url)
       `)
-      .eq('conversation_id', params.id)
+      .eq('conversation_id', id)
       .order('created_at', { ascending: true })
 
     if (error) {
@@ -44,7 +45,7 @@ export async function GET(
     await supabase
       .from('conversations')
       .update(isTrainer ? { unread_trainer: 0 } : { unread_user: 0 })
-      .eq('id', params.id)
+      .eq('id', id)
 
     return NextResponse.json({ messages: data })
   } catch (err: any) {
@@ -55,9 +56,10 @@ export async function GET(
 // POST /api/conversations/[id]/messages — send a message
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -75,7 +77,7 @@ export async function POST(
     const { data: conv, error: convError } = await supabase
       .from('conversations')
       .select('id, user_id, trainer_id, unread_user, unread_trainer')
-      .eq('id', params.id)
+      .eq('id', id)
       .or(`user_id.eq.${user.id},trainer_id.eq.${user.id}`)
       .single()
 
@@ -86,7 +88,7 @@ export async function POST(
     // Insert the message
     const { data: message, error: msgError } = await supabase
       .from('messages')
-      .insert({ conversation_id: params.id, sender_id: user.id, content: content.trim() })
+      .insert({ conversation_id: id, sender_id: user.id, content: content.trim() })
       .select()
       .single()
 
@@ -105,7 +107,7 @@ export async function POST(
           ? { unread_user: (conv.unread_user ?? 0) + 1 }
           : { unread_trainer: (conv.unread_trainer ?? 0) + 1 }),
       })
-      .eq('id', params.id)
+      .eq('id', id)
 
     return NextResponse.json({ message }, { status: 201 })
   } catch (err: any) {
