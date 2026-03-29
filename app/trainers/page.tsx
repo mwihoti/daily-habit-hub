@@ -273,7 +273,7 @@ export default function TrainersPage() {
               className="bg-card text-foreground border-0"
               asChild
             >
-              <Link href="/register?role=trainer">Apply to be a Coach</Link>
+              <Link href="/trainer-setup">Apply to be a Coach</Link>
             </Button>
           </CardContent>
         </Card>

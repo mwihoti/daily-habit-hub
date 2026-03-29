@@ -49,11 +49,34 @@ export async function POST(request: Request) {
       price_monthly,
       group_price_monthly,
       avatar_url,
+      // Qualification fields — stored as structured JSON suffix in bio
+      certifications_json,
+      education,
+      training_style,
+      social_instagram,
+      social_youtube,
+      social_website,
     } = body
 
     if (!full_name) {
       return NextResponse.json({ error: 'full_name is required' }, { status: 400 })
     }
+
+    // Build enriched bio that includes qualifications metadata
+    // Stored as a JSON block so the trainer profile page can parse/display it
+    const qualifications = {
+      certifications: certifications_json ? JSON.parse(certifications_json) : [],
+      education: education ?? null,
+      training_style: training_style ?? null,
+      social: {
+        instagram: social_instagram ?? null,
+        youtube:   social_youtube   ?? null,
+        website:   social_website   ?? null,
+      },
+    }
+    const enrichedBio = bio
+      ? `${bio}\n\n<!--qualifications:${JSON.stringify(qualifications)}-->`
+      : null
 
     const { data, error } = await supabase
       .from('trainer_profiles')
@@ -61,7 +84,7 @@ export async function POST(request: Request) {
         {
           user_id: user.id,
           full_name,
-          bio: bio ?? null,
+          bio: enrichedBio ?? null,
           location: location ?? null,
           specialties: specialties ?? [],
           experience_years: experience_years ?? 0,
