@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -64,7 +64,7 @@ function formatMessageTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
   const searchParams = useSearchParams();
   const initialConvId = searchParams.get("conversation");
 
@@ -445,5 +445,19 @@ export default function MessagesPage() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </Layout>
+    }>
+      <MessagesContent />
+    </Suspense>
   );
 }
