@@ -1,126 +1,131 @@
 'use client';
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Users, Calendar, MessageCircle, CheckCircle, ArrowLeft, Video, Clock, CalendarDays } from "lucide-react";
+import {
+  Star, MapPin, Users, Calendar, MessageCircle, ArrowLeft,
+  Loader2, Languages, Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 
-const trainersData: Record<string, any> = {
-  "1": {
-    id: "1",
-    name: "Coach Michael O.",
-    location: "Nairobi, Kenya",
-    avatar: "👨‍🏫",
-    specialties: ["Weight Loss", "Beginners", "Lifestyle Coaching"],
-    rating: 4.9,
-    reviews: 127,
-    price: "KES 3,500/mo",
-    groupPrice: "KES 1,500/mo",
-    clients: 24,
-    experience: "8 years",
-    bio: "I've been helping beginners build sustainable fitness habits for over 8 years. My approach focuses on consistency over intensity—showing up matters more than being perfect. I lost 25kg myself and understand the mental and physical journey.",
-    verified: true,
-    languages: ["English", "Swahili"],
-    availability: "Mon-Fri, 6am-9pm EAT",
-    includes: [
-      "Personalized workout plans",
-      "Weekly check-ins via WhatsApp",
-      "Nutrition guidance",
-      "24/7 messaging support",
-      "Progress tracking",
-      "Monthly video call",
-    ],
-    virtualSessions: [
-      { type: "1-on-1 Virtual Session", duration: "30 min", price: "KES 800" },
-      { type: "1-on-1 Virtual Session", duration: "60 min", price: "KES 1,400" },
-      { type: "Group Virtual Class", duration: "45 min", price: "KES 400" },
-    ],
-    testimonials: [
-      {
-        name: "Sarah M.",
-        text: "Coach Michael helped me lose 15kg in 4 months. His patience and understanding made all the difference!",
-        rating: 5,
-      },
-      {
-        name: "James K.",
-        text: "Finally found a coach who gets beginners. No judgment, just support. Highly recommend!",
-        rating: 5,
-      },
-    ],
-  },
-  "2": {
-    id: "2",
-    name: "Coach Faith W.",
-    location: "Nairobi, Kenya",
-    avatar: "👩‍🏫",
-    specialties: ["Home Workouts", "Women's Fitness", "Post-Pregnancy"],
-    rating: 4.8,
-    reviews: 89,
-    price: "KES 2,800/mo",
-    groupPrice: "KES 1,200/mo",
-    clients: 31,
-    experience: "5 years",
-    bio: "No gym? No problem! I specialize in effective home workout programs that require minimal or no equipment. As a mother of two, I understand the challenges of finding time for fitness and design programs that fit into busy lives.",
-    verified: true,
-    languages: ["English", "Swahili"],
-    availability: "Mon-Sat, 5am-8pm EAT",
-    includes: [
-      "Home workout plans (no equipment needed)",
-      "Daily motivation messages",
-      "Nutrition tips for busy people",
-      "WhatsApp group support",
-      "Weekly progress reviews",
-      "Flexible scheduling",
-    ],
-    virtualSessions: [
-      { type: "1-on-1 Virtual Session", duration: "30 min", price: "KES 600" },
-      { type: "1-on-1 Virtual Session", duration: "60 min", price: "KES 1,100" },
-      { type: "Group Virtual Class", duration: "45 min", price: "KES 300" },
-    ],
-    testimonials: [
-      {
-        name: "Grace N.",
-        text: "As a working mom, Coach Faith's home programs changed my life. I can finally exercise!",
-        rating: 5,
-      },
-      {
-        name: "Mary W.",
-        text: "Her post-pregnancy program helped me regain my confidence. So supportive!",
-        rating: 5,
-      },
-    ],
-  },
-};
+interface TrainerProfile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  avatar_url: string | null;
+  bio: string | null;
+  location: string | null;
+  specialties: string[];
+  experience_years: number;
+  languages: string[];
+  availability: string | null;
+  price_monthly: number;
+  group_price_monthly: number;
+  rating: number;
+  review_count: number;
+  client_count: number;
+  is_verified: boolean;
+}
+
+function TrainerAvatar({ url, name, size = "lg" }: { url: string | null; name: string; size?: "sm" | "lg" }) {
+  const initials = name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const cls = size === "lg"
+    ? "w-24 h-24 md:w-32 md:h-32 rounded-2xl text-4xl md:text-5xl"
+    : "w-10 h-10 rounded-full text-lg";
+
+  if (url) {
+    return <img src={url} alt={name} className={`${cls} object-cover shrink-0 mx-auto md:mx-0`} />;
+  }
+  return (
+    <div className={`${cls} gradient-hero flex items-center justify-center font-bold text-primary-foreground shrink-0 mx-auto md:mx-0`}>
+      {initials}
+    </div>
+  );
+}
 
 export default function TrainerProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const trainer = trainersData[id || "1"] || trainersData["1"];
-  const [selectedSession, setSelectedSession] = useState<number | null>(null);
 
-  const handleRequestCoaching = () => {
-    toast.success("Request sent! 🎉", {
-      description: `${trainer.name} will respond within 24 hours.`,
-    });
+  const [trainer, setTrainer] = useState<TrainerProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMessaging, setIsMessaging] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+
+    async function fetchTrainer() {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/trainers/${id}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Not found");
+        setTrainer(data.trainer);
+      } catch {
+        toast.error("Trainer not found");
+        router.push("/trainers");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTrainer();
+  }, [id, router]);
+
+  const handleMessage = async () => {
+    if (!trainer) return;
+    setIsMessaging(true);
+    try {
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trainer_user_id: trainer.user_id }),
+      });
+      const data = await res.json();
+
+      if (res.status === 401) {
+        toast.error("Please sign in to message this trainer");
+        router.push("/login");
+        return;
+      }
+      if (!res.ok) throw new Error(data.error);
+
+      router.push(`/messages?conversation=${data.conversation.id}`);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not start conversation");
+    } finally {
+      setIsMessaging(false);
+    }
   };
 
-  const handleBookSession = (sessionType: string) => {
-    toast.success("Session booked! 📅", {
-      description: `Your ${sessionType} with ${trainer.name} has been requested. Check your messages for confirmation.`,
-    });
-    setSelectedSession(null);
-  };
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!trainer) return null;
 
   return (
     <Layout>
       <div className="container py-6 md:py-12 max-w-4xl">
-        {/* Back Button */}
-        <Link 
-          href="/trainers" 
+        {/* Back */}
+        <Link
+          href="/trainers"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -131,57 +136,63 @@ export default function TrainerProfilePage() {
         <Card className="mb-6 animate-slide-up">
           <CardContent className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Avatar */}
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl gradient-hero flex items-center justify-center text-5xl md:text-6xl shrink-0 mx-auto md:mx-0">
-                {trainer.avatar}
-              </div>
+              <TrainerAvatar url={trainer.avatar_url} name={trainer.full_name} size="lg" />
 
-              {/* Info */}
               <div className="flex-1 text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                  <h1 className="text-2xl md:text-3xl font-bold">{trainer.name}</h1>
-                  {trainer.verified && (
+                  <h1 className="text-2xl md:text-3xl font-bold">{trainer.full_name}</h1>
+                  {trainer.is_verified && (
                     <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
                       ✓ Verified
                     </span>
                   )}
                 </div>
-                
-                <div className="flex items-center justify-center md:justify-start gap-4 text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{trainer.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{trainer.experience}</span>
-                  </div>
+
+                <div className="flex items-center justify-center md:justify-start gap-4 text-muted-foreground mb-4 flex-wrap">
+                  {trainer.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{trainer.location}</span>
+                    </div>
+                  )}
+                  {trainer.experience_years > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{trainer.experience_years} year{trainer.experience_years !== 1 ? "s" : ""} exp.</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Rating & Clients */}
-                <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
+                <div className="flex items-center justify-center md:justify-start gap-4 mb-4 flex-wrap">
                   <div className="flex items-center gap-1">
                     <Star className="w-5 h-5 text-streak fill-streak" />
-                    <span className="font-bold text-lg">{trainer.rating}</span>
-                    <span className="text-muted-foreground">({trainer.reviews} reviews)</span>
+                    <span className="font-bold text-lg">
+                      {trainer.rating > 0 ? trainer.rating.toFixed(1) : "New"}
+                    </span>
+                    {trainer.review_count > 0 && (
+                      <span className="text-muted-foreground">({trainer.review_count} reviews)</span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Users className="w-5 h-5" />
-                    <span>{trainer.clients} active clients</span>
-                  </div>
+                  {trainer.client_count > 0 && (
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Users className="w-5 h-5" />
+                      <span>{trainer.client_count} active clients</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Specialties */}
-                <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                  {trainer.specialties.map((specialty: string) => (
-                    <span
-                      key={specialty}
-                      className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium"
-                    >
-                      {specialty}
-                    </span>
-                  ))}
-                </div>
+                {trainer.specialties.length > 0 && (
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                    {trainer.specialties.map((s) => (
+                      <span
+                        key={s}
+                        className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -190,161 +201,87 @@ export default function TrainerProfilePage() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="md:col-span-2 space-y-6">
-            {/* Bio */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="font-bold text-lg mb-3">About</h2>
-                <p className="text-muted-foreground leading-relaxed">{trainer.bio}</p>
-              </CardContent>
-            </Card>
+            {trainer.bio && (
+              <Card>
+                <CardContent className="p-6">
+                  <h2 className="font-bold text-lg mb-3">About</h2>
+                  <p className="text-muted-foreground leading-relaxed">{trainer.bio}</p>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* What's Included */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="font-bold text-lg mb-4">What's Included</h2>
-                <ul className="space-y-3">
-                  {trainer.includes.map((item: string, index: number) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Virtual Training Booking */}
-            <Card className="border-2 border-primary/20 bg-primary/5">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Video className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="font-bold text-lg">Book Virtual Training</h2>
-                    <p className="text-sm text-muted-foreground">Train from anywhere</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
-                  {trainer.virtualSessions.map((session: any, index: number) => (
-                    <div 
-                      key={index}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        selectedSession === index 
-                          ? 'border-primary bg-primary/10' 
-                          : 'border-border hover:border-primary/50 bg-background'
-                      }`}
-                      onClick={() => setSelectedSession(index)}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-semibold">{session.type}</p>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>{session.duration}</span>
-                          </div>
-                        </div>
-                        <p className="font-bold text-primary">{session.price}</p>
+            {/* Languages & Availability */}
+            {(trainer.languages.length > 0 || trainer.availability) && (
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  {trainer.languages.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Languages className="w-4 h-4 text-muted-foreground" />
+                        <h3 className="font-semibold">Languages</h3>
                       </div>
-                      {selectedSession === index && (
-                        <div className="mt-3 pt-3 border-t border-border animate-slide-up">
-                          <p className="text-sm text-muted-foreground mb-3">
-                            Select a time that works for you. {trainer.name} will confirm within 24 hours.
-                          </p>
-                          <div className="grid grid-cols-2 gap-2 mb-3">
-                            {["Today 6pm", "Tomorrow 7am", "Tomorrow 6pm", "Sat 10am"].map((time) => (
-                              <button
-                                key={time}
-                                className="px-3 py-2 text-sm rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
-                              >
-                                {time}
-                              </button>
-                            ))}
-                          </div>
-                          <Button 
-                            variant="hero" 
-                            size="sm" 
-                            className="w-full"
-                            onClick={() => handleBookSession(session.type)}
-                          >
-                            <CalendarDays className="w-4 h-4" />
-                            Book This Session
-                          </Button>
-                        </div>
-                      )}
+                      <p className="text-muted-foreground">{trainer.languages.join(", ")}</p>
                     </div>
-                  ))}
-                </div>
-                
-                <p className="text-xs text-muted-foreground mt-4 text-center">
-                  💡 Virtual sessions via Google Meet or Zoom
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Testimonials */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="font-bold text-lg mb-4">What Clients Say</h2>
-                <div className="space-y-4">
-                  {trainer.testimonials.map((testimonial: any, index: number) => (
-                    <div key={index} className="p-4 rounded-xl bg-muted">
-                      <div className="flex items-center gap-1 mb-2">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-streak fill-streak" />
-                        ))}
+                  )}
+                  {trainer.availability && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <h3 className="font-semibold">Availability</h3>
                       </div>
-                      <p className="text-muted-foreground mb-2">"{testimonial.text}"</p>
-                      <p className="font-medium text-sm">{testimonial.name}</p>
+                      <p className="text-muted-foreground">{trainer.availability}</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar — Pricing & CTA */}
           <div className="space-y-6">
-            {/* Pricing */}
             <Card className="sticky top-24">
               <CardContent className="p-6">
                 <h2 className="font-bold text-lg mb-4">Coaching Plans</h2>
-                
-                {/* 1-on-1 */}
-                <div className="p-4 rounded-xl border-2 border-primary bg-primary/5 mb-4">
-                  <p className="text-sm text-muted-foreground">1-on-1 Coaching</p>
-                  <p className="text-2xl font-bold text-primary">{trainer.price}</p>
-                  <p className="text-xs text-muted-foreground">Personalized attention</p>
-                </div>
 
-                {/* Group */}
-                <div className="p-4 rounded-xl border border-border mb-6">
-                  <p className="text-sm text-muted-foreground">Group Coaching</p>
-                  <p className="text-2xl font-bold">{trainer.groupPrice}</p>
-                  <p className="text-xs text-muted-foreground">Join a community</p>
-                </div>
+                {trainer.price_monthly > 0 && (
+                  <div className="p-4 rounded-xl border-2 border-primary bg-primary/5 mb-4">
+                    <p className="text-sm text-muted-foreground">1-on-1 Coaching</p>
+                    <p className="text-2xl font-bold text-primary">
+                      KES {trainer.price_monthly.toLocaleString()}/mo
+                    </p>
+                    <p className="text-xs text-muted-foreground">Personalized attention</p>
+                  </div>
+                )}
 
-                <Button 
-                  variant="hero" 
-                  className="w-full mb-3"
-                  onClick={handleRequestCoaching}
+                {trainer.group_price_monthly > 0 && (
+                  <div className="p-4 rounded-xl border border-border mb-6">
+                    <p className="text-sm text-muted-foreground">Group Coaching</p>
+                    <p className="text-2xl font-bold">
+                      KES {trainer.group_price_monthly.toLocaleString()}/mo
+                    </p>
+                    <p className="text-xs text-muted-foreground">Join a community</p>
+                  </div>
+                )}
+
+                {trainer.price_monthly === 0 && trainer.group_price_monthly === 0 && (
+                  <p className="text-muted-foreground text-sm mb-6">
+                    Message this trainer for pricing details.
+                  </p>
+                )}
+
+                <Button
+                  variant="hero"
+                  className="w-full"
+                  onClick={handleMessage}
+                  disabled={isMessaging}
                 >
-                  Request Coaching
+                  {isMessaging ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <MessageCircle className="w-4 h-4" />
+                  )}
+                  Message {trainer.full_name.split(" ")[0]}
                 </Button>
-                
-                <Button variant="outline" className="w-full">
-                  <MessageCircle className="w-4 h-4" />
-                  Message First
-                </Button>
-
-                {/* Availability */}
-                <div className="mt-6 pt-6 border-t border-border">
-                  <p className="text-sm text-muted-foreground mb-2">Availability</p>
-                  <p className="font-medium">{trainer.availability}</p>
-                  <p className="text-sm text-muted-foreground mt-2">Languages</p>
-                  <p className="font-medium">{trainer.languages.join(", ")}</p>
-                </div>
               </CardContent>
             </Card>
           </div>

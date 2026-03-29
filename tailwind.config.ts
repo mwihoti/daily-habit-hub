@@ -14,7 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Nunito', 'sans-serif'],
+        sans:    ['var(--font-body)', 'Nunito', 'sans-serif'],
+        body:    ['var(--font-body)', 'Nunito', 'sans-serif'],
+        display: ['var(--font-display)', 'Space Grotesk', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -14,7 +14,15 @@ export async function GET(request: Request) {
       const { error } = await supabase.auth.exchangeCodeForSession(code)
 
       if (!error) {
-        return NextResponse.redirect(`${origin}${safeNext}`)
+        // Check if the user registered as a trainer (role stored in localStorage
+        // before the OAuth redirect) — we read it via the `pending_signup_role`
+        // query param passed through the redirect URL when possible, but the
+        // safest fallback is to check the user's metadata after exchange.
+        const supabase2 = await createClient()
+        const { data: { user } } = await supabase2.auth.getUser()
+        const role = user?.user_metadata?.role
+        const redirectPath = role === 'trainer' ? '/trainer-setup' : safeNext
+        return NextResponse.redirect(`${origin}${redirectPath}`)
       }
 
       console.error('OAuth callback exchange failed:', error.message)

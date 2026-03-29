@@ -1,3 +1,13 @@
+# Environment variables (contain secrets)
+.env
+.env.*
+!.env.example
+
+# Hardhat generated files
+src/lib/web3/artifacts/
+src/lib/web3/cache/
+typechain-types/
+
 # Logs
 logs
 *.log
