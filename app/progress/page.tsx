@@ -13,22 +13,12 @@ import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSameDay } from "date-fns";
 import { useState, useEffect } from "react";
-import { useAccount, useReadContracts } from "wagmi";
+import { useAccount } from "wagmi";
 import { ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
 
-// Minimal ABI — only the function we call here. Avoids type-depth error with full ABI.
-const HAS_ACHIEVEMENT_ABI = [
-  {
-    inputs: [
-      { internalType: 'address', name: '', type: 'address' as const },
-      { internalType: 'uint8',   name: '', type: 'uint8'   as const },
-    ],
-    name: 'hasAchievement',
-    outputs: [{ internalType: 'bool', name: '', type: 'bool' as const }],
-    stateMutability: 'view' as const,
-    type: 'function' as const,
-  },
-] as const;
+const FUJI_RPC = 'https://api.avax-test.network/ext/bc/C/rpc';
+// keccak256("hasAchievement(address,uint8)").slice(0,4) = 0x45fd14b0
+const HAS_ACHIEVEMENT_SELECTOR = '45fd14b0';
 
 export default function ProgressPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -69,17 +59,31 @@ export default function ProgressPage() {
     }
   });
 
-  // On-chain achievement status (reads from AchievementNFT contract)
-  const walletAddress = (address ?? '0x0000000000000000000000000000000000000000') as `0x${string}`;
-  const { data: onChainAchievements } = useReadContracts({
-    // Type casting to any avoids 'Type instantiation is excessively deep' error during Vercel build
-    contracts: ACHIEVEMENTS.map((a) => ({
-      address: ACHIEVEMENT_NFT_ADDRESS,
-      abi: HAS_ACHIEVEMENT_ABI,
-      functionName: 'hasAchievement' as const,
-      args: [walletAddress, a.type] as const,
-    })) as any,
-    query: { enabled: !!address && isMounted },
+  // On-chain achievement status — raw eth_call, no wagmi/viem generics
+  const { data: onChainAchievements } = useQuery({
+    queryKey: ['achievements', address],
+    enabled: !!address && isMounted,
+    queryFn: async (): Promise<boolean[]> => {
+      const addr = (address as string).replace('0x', '').toLowerCase().padStart(64, '0');
+      const results = await Promise.all(
+        ACHIEVEMENTS.map(async (a) => {
+          const typeHex = a.type.toString(16).padStart(64, '0');
+          const data = HAS_ACHIEVEMENT_SELECTOR + addr + typeHex;
+          try {
+            const res = await fetch(FUJI_RPC, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: ACHIEVEMENT_NFT_ADDRESS, data }, 'latest'] }),
+            });
+            const json = await res.json() as { result?: string };
+            return json.result !== undefined && json.result !== '0x' && json.result !== '0x' + '0'.repeat(64) && parseInt(json.result, 16) === 1;
+          } catch {
+            return false;
+          }
+        })
+      );
+      return results;
+    },
   });
 
   // Calculate monthly data for the last 6 months
@@ -304,7 +308,7 @@ export default function ProgressPage() {
             ) : (
               <div className="grid sm:grid-cols-3 gap-4">
                 {ACHIEVEMENTS.map((achievement, i) => {
-                  const earned = onChainAchievements?.[i]?.result === true;
+                  const earned = onChainAchievements?.[i] === true;
                   return (
                     <div
                       key={achievement.type}
