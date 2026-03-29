@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,7 @@ import { ArrowRight, ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 
 type Goal = "lose_weight" | "build_muscle" | "consistency" | "get_healthier";
 type Workout = "home" | "gym" | "outdoor" | "mixed";
@@ -34,6 +36,7 @@ export default function OnboardingPage() {
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const supabase = createClient();
+  const { address, isConnected } = useAccount();
 
   const totalSteps = 3;
 
@@ -52,6 +55,7 @@ export default function OnboardingPage() {
           fitness_goal:           selectedGoal,
           preferred_workout:      selectedWorkout,
           onboarding_completed:   true,
+          ...(isConnected && address ? { wallet_address: address } : {}),
         })
         .eq("id", user.id);
 
