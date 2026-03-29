@@ -5,7 +5,11 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StreakBadge, WeekCalendar } from "@/components/StreakComponents";
-import { CheckCircle, Dumbbell, Heart, Bike, PersonStanding, Home, Timer, Send, Camera, X } from "lucide-react";
+import {
+  CheckCircle, Dumbbell, Heart, Bike, PersonStanding,
+  Home, Timer, Camera, X, Globe, Lock, Coins, Share2,
+  ArrowRight, Flame,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -15,163 +19,250 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, isSameDay } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Globe, Lock, Coins } from "lucide-react";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useWriteContract } from 'wagmi';
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useWriteContract } from "wagmi";
 import { HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS } from "@/lib/web3/habitRegistry";
 
 const workoutTypes = [
-  { id: "gym", icon: Dumbbell, label: "Gym", emoji: "🏋️" },
-  { id: "run", icon: PersonStanding, label: "Run/Walk", emoji: "🏃" },
-  { id: "home", icon: Home, label: "Home Workout", emoji: "🏠" },
-  { id: "cycling", icon: Bike, label: "Cycling", emoji: "🚴" },
-  { id: "yoga", icon: Heart, label: "Yoga/Stretch", emoji: "🧘" },
-  { id: "other", icon: Timer, label: "Other", emoji: "💪" },
+  { id: "gym",     icon: Dumbbell,        label: "Gym",            emoji: "🏋️" },
+  { id: "run",     icon: PersonStanding,  label: "Run/Walk",       emoji: "🏃" },
+  { id: "home",    icon: Home,            label: "Home Workout",   emoji: "🏠" },
+  { id: "cycling", icon: Bike,            label: "Cycling",        emoji: "🚴" },
+  { id: "yoga",    icon: Heart,           label: "Yoga/Stretch",   emoji: "🧘" },
+  { id: "other",   icon: Timer,           label: "Other",          emoji: "💪" },
 ];
 
+// ─── Confetti Particle ────────────────────────────────────────────────────────
+function Confetti() {
+  const colors = ["#FF6B2B", "#FF8C00", "#FFD700", "#00FF87", "#00BFFF", "#FF1493"];
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {Array.from({ length: 30 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-2 h-2 rounded-sm animate-confetti"
+          style={{
+            left:             `${Math.random() * 100}%`,
+            top:              `${-10 - Math.random() * 20}%`,
+            backgroundColor:  colors[Math.floor(Math.random() * colors.length)],
+            animationDelay:   `${Math.random() * 0.8}s`,
+            animationDuration:`${0.8 + Math.random() * 0.6}s`,
+            transform:        `rotate(${Math.random() * 360}deg)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Celebration Overlay ──────────────────────────────────────────────────────
+function CelebrationScreen({
+  streak,
+  onContinue,
+}: {
+  streak: number;
+  onContinue: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 gradient-hero flex flex-col items-center justify-center p-6 text-white">
+      <Confetti />
+      <div className="relative text-center animate-scale-in">
+        <div className="text-8xl mb-4 animate-bounce-soft">🔥</div>
+        <h1 className="font-display font-bold mb-3" style={{ fontSize: "clamp(2.5rem, 8vw, 4rem)" }}>
+          {streak} Day{streak !== 1 ? "s" : ""}!
+        </h1>
+        <p className="text-white/90 text-xl font-semibold mb-2">
+          {streak === 1
+            ? "Day 1 complete. The journey starts now."
+            : streak < 7
+            ? "You showed up. That's everything."
+            : streak < 30
+            ? "You're building something real. 🚀"
+            : "You are elite. Absolute consistency."}
+        </p>
+        <p className="text-white/70 text-sm mb-10">Check-in recorded ✓</p>
+
+        <div className="flex flex-col gap-3 w-full max-w-xs mx-auto">
+          <Button
+            size="lg"
+            variant="outline"
+            className="bg-white/15 border-white/30 text-white hover:bg-white/25 gap-2"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: "FitTribe Check-in",
+                  text: `I just hit a ${streak}-day streak on FitTribe! 🔥 Join me.`,
+                });
+              } else {
+                navigator.clipboard.writeText(`I just hit a ${streak}-day streak on FitTribe! 🔥`);
+                toast.success("Copied to clipboard!");
+              }
+            }}
+          >
+            <Share2 className="w-5 h-5" />
+            Share your streak
+          </Button>
+          <Button
+            size="lg"
+            className="bg-white text-orange-600 hover:bg-white/90 font-bold gap-2"
+            onClick={onContinue}
+          >
+            Continue <ArrowRight className="w-5 h-5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CheckInPage() {
-  const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isPublic, setIsPublic] = useState(true);
-  const [recordOnChain, setRecordOnChain] = useState(false);
+  const [selectedType, setSelectedType]     = useState<string | null>(null);
+  const [note, setNote]                     = useState("");
+  const [photo, setPhoto]                   = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview]     = useState<string | null>(null);
+  const [isPublic, setIsPublic]             = useState(true);
+  const [recordOnChain, setRecordOnChain]   = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [finalStreak, setFinalStreak]       = useState(0);
+
   const { isConnected, address, chain } = useAccount();
-  const { writeContractAsync } = useWriteContract();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { writeContractAsync }          = useWriteContract();
+  const fileInputRef                    = useRef<HTMLInputElement>(null);
+  const supabase                        = createClient();
+  const router                          = useRouter();
+  const queryClient                     = useQueryClient();
 
-  const supabase = createClient();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  // Fetch current user
   const { data: user, isLoading: isUserLoading } = useQuery({
-    queryKey: ['user'],
+    queryKey: ["user"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       return user;
-    }
+    },
   });
 
-  // sync wallet address to profile
+  // Sync wallet to profile
   useEffect(() => {
     if (isConnected && address && user?.id) {
-      supabase
-        .from('profiles')
-        .update({ wallet_address: address })
-        .eq('id', user.id)
-        .then(({ error }) => {
-          if (!error) queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
-        });
+      supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
     }
-  }, [isConnected, address, user?.id, supabase, queryClient]);
+  }, [isConnected, address, user?.id, supabase]);
 
-  // Fetch profile for streak
   const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
+    queryKey: ["profile", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
+      const { data } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
       return data;
-    }
+    },
   });
 
-  // Fetch recent workouts for this week's checklist
   const { data: workouts = [] } = useQuery({
-    queryKey: ['workouts', user?.id],
+    queryKey: ["workouts", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await supabase.from('workouts').select('*').eq('user_id', user?.id);
+      const { data } = await supabase.from("workouts").select("*").eq("user_id", user!.id);
       return data || [];
-    }
+    },
   });
 
-  // Fetch recent check-ins from others (friends/community)
   const { data: recentCheckins = [] } = useQuery({
-    queryKey: ['recent-checkins'],
+    queryKey: ["recent-checkins"],
     queryFn: async () => {
       const { data } = await supabase
-        .from('workouts')
-        .select('*, profiles(full_name, avatar_url, username, streak)')
-        .order('created_at', { ascending: false })
+        .from("workouts")
+        .select("*, profiles(full_name, avatar_url, username, streak)")
+        .order("created_at", { ascending: false })
         .limit(5);
       return data || [];
-    }
+    },
   });
 
   const checkInMutation = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error("No user");
+      if (!user) throw new Error("Not logged in");
 
-      let photo_url = null;
+      // 1. Upload photo if present
+      let photo_url: string | null = null;
       if (photo) {
-        const fileExt = photo.name.split('.').pop();
-        const fileName = `${user.id}/${Math.random()}.${fileExt}`;
-        const { error: uploadError, data } = await supabase.storage
-          .from('workout-photos')
-          .upload(fileName, photo);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('workout-photos')
-          .getPublicUrl(fileName);
-
+        const ext = photo.name.split(".").pop();
+        const path = `${user.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("workout-photos").upload(path, photo);
+        if (upErr) throw upErr;
+        const { data: { publicUrl } } = supabase.storage.from("workout-photos").getPublicUrl(path);
         photo_url = publicUrl;
       }
 
-      const { data, error } = await supabase
-        .from('workouts')
-        .insert({
-          user_id: user.id,
-          type: selectedType,
-          note,
-          photo_url,
-          is_public: isPublic,
-        })
+      // 2. Pin metadata to IPFS (non-blocking — graceful fallback)
+      let metadataUri = "ipfs://placeholder";
+      try {
+        const ipfsRes = await fetch("/api/ipfs/pin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ workout_type: selectedType, note, photo_url }),
+        });
+        if (ipfsRes.ok) {
+          const ipfsData = await ipfsRes.json();
+          if (ipfsData.uri && ipfsData.uri !== "ipfs://placeholder") {
+            metadataUri = ipfsData.uri;
+          }
+        }
+      } catch { /* IPFS is optional */ }
+
+      // 3. Save to Supabase (uses new record_checkin RPC for streak)
+      const { data: workout, error: wErr } = await supabase
+        .from("workouts")
+        .insert({ user_id: user.id, type: selectedType, note, photo_url, is_public: isPublic })
         .select()
         .single();
+      if (wErr) throw wErr;
 
-      if (error) throw error;
+      // 4. Fix streak via new safe RPC
+      const { data: streakData } = await supabase.rpc("record_checkin", { p_user_id: user.id });
+      const newStreak = streakData?.[0]?.new_streak ?? profile?.streak ?? 0;
 
-      // On-chain recording
-      if (recordOnChain && isConnected) {
+      // 5. On-chain recording
+      if (isConnected && recordOnChain && address) {
+        // Approach 1: user self-signs (they pay gas)
         try {
-          // You might want to generate a metadata URI properly here, maybe pins on IPFS?
-          // For now we'll just use the note or a placeholder.
-          const metadataUri = photo_url || note || "Daily habit completion";
-          
           await writeContractAsync({
             address: HABIT_REGISTRY_ADDRESS,
             abi: HABIT_REGISTRY_ABI,
-            functionName: 'recordHabit',
-            args: [selectedType || "unknown", metadataUri],
+            functionName: "recordHabit",
+            args: [selectedType || "other", metadataUri],
             account: address,
-            chain: chain,
+            chain,
           });
-          toast.info("On-chain record created! ⛓️");
-        } catch (web3Error: any) {
-          console.error("Web3 record failed:", web3Error);
-          // We don't necessarily want to fail the whole check-in if on-chain fails,
-          // but we should inform the user.
-          toast.warning("Check-in saved, but on-chain record failed.");
+          toast.info("Proof of Progress minted on Avalanche ⛓️");
+        } catch (web3Err: any) {
+          toast.warning("Check-in saved, but on-chain mint failed.");
         }
+      } else if (profile?.wallet_address && !isConnected) {
+        // Approach 2: server admin mints on behalf (no gas for user)
+        try {
+          fetch("/api/web3/record-habit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              targetWallet: profile.wallet_address,
+              habitType:    selectedType || "other",
+              metadataUri,
+            }),
+          }); // fire-and-forget
+        } catch { /* non-blocking */ }
       }
 
-      // Update streak and total workouts in profile
-      await supabase.rpc('increment_workout_count', { user_id: user.id });
-
-      return data;
+      return { newStreak };
     },
-    onSuccess: () => {
-      toast.success("🎉 You're on fire! Keep it up!");
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      router.push("/dashboard");
+    onSuccess: ({ newStreak }) => {
+      queryClient.invalidateQueries({ queryKey: ["workouts"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      setFinalStreak(newStreak);
+      setShowCelebration(true);
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Something went wrong");
-    }
+    onError: (err: any) => {
+      toast.error(err?.message || "Something went wrong");
+    },
   });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,36 +270,33 @@ export default function CheckInPage() {
     if (file) {
       setPhoto(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
+      reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const removePhoto = () => {
-    setPhoto(null);
-    setPhotoPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const startOfThisWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const checkedDays = [0, 1, 2, 3, 4, 5, 6].map(dayIndex => {
-    const date = new Date(startOfThisWeek);
-    date.setDate(date.getDate() + dayIndex);
-    return workouts.some(w => isSameDay(new Date(w.created_at), date));
+  const checkedDays = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+    const d = new Date(startOfThisWeek);
+    d.setDate(d.getDate() + i);
+    return workouts.some((w: any) => isSameDay(new Date(w.created_at), d));
   });
+  const hasCheckedInToday = workouts.some((w: any) => isSameDay(new Date(w.created_at), new Date()));
 
-  const hasCheckedInToday = workouts.some(w => isSameDay(new Date(w.created_at), new Date()));
+  if (showCelebration) {
+    return (
+      <CelebrationScreen
+        streak={finalStreak}
+        onContinue={() => router.push("/dashboard")}
+      />
+    );
+  }
 
   if (isUserLoading) {
     return (
       <Layout>
         <div className="container min-h-[60vh] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-muted-foreground animate-pulse font-medium">Loading your progress...</p>
-          </div>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </Layout>
     );
@@ -217,30 +305,21 @@ export default function CheckInPage() {
   if (!user) {
     return (
       <Layout>
-        <div className="container py-12 md:py-24 max-w-md mx-auto px-4">
-          <Card className="border-2 border-primary/20 shadow-xl overflow-hidden animate-slide-up bg-card/50 backdrop-blur-sm">
-            <div className="h-2 bg-gradient-hero" />
-            <CardContent className="p-8 text-center space-y-8">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-4xl shadow-glow transition-transform hover:scale-110 duration-300">
-                🔒
+        <div className="container py-12 max-w-md mx-auto">
+          <Card className="border-2 border-primary/20 shadow-xl overflow-hidden animate-slide-up">
+            <div className="h-2 gradient-hero" />
+            <CardContent className="p-8 text-center space-y-6">
+              <div className="text-5xl">🔒</div>
+              <div>
+                <h1 className="text-2xl font-display font-bold mb-2">Sign in to check in</h1>
+                <p className="text-muted-foreground text-sm">Track your habits and build your streak.</p>
               </div>
-              <div className="space-y-3">
-                <h1 className="text-3xl font-bold tracking-tight">Access Denied</h1>
-                <p className="text-muted-foreground leading-relaxed">
-                  You need to be authenticated to access the check-in page and record your habits.
-                </p>
-              </div>
-              <div className="flex flex-col gap-4">
-                <Button asChild size="xl" variant="hero" className="w-full shadow-lg">
-                  <Link href="/login">Sign In to Continue</Link>
+              <div className="flex flex-col gap-3">
+                <Button asChild variant="hero" size="lg" className="w-full">
+                  <Link href="/login">Sign In</Link>
                 </Button>
-                <div className="flex items-center gap-2 py-2">
-                  <div className="h-px bg-border flex-1" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">or</span>
-                  <div className="h-px bg-border flex-1" />
-                </div>
-                <Button asChild variant="outline" size="xl" className="w-full hover:bg-primary/5 border-primary/20">
-                  <Link href="/register">Create New Account</Link>
+                <Button asChild variant="outline" size="lg" className="w-full">
+                  <Link href="/register">Create Account</Link>
                 </Button>
               </div>
             </CardContent>
@@ -255,55 +334,63 @@ export default function CheckInPage() {
       <div className="container py-6 md:py-12 max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8 animate-slide-up">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full gradient-hero mb-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full gradient-hero mb-4 shadow-fire">
             <span className="text-4xl">{hasCheckedInToday ? "🎉" : "💪"}</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-3xl font-display font-bold mb-2">
             {hasCheckedInToday ? "You showed up!" : "Did you work out today?"}
           </h1>
           <p className="text-muted-foreground">
             {hasCheckedInToday
-              ? "Amazing! Keep the streak going tomorrow."
-              : "Just checking in keeps you accountable."}
+              ? "Keep the streak alive tomorrow."
+              : "Log it. Own it. Earn your $HABIT."}
           </p>
         </div>
 
-        {/* Web3 Wallet Connection */}
-        <Card className="mb-8 border-2 border-dashed border-blue-500/30 bg-blue-500/5">
-          <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                <Coins className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold">Avalanche Rewards</h3>
-              <p className="text-sm text-muted-foreground px-4">
-                Connect your wallet to earn $HABIT tokens and record your progress on-chain.
-              </p>
-            </div>
-            <ConnectButton />
-          </CardContent>
-        </Card>
-
         {/* Current Stats */}
-        <Card className="mb-8 border-2 border-primary/20">
+        <Card className="mb-6 border-2 border-primary/20">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <StreakBadge streak={profile?.streak || 0} size="lg" />
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">This week</p>
-                <p className="text-2xl font-bold">{workouts.filter(w => new Date(w.created_at) >= startOfThisWeek).length}/7 💪</p>
+                <p className="text-2xl font-display font-bold">
+                  {workouts.filter((w: any) => new Date(w.created_at) >= startOfThisWeek).length}/7 💪
+                </p>
               </div>
             </div>
             <WeekCalendar checkedDays={checkedDays} />
           </CardContent>
         </Card>
 
-        {(!hasCheckedInToday) ? (
+        {/* Web3 Wallet Card */}
+        <Card className="mb-6 border-2 border-accent/30 bg-accent/5">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl gradient-chain flex items-center justify-center shrink-0">
+                <Coins className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-display font-bold">Earn on Avalanche</p>
+                <p className="text-xs text-muted-foreground">
+                  {isConnected
+                    ? `Connected — earn 10 $HABIT per check-in`
+                    : "Connect wallet to earn $HABIT tokens + NFT badges"}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <ConnectButton />
+            </div>
+          </CardContent>
+        </Card>
+
+        {!hasCheckedInToday ? (
           <>
-            {/* Workout Type Selection */}
+            {/* Workout Type */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle className="text-lg">What did you do?</CardTitle>
+                <CardTitle className="font-display">What did you do?</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-3">
@@ -312,24 +399,24 @@ export default function CheckInPage() {
                       key={type.id}
                       onClick={() => setSelectedType(type.id)}
                       className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
+                        "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200",
                         selectedType === type.id
-                          ? "border-primary bg-primary/10 shadow-glow"
+                          ? "border-primary bg-primary/10 shadow-glow scale-105"
                           : "border-border hover:border-primary/30 hover:bg-muted"
                       )}
                     >
                       <span className="text-2xl">{type.emoji}</span>
-                      <span className="text-sm font-medium">{type.label}</span>
+                      <span className="text-xs font-semibold">{type.label}</span>
                     </button>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Optional Note & Photo */}
+            {/* Notes + Photo */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle className="text-lg">Add details (optional)</CardTitle>
+                <CardTitle className="font-display">Add details (optional)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <textarea
@@ -339,44 +426,40 @@ export default function CheckInPage() {
                   className="w-full p-4 rounded-xl border-2 border-border bg-background resize-none h-24 focus:border-primary focus:outline-none transition-colors"
                   maxLength={200}
                 />
-
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Camera className="w-4 h-4" />
-                      Add Proof Photo
-                    </Button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handlePhotoChange}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                  </div>
-
-                  {photoPreview && (
-                    <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-border group">
-                      <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                      <button
-                        onClick={removePhoto}
-                        className="absolute top-2 right-2 p-1.5 bg-background/80 hover:bg-background rounded-full transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Camera className="w-4 h-4" />
+                    Add Proof Photo
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handlePhotoChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
                 </div>
+                {photoPreview && (
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-border">
+                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => { setPhoto(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                      className="absolute top-2 right-2 p-1.5 bg-background/80 hover:bg-background rounded-full"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Privacy Toggle */}
-            <Card className="mb-6">
+            <Card className="mb-4">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={cn(
@@ -392,51 +475,40 @@ export default function CheckInPage() {
                     </p>
                   </div>
                 </div>
-                <Switch
-                  id="public-toggle"
-                  checked={isPublic}
-                  onCheckedChange={setIsPublic}
-                />
+                <Switch id="public-toggle" checked={isPublic} onCheckedChange={setIsPublic} />
               </CardContent>
             </Card>
 
             {/* Avalanche Toggle */}
             {isConnected && (
-              <Card className="mb-6 border-blue-500/20 bg-blue-500/5">
+              <Card className="mb-6 border-accent/20 bg-accent/5">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                      <Coins className="w-5 h-5" />
+                    <div className="w-10 h-10 rounded-full gradient-chain flex items-center justify-center">
+                      <Coins className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <Label htmlFor="chain-toggle" className="font-bold">Record on Avalanche</Label>
+                      <Label htmlFor="chain-toggle" className="font-bold">Mint Proof of Progress</Label>
                       <p className="text-xs text-muted-foreground">
-                        Mint a "Proof of Progress" for this activity
+                        Earn 10 $HABIT — you pay gas
                       </p>
                     </div>
                   </div>
-                  <Switch
-                    id="chain-toggle"
-                    checked={recordOnChain}
-                    onCheckedChange={setRecordOnChain}
-                  />
+                  <Switch id="chain-toggle" checked={recordOnChain} onCheckedChange={setRecordOnChain} />
                 </CardContent>
               </Card>
             )}
 
-            {/* Check-in Button */}
+            {/* Check-in CTA */}
             <Button
               variant="hero"
-              size="xl"
-              className="w-full"
+              size="lg"
+              className="w-full text-lg h-14 shadow-glow"
               onClick={() => checkInMutation.mutate()}
               disabled={checkInMutation.isPending || !selectedType}
             >
               {checkInMutation.isPending ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  Checking in...
-                </>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <CheckCircle className="w-6 h-6" />
@@ -446,45 +518,46 @@ export default function CheckInPage() {
             </Button>
           </>
         ) : (
-          /* Success State */
-          <Card className="gradient-hero text-primary-foreground animate-fade-in mb-8">
+          /* Already checked in today */
+          <Card className="gradient-hero text-white animate-fade-in mb-8">
             <CardContent className="p-8 text-center space-y-4">
               <div className="text-6xl animate-bounce-soft">🔥</div>
-              <h2 className="text-2xl font-bold">{profile?.streak || 0} Day Streak!</h2>
-              <p className="opacity-90">You've completed your activity for today. Well done!</p>
-              <Button
-                variant="outline"
-                className="bg-card text-foreground border-0 mx-auto"
-                asChild
-              >
+              <h2 className="text-2xl font-display font-bold">{profile?.streak || 0} Day Streak!</h2>
+              <p className="text-white/80">You've already checked in today. Come back tomorrow!</p>
+              <Button variant="outline" className="bg-white/15 border-white/30 text-white hover:bg-white/25" asChild>
                 <Link href="/dashboard">Go to Dashboard</Link>
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Recent Community/Friends Check-ins */}
+        {/* Community Check-ins */}
         <div className="mt-8">
-          <h3 className="font-bold text-lg mb-4">Friends working out now 👀</h3>
+          <h3 className="font-display font-bold text-lg mb-4">Your tribe is working out 👀</h3>
           <div className="space-y-3">
             {recentCheckins.length > 0 ? (
-              recentCheckins.map((checkin: any, index: number) => (
-                <Card key={index} className="hover:shadow-soft transition-all">
+              recentCheckins.map((checkin: any, i: number) => (
+                <Card key={i} className="hover:shadow-soft transition-all">
                   <CardContent className="p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl overflow-hidden">
+                    <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-lg overflow-hidden shrink-0">
                       {checkin.profiles?.avatar_url ? (
-                        <img src={checkin.profiles.avatar_url} alt={checkin.profiles.username} className="w-full h-full object-cover" />
+                        <img src={checkin.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <span>{checkin.profiles?.full_name?.charAt(0) || "👤"}</span>
                       )}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold">{checkin.profiles?.full_name || checkin.profiles?.username || "Anonymous"}</span>
-                        <span className="text-xs text-muted-foreground">{new Date(checkin.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="font-semibold truncate">
+                          {checkin.profiles?.full_name || checkin.profiles?.username || "Anonymous"}
+                        </span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {new Date(checkin.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {workoutTypes.find(t => t.id === checkin.type)?.emoji} {workoutTypes.find(t => t.id === checkin.type)?.label}
+                        {workoutTypes.find((t) => t.id === checkin.type)?.emoji}{" "}
+                        {workoutTypes.find((t) => t.id === checkin.type)?.label}
                       </p>
                     </div>
                     <StreakBadge streak={checkin.profiles?.streak || 0} size="sm" showLabel={false} />
@@ -492,7 +565,10 @@ export default function CheckInPage() {
                 </Card>
               ))
             ) : (
-              <p className="text-center text-muted-foreground py-4">No recent community check-ins</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <Flame className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                <p>No recent check-ins. Be the first today!</p>
+              </div>
             )}
           </div>
         </div>

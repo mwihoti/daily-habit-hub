@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StatCard, WeekCalendar } from "@/components/StreakComponents";
+import { StatCard, WeekCalendar, StreakHero } from "@/components/StreakComponents";
 import Link from "next/link";
 import { 
   Flame, Trophy, Target, TrendingUp, Calendar, 
@@ -187,9 +187,9 @@ export default function DashboardPage() {
     <Layout>
       <div className="container py-6 md:py-12">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-slide-up">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 animate-slide-up">
           <div>
-            <h1 className="text-3xl font-bold mb-1">
+            <h1 className="text-3xl font-display font-bold mb-1">
               Hey {profile?.full_name?.split(' ')[0] || 'there'}! 👋
             </h1>
             <p className="text-muted-foreground">Keep showing up. You're doing amazing!</p>
@@ -202,29 +202,36 @@ export default function DashboardPage() {
           </Button>
         </div>
 
+        {/* Streak Hero — the most important element on this page */}
+        <div className="mb-6">
+          <StreakHero
+            streak={profile?.streak || 0}
+            totalWorkouts={workouts.length}
+            hasCheckedInToday={workouts.some((w: any) => {
+              const d = new Date(w.created_at);
+              const t = new Date();
+              return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+            })}
+          />
+        </div>
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard 
-            icon={Flame} 
-            value={profile?.streak || 0} 
-            label="Day Streak" 
-            variant="streak" 
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <StatCard
+            icon={Target}
+            value={weeklyWorkoutCount}
+            label="This Week"
+            variant="primary"
           />
-          <StatCard 
-            icon={Target} 
-            value={weeklyWorkoutCount} 
-            label="This Week" 
-            variant="primary" 
+          <StatCard
+            icon={Trophy}
+            value={workouts.length}
+            label="Total Workouts"
           />
-          <StatCard 
-            icon={Trophy} 
-            value={workouts.length} 
-            label="Total Workouts" 
-          />
-          <StatCard 
-            icon={Calendar} 
-            value={weeksSinceJoined} 
-            label="Weeks Count" 
+          <StatCard
+            icon={Calendar}
+            value={weeksSinceJoined}
+            label="Weeks Active"
           />
         </div>
 

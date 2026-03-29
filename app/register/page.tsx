@@ -95,7 +95,7 @@ export default function RegisterPage() {
               ? "Welcome to FitTribe! Complete your trainer profile."
               : "Welcome to FitTribe! Let's start your fitness journey.",
         });
-        router.push(role === "trainer" ? "/dashboard" : "/check-in");
+        router.push(role === "trainer" ? "/trainer-setup" : "/onboarding");
         return;
       }
     } catch (err: any) {

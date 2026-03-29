@@ -2,7 +2,7 @@
 
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StreakBadge, WeekCalendar } from "@/components/StreakComponents";
+import { StreakBadge, WeekCalendar, WorkoutHeatmap } from "@/components/StreakComponents";
 import { 
   TrendingUp, TrendingDown, Minus, Calendar, 
   Flame, Target, BarChart3, Trophy
@@ -108,7 +108,7 @@ export default function ProgressPage() {
       <div className="container py-6 md:py-12">
         {/* Header */}
         <div className="mb-8 animate-slide-up">
-          <h1 className="text-3xl font-bold mb-2">Your Progress 📈</h1>
+          <h1 className="text-3xl font-display font-bold mb-2">Your Progress 📈</h1>
           <p className="text-muted-foreground">
             Celebrating consistency over perfection. Every workout counts!
           </p>
@@ -200,6 +200,22 @@ export default function ProgressPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Workout Heatmap */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              Workout History — Last 16 Weeks
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WorkoutHeatmap
+              workoutDates={workouts.map((w: any) => w.created_at)}
+              weeksBack={16}
+            />
+          </CardContent>
+        </Card>
 
         {/* Milestones */}
         <Card className="mt-6">
