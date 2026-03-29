@@ -20,8 +20,13 @@ import { startOfWeek, isSameDay } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useWriteContract } from "wagmi";
-import { HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS } from "@/lib/web3/habitRegistry";
+import { useAccount, useWriteContract, usePublicClient } from "wagmi";
+import { parseEventLogs } from "viem";
+import { avalancheFuji, avalanche } from "wagmi/chains";
+import {
+  HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS,
+  ACHIEVEMENT_NFT_ABI, ACHIEVEMENTS,
+} from "@/lib/web3/habitRegistry";
 
 const workoutTypes = [
   { id: "gym",     icon: Dumbbell,        label: "Gym",            emoji: "🏋️" },
@@ -58,9 +63,11 @@ function Confetti() {
 // ─── Celebration Overlay ──────────────────────────────────────────────────────
 function CelebrationScreen({
   streak,
+  earnedNft,
   onContinue,
 }: {
   streak: number;
+  earnedNft?: { name: string; emoji: string; description: string };
   onContinue: () => void;
 }) {
   return (
@@ -80,7 +87,19 @@ function CelebrationScreen({
             ? "You're building something real. 🚀"
             : "You are elite. Absolute consistency."}
         </p>
-        <p className="text-white/70 text-sm mb-10">Check-in recorded ✓</p>
+        <p className="text-white/70 text-sm mb-6">Check-in recorded ✓</p>
+
+        {/* NFT earned banner */}
+        {earnedNft && (
+          <div className="mb-8 mx-auto max-w-xs bg-white/15 border border-white/30 rounded-2xl p-4 flex items-center gap-3">
+            <span className="text-4xl">{earnedNft.emoji}</span>
+            <div className="text-left">
+              <p className="font-display font-bold text-sm text-yellow-300">NFT Unlocked!</p>
+              <p className="font-bold text-white">{earnedNft.name}</p>
+              <p className="text-xs text-white/70">{earnedNft.description}</p>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3 w-full max-w-xs mx-auto">
           <Button
@@ -125,9 +144,11 @@ export default function CheckInPage() {
   const [recordOnChain, setRecordOnChain]   = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [finalStreak, setFinalStreak]       = useState(0);
+  const [earnedNft, setEarnedNft]           = useState<{ name: string; emoji: string; description: string } | undefined>();
 
   const { isConnected, address, chain } = useAccount();
   const { writeContractAsync }          = useWriteContract();
+  const publicClient                    = usePublicClient();
   const fileInputRef                    = useRef<HTMLInputElement>(null);
   const supabase                        = createClient();
   const router                          = useRouter();
@@ -222,10 +243,12 @@ export default function CheckInPage() {
       const newStreak = streakData?.[0]?.new_streak ?? profile?.streak ?? 0;
 
       // 5. On-chain recording
+      let nftEarned: typeof ACHIEVEMENTS[number] | undefined;
+
       if (isConnected && recordOnChain && address) {
         // Approach 1: user self-signs (they pay gas)
         try {
-          await writeContractAsync({
+          const txHash = await writeContractAsync({
             address: HABIT_REGISTRY_ADDRESS,
             abi: HABIT_REGISTRY_ABI,
             functionName: "recordHabit",
@@ -234,6 +257,22 @@ export default function CheckInPage() {
             chain,
           });
           toast.info("Proof of Progress minted on Avalanche ⛓️");
+
+          // Parse receipt for AchievementMinted events
+          if (publicClient && txHash) {
+            try {
+              const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}` });
+              const logs = parseEventLogs({
+                abi: ACHIEVEMENT_NFT_ABI,
+                eventName: "AchievementMinted",
+                logs: receipt.logs,
+              });
+              if (logs.length > 0) {
+                const earnedType = Number((logs[0] as any).args.achievementType);
+                nftEarned = ACHIEVEMENTS.find((a) => a.type === earnedType);
+              }
+            } catch { /* non-blocking — celebration still shows */ }
+          }
         } catch (web3Err: any) {
           toast.warning("Check-in saved, but on-chain mint failed.");
         }
@@ -252,12 +291,13 @@ export default function CheckInPage() {
         } catch { /* non-blocking */ }
       }
 
-      return { newStreak };
+      return { newStreak, nftEarned };
     },
-    onSuccess: ({ newStreak }) => {
+    onSuccess: ({ newStreak, nftEarned }) => {
       queryClient.invalidateQueries({ queryKey: ["workouts"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setFinalStreak(newStreak);
+      if (nftEarned) setEarnedNft({ name: nftEarned.name, emoji: nftEarned.emoji, description: nftEarned.description });
       setShowCelebration(true);
     },
     onError: (err: any) => {
@@ -287,6 +327,7 @@ export default function CheckInPage() {
     return (
       <CelebrationScreen
         streak={finalStreak}
+        earnedNft={earnedNft}
         onContinue={() => router.push("/dashboard")}
       />
     );
