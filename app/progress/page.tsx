@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSameDay } from "date-fns";
+import { useState, useEffect } from "react";
 import { useAccount, useReadContracts } from "wagmi";
 import { ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
 
@@ -30,6 +31,11 @@ const HAS_ACHIEVEMENT_ABI = [
 ] as const;
 
 export default function ProgressPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const supabase = createClient();
   const { address } = useAccount();
 
@@ -66,13 +72,14 @@ export default function ProgressPage() {
   // On-chain achievement status (reads from AchievementNFT contract)
   const walletAddress = (address ?? '0x0000000000000000000000000000000000000000') as `0x${string}`;
   const { data: onChainAchievements } = useReadContracts({
+    // Type casting to any avoids 'Type instantiation is excessively deep' error during Vercel build
     contracts: ACHIEVEMENTS.map((a) => ({
       address: ACHIEVEMENT_NFT_ADDRESS,
       abi: HAS_ACHIEVEMENT_ABI,
       functionName: 'hasAchievement' as const,
-      args: [walletAddress, a.type] as [`0x${string}`, number],
-    })),
-    query: { enabled: !!address },
+      args: [walletAddress, a.type] as const,
+    })) as any,
+    query: { enabled: !!address && isMounted },
   });
 
   // Calculate monthly data for the last 6 months
