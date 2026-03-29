@@ -3,17 +3,20 @@
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StreakBadge, WeekCalendar, WorkoutHeatmap } from "@/components/StreakComponents";
-import { 
-  TrendingUp, TrendingDown, Minus, Calendar, 
-  Flame, Target, BarChart3, Trophy
+import {
+  TrendingUp, TrendingDown, Minus, Calendar,
+  Flame, Target, BarChart3, Trophy, Coins
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { format, startOfMonth, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSameDay } from "date-fns";
+import { format, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSameDay } from "date-fns";
+import { useAccount, useReadContracts } from "wagmi";
+import { ACHIEVEMENT_NFT_ABI, ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
 
 export default function ProgressPage() {
   const supabase = createClient();
+  const { address } = useAccount();
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -43,6 +46,19 @@ export default function ProgressPage() {
         .order('created_at', { ascending: false });
       return data || [];
     }
+  });
+
+  // On-chain achievement status (reads from AchievementNFT contract)
+  const { data: onChainAchievements } = useReadContracts({
+    contracts: address
+      ? ACHIEVEMENTS.map((a) => ({
+          address: ACHIEVEMENT_NFT_ADDRESS,
+          abi: ACHIEVEMENT_NFT_ABI,
+          functionName: 'hasAchievement' as const,
+          args: [address, a.type] as [`0x${string}`, number],
+        }))
+      : [],
+    query: { enabled: !!address },
   });
 
   // Calculate monthly data for the last 6 months
@@ -227,13 +243,13 @@ export default function ProgressPage() {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {milestones.map((milestone, index) => (
-                <div 
+              {milestones.map((milestone) => (
+                <div
                   key={milestone.title}
                   className={cn(
                     "p-4 rounded-xl border-2 transition-all",
-                    milestone.achieved 
-                      ? "border-primary/30 bg-primary/5" 
+                    milestone.achieved
+                      ? "border-primary/30 bg-primary/5"
                       : "border-border bg-muted/50 opacity-60"
                   )}
                 >
@@ -248,6 +264,53 @@ export default function ProgressPage() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* On-chain NFT Achievements */}
+        <Card className="mt-6 border-accent/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Coins className="w-5 h-5 text-accent" />
+              On-Chain NFT Badges
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!address ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Connect your wallet on the check-in page to earn soulbound NFT badges on Avalanche.
+              </p>
+            ) : (
+              <div className="grid sm:grid-cols-3 gap-4">
+                {ACHIEVEMENTS.map((achievement, i) => {
+                  const earned = onChainAchievements?.[i]?.result === true;
+                  return (
+                    <div
+                      key={achievement.type}
+                      className={cn(
+                        "p-5 rounded-2xl border-2 text-center transition-all",
+                        earned
+                          ? "border-yellow-400/40 bg-yellow-400/5 shadow-sm"
+                          : "border-border bg-muted/30 opacity-50"
+                      )}
+                    >
+                      <div className={cn("text-5xl mb-3", !earned && "grayscale")}>{achievement.emoji}</div>
+                      <h3 className="font-display font-bold text-sm mb-1">{achievement.name}</h3>
+                      <p className="text-xs text-muted-foreground mb-2">{achievement.description}</p>
+                      {earned ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 text-xs font-bold">
+                          Minted
+                        </span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs">
+                          Locked
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
