@@ -108,7 +108,7 @@ export default function LandingPage() {
     <Layout>
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-hero opacity-5" />
+        <div className="absolute inset-0 gradient-hero opacity-5 pointer-events-none" />
         <div className="container py-12 md:py-24">
           <div className="max-w-3xl mx-auto text-center space-y-6 animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-medium text-sm">
@@ -312,7 +312,7 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <section className="py-16 md:py-24 relative overflow-hidden">
-        <div className="absolute inset-0 gradient-energy opacity-5" />
+        <div className="absolute inset-0 gradient-energy opacity-5 pointer-events-none" />
         <div className="container relative">
           <Card className="max-w-3xl mx-auto overflow-hidden shadow-glow border-primary/20">
             <CardContent className="p-8 md:p-12 text-center space-y-6">
