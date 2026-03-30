@@ -197,33 +197,33 @@ export default function GoalsPage() {
           ) : (
             goals.map((goal: any) => (
               <Card key={goal.id} className="card-hover">
-                <CardHeader className="flex flex-row items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
+                <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <CardTitle className="flex items-center gap-2 flex-wrap">
                       {goal.title}
                       {goal.status === 'completed' && <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-500">Completed</span>}
                       {goal.status === 'in_progress' && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500">In Progress</span>}
                     </CardTitle>
                     <CardDescription>{goal.description}</CardDescription>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1 shrink-0">
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
                       {goal.target_date ? format(new Date(goal.target_date), 'MMM d, yyyy') : 'No target date'}
                     </div>
-                    <div className="flex gap-2 mt-2">
-                      <Button 
-                        variant={goal.status === 'in_progress' ? 'default' : 'outline'} 
-                        size="sm" 
+                    <div className="flex gap-2 sm:mt-2">
+                      <Button
+                        variant={goal.status === 'in_progress' ? 'default' : 'outline'}
+                        size="sm"
                         className="h-7 text-xs"
                         onClick={() => updateGoalMutation.mutate({ id: goal.id, status: 'in_progress' })}
                         disabled={updateGoalMutation.isPending}
                       >
                         In Progress
                       </Button>
-                      <Button 
-                        variant={goal.status === 'completed' ? 'default' : 'outline'} 
-                        size="sm" 
+                      <Button
+                        variant={goal.status === 'completed' ? 'default' : 'outline'}
+                        size="sm"
                         className="h-7 text-xs"
                         onClick={() => updateGoalMutation.mutate({ id: goal.id, status: 'completed' })}
                         disabled={updateGoalMutation.isPending}

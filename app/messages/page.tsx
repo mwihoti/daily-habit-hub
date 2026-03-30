@@ -240,7 +240,7 @@ function MessagesContent() {
   return (
     <Layout>
       <div className="container py-6 md:py-8 max-w-6xl">
-        <div className="grid md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-180px)] md:h-[calc(100vh-200px)]">
+        <div className="grid md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-230px)] md:h-[calc(100vh-200px)]">
 
           {/* Conversations List */}
           <Card className={cn("flex flex-col", selectedConvId && "hidden md:flex")}>

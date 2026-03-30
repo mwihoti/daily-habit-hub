@@ -315,10 +315,10 @@ export default function TasksPage() {
                   </div>
                 </div>
                 
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive rounded-full transition-all"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-muted-foreground hover:text-destructive rounded-full transition-all"
                   onClick={() => deleteTaskMutation.mutate(task.id)}
                 >
                   <Trash2 className="w-4 h-4" />
