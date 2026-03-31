@@ -45,6 +45,9 @@
     "hardhat.config.ts",
     "scripts",
     "test",
-    "typechain-types"
+    "typechain-types",
+    "vitest.setup.ts",
+    "vitest.config.ts",
+    "__tests__"
   ]
 }

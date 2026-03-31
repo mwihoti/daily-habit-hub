@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Providers } from "./providers";
+import { JsonLd, organizationSchema, websiteSchema, localBusinessSchema } from "@/components/JsonLd";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -20,13 +21,79 @@ const nunito = Nunito({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fittribe.co.ke";
+
 export const metadata: Metadata = {
-  title: "FitTribe — Daily Habit Hub",
-  description: "Track workouts, earn $HABIT tokens on Avalanche, and connect with verified coaches.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "FitTribe — Fitness & Personal Trainers in Nairobi",
+    template: "%s | FitTribe Nairobi",
+  },
+  description:
+    "Nairobi's #1 fitness habit tracker. Find verified personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops. Track workouts, earn rewards, join the community.",
+  keywords: [
+    "personal trainer Nairobi",
+    "fitness trainer Kilimani",
+    "gym Nairobi Karen",
+    "personal trainer Ngong Road",
+    "fitness coach Nairobi CBD",
+    "workout trainer Thika Road",
+    "personal trainer Roysambu",
+    "fitness coach Allsops",
+    "online fitness coach Kenya",
+    "certified personal trainer Nairobi",
+    "weight loss trainer Nairobi",
+    "home workout trainer Nairobi",
+    "fitness habit tracker Kenya",
+    "FitTribe Nairobi",
+    "workout accountability Nairobi",
+    "fitness community Nairobi",
+  ],
+  authors: [{ name: "FitTribe", url: siteUrl }],
+  creator: "FitTribe",
+  publisher: "FitTribe",
+  category: "Health & Fitness",
   openGraph: {
-    title: "FitTribe — Daily Habit Hub",
-    description: "Earn rewards for showing up. Every workout counts.",
+    title: "FitTribe — Fitness & Personal Trainers in Nairobi",
+    description:
+      "Find verified personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops. Track workouts daily and earn rewards.",
     type: "website",
+    url: siteUrl,
+    siteName: "FitTribe",
+    locale: "en_KE",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "FitTribe — Nairobi Fitness Community",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FitTribe — Fitness & Personal Trainers in Nairobi",
+    description:
+      "Find verified personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops.",
+    images: ["/og-image.png"],
+    creator: "@FitTribeKE",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
 };
 
@@ -36,8 +103,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${nunito.variable}`}>
+    <html lang="en-KE" className={`${spaceGrotesk.variable} ${nunito.variable}`}>
       <body className="font-body">
+        <JsonLd schema={organizationSchema} />
+        <JsonLd schema={websiteSchema} />
+        <JsonLd schema={localBusinessSchema} />
         <Providers>
           <TooltipProvider>
             {children}

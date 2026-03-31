@@ -12,3 +12,14 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /check-in
+Disallow: /profile
+Disallow: /messages
+Disallow: /onboarding
+Disallow: /progress
+Disallow: /tasks
+Disallow: /achievements
+Disallow: /api/
+
+Sitemap: https://fittribe.co.ke/sitemap.xml
