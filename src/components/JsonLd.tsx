@@ -79,7 +79,7 @@ export const localBusinessSchema = {
     longitude: 36.817223,
   },
   areaServed: [
-    "Kilimani", "Karen", "Ngong Road", "Nairobi CBD",
+    "Kilimani", "Karen", "Ngong Road", "CBD", "Nairobi CBD",
     "Thika Road", "Roysambu", "Allsops", "Westlands",
     "Lavington", "Gigiri", "Runda", "Muthaiga", "Parklands",
     "South B", "South C", "Langata", "Embakasi",

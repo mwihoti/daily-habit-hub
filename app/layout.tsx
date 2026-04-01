@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s | FitTribe Nairobi",
   },
   description:
-    "Nairobi's #1 fitness habit tracker. Find verified personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops. Track workouts, earn rewards, join the community.",
+    "Nairobi's fitness app. Find personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops. Track workouts, earn rewards.",
   keywords: [
     "personal trainer Nairobi",
     "fitness trainer Kilimani",
