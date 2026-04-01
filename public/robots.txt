@@ -22,4 +22,4 @@ Disallow: /tasks
 Disallow: /achievements
 Disallow: /api/
 
-Sitemap: https://fittribe.co.ke/sitemap.xml
+Sitemap: https://daily-habit-hub.vercel.app/sitemap.xml

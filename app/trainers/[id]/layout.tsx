@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { JsonLd } from "@/components/JsonLd";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fittribe.co.ke";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
 
 interface Props {
   params: Promise<{ id: string }>;

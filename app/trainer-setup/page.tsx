@@ -324,7 +324,7 @@ export default function TrainerSetupPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <Instagram className="w-5 h-5 text-pink-500 shrink-0" />
-                      <Input placeholder="Instagram handle (e.g. @coach_mike)" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
+                      <Input aria-label="Instagram" placeholder="Instagram handle (e.g. @coach_mike)" value={instagram} onChange={(e) => setInstagram(e.target.value)} />
                     </div>
                     <div className="flex items-center gap-3">
                       <Youtube className="w-5 h-5 text-red-500 shrink-0" />

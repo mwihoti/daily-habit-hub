@@ -11,7 +11,7 @@ export function JsonLd({ schema }: JsonLdProps) {
   );
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fittribe.co.ke";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
 
 export const organizationSchema = {
   "@context": "https://schema.org",

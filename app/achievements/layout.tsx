@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fittribe.co.ke";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
 
 export const metadata: Metadata = {
   title: "Fitness Achievements & Rewards | FitTribe Nairobi",

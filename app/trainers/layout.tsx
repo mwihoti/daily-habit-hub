@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fittribe.co.ke";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
 
 export const metadata: Metadata = {
   title: "Personal Trainers in Nairobi | Kilimani, Karen, CBD, Thika Road",
