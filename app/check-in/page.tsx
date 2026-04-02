@@ -64,10 +64,12 @@ function Confetti() {
 // ─── Celebration Overlay ──────────────────────────────────────────────────────
 function CelebrationScreen({
   streak,
+  workoutType,
   earnedNft,
   onContinue,
 }: {
   streak: number;
+  workoutType?: string | null;
   earnedNft?: { name: string; emoji: string; description: string };
   onContinue: () => void;
 }) {
@@ -107,14 +109,23 @@ function CelebrationScreen({
             size="lg"
             variant="outline"
             className="bg-white/15 border-white/30 text-white hover:bg-white/25 gap-2"
-            onClick={() => {
+            onClick={async () => {
+              const typeLabel = workoutType
+                ? workoutTypes.find((t) => t.id === workoutType)?.label ?? workoutType
+                : null;
+              const text = typeLabel
+                ? `I just completed a ${typeLabel} and hit a ${streak}-day streak on Daily Habit Hub! 🔥`
+                : `I just hit a ${streak}-day streak on Daily Habit Hub! 🔥`;
+              const url = `${window.location.origin}/community`;
+
               if (navigator.share) {
-                navigator.share({
-                  title: "FitTribe Check-in",
-                  text: `I just hit a ${streak}-day streak on FitTribe! 🔥 Join me.`,
-                });
+                try {
+                  await navigator.share({ title: "Daily Habit Hub", text, url });
+                } catch {
+                  // user cancelled — do nothing
+                }
               } else {
-                navigator.clipboard.writeText(`I just hit a ${streak}-day streak on FitTribe! 🔥`);
+                await navigator.clipboard.writeText(`${text}\n${url}`);
                 toast.success("Copied to clipboard!");
               }
             }}
@@ -328,6 +339,7 @@ export default function CheckInPage() {
     return (
       <CelebrationScreen
         streak={finalStreak}
+        workoutType={selectedType}
         earnedNft={earnedNft}
         onContinue={() => router.push("/dashboard")}
       />

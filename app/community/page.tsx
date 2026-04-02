@@ -142,9 +142,28 @@ export default function CommunityPage() {
 function CommunityPost({ post, currentUser, onLike, index }: any) {
   const [commentOpen, setCommentOpen] = useState(false);
   const isLiked = post.likes?.some((l: any) => l.user_id === currentUser?.id);
-  
+
+  const handleShare = async () => {
+    const name = post.profiles?.full_name || post.profiles?.username || "Someone";
+    const type = post.type ? `${post.type} session` : "workout";
+    const text = `${name} just logged a ${type} on Daily Habit Hub! 💪`;
+    const url = `${window.location.origin}/community#post-${post.id}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Daily Habit Hub", text, url });
+      } catch {
+        // user cancelled — do nothing
+      }
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   return (
-    <Card 
+    <Card
+      id={`post-${post.id}`}
       className="hover:shadow-medium transition-all animate-fade-in border-border/50"
       style={{ animationDelay: `${index * 50}ms` }}
     >
@@ -209,7 +228,10 @@ function CommunityPost({ post, currentUser, onLike, index }: any) {
             <span className="font-medium">{post.comments?.length || 0}</span>
           </button>
           
-          <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all hover:scale-105 ml-auto">
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all hover:scale-105 ml-auto"
+          >
             <Share2 className="w-5 h-5" />
           </button>
         </div>
