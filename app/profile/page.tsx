@@ -13,12 +13,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { 
-  User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon, 
-  Camera as CameraIcon, Trophy as TrophyIcon, 
-  Calendar as CalendarIcon, Flame as FlameIcon, 
-  Mail as MailIcon, AtSign as AtSignIcon, Coins
+import {
+  User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon,
+  Camera as CameraIcon, Trophy as TrophyIcon,
+  Calendar as CalendarIcon, Flame as FlameIcon,
+  Mail as MailIcon, AtSign as AtSignIcon, Coins, Key
 } from "lucide-react";
+import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 
 import { format } from "date-fns";
 
@@ -72,6 +73,9 @@ export default function ProfilePage() {
       return data || [];
     }
   });
+
+  // Must be after user query so user?.id is in scope
+  const { walletType, activeAddress, getExportKey } = useEmbeddedWallet(user?.id);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -273,12 +277,34 @@ export default function ProfilePage() {
                   <span className="text-muted-foreground flex items-center gap-2">
                     <Coins className="w-4 h-4 text-blue-500" />
                     Avalanche Wallet
+                    {walletType === 'embedded' && (
+                      <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
+                        In-App
+                      </span>
+                    )}
                   </span>
-                  <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                    {profile?.wallet_address 
-                      ? `${profile.wallet_address.slice(0, 6)}...${profile.wallet_address.slice(-4)}`
-                      : "Not Connected"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                      {(activeAddress || profile?.wallet_address)
+                        ? `${(activeAddress || profile!.wallet_address).slice(0, 6)}...${(activeAddress || profile!.wallet_address).slice(-4)}`
+                        : "Not set up"}
+                    </span>
+                    {walletType === 'embedded' && user?.id && (
+                      <button
+                        title="Export private key to clipboard"
+                        onClick={() => {
+                          const key = getExportKey(user.id)
+                          if (key) {
+                            navigator.clipboard.writeText(key)
+                            toast.success("Private key copied — keep it safe!", { duration: 6000 })
+                          }
+                        }}
+                        className="p-1 rounded hover:bg-muted transition-colors"
+                      >
+                        <Key className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border/50">
                   <span className="text-muted-foreground">Account Type</span>

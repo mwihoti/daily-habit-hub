@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { ArrowRight, ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
+import { WalletConnectSection } from "@/components/WalletConnectSection";
+import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 
 type Goal = "lose_weight" | "build_muscle" | "consistency" | "get_healthier";
 type Workout = "home" | "gym" | "outdoor" | "mixed";
@@ -37,6 +38,15 @@ export default function OnboardingPage() {
   const [isSaving, setIsSaving] = useState(false);
   const supabase = createClient();
   const { address, isConnected } = useAccount();
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const { activeAddress } = useEmbeddedWallet(userId);
+
+  // Load userId early so WalletConnectSection can create the embedded wallet
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, [supabase]);
 
   const totalSteps = 3;
 
@@ -48,6 +58,10 @@ export default function OnboardingPage() {
         router.push("/login");
         return;
       }
+      if (!userId) setUserId(user.id); // ensure hook is synced if not yet set
+
+      // Use external wallet address if connected, otherwise use embedded wallet address
+      const walletAddr = (isConnected && address) ? address : activeAddress;
 
       await supabase
         .from("profiles")
@@ -55,7 +69,7 @@ export default function OnboardingPage() {
           fitness_goal:           selectedGoal,
           preferred_workout:      selectedWorkout,
           onboarding_completed:   true,
-          ...(isConnected && address ? { wallet_address: address } : {}),
+          ...(walletAddr ? { wallet_address: walletAddr } : {}),
         })
         .eq("id", user.id);
 
@@ -176,7 +190,7 @@ export default function OnboardingPage() {
               <div className="text-5xl mb-4">⛓️</div>
               <h1 className="text-3xl font-display font-bold mb-2">Earn rewards on Avalanche</h1>
               <p className="text-muted-foreground mb-1">
-                Connect your wallet to earn <strong>$HABIT tokens</strong> and mint
+                Set up a wallet to earn <strong>$HABIT tokens</strong> and mint
                 achievement NFTs every time you check in.
               </p>
               <p className="text-sm text-muted-foreground">Totally optional — you can do this later.</p>
@@ -196,8 +210,8 @@ export default function OnboardingPage() {
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-center pt-2">
-                  <ConnectButton />
+                <div className="pt-2">
+                  <WalletConnectSection userId={userId} />
                 </div>
               </CardContent>
             </Card>

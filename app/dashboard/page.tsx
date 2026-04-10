@@ -23,11 +23,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAccount, useReadContract } from "wagmi";
-import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS,
   HABIT_TOKEN_ABI, HABIT_TOKEN_ADDRESS,
 } from "@/lib/web3/habitRegistry";
+import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
+import { WalletConnectSection } from "@/components/WalletConnectSection";
 
 const workoutEmojis: Record<string, string> = {
   gym: "🏋️",
@@ -51,7 +52,6 @@ export default function DashboardPage() {
   const [isMinting, setIsMinting] = useState(false);
 
   const { isConnected, address } = useAccount();
-  const { openConnectModal } = useConnectModal();
 
   const isActivityToday = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -93,29 +93,32 @@ export default function DashboardPage() {
     }
   });
 
-  // Sync wallet address to profile whenever wallet connects
+  // Unified wallet — merges embedded (in-app) and external (MetaMask) state
+  const { activeAddress, hasWallet } = useEmbeddedWallet(user?.id);
+
+  // Sync external wallet address to profile whenever it connects
   useEffect(() => {
     if (isConnected && address && user?.id) {
       supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
     }
   }, [isConnected, address, user?.id, supabase]);
 
-  // Read $HABIT token balance
+  // Read $HABIT token balance (works for both embedded and external wallet)
   const { data: habitBalanceRaw } = useReadContract({
     address: HABIT_TOKEN_ADDRESS,
     abi: HABIT_TOKEN_ABI,
     functionName: "balanceOf",
-    args: address ? [address] : undefined,
-    query: { enabled: isConnected && !!address && HABIT_TOKEN_ADDRESS !== "0x0000000000000000000000000000000000000000" },
+    args: activeAddress ? [activeAddress] : undefined,
+    query: { enabled: !!activeAddress && HABIT_TOKEN_ADDRESS !== "0x0000000000000000000000000000000000000000" },
   });
 
-  // Check if the connected wallet can still mint today
+  // Check if the active wallet can still mint today
   const { data: canMintOnChain, refetch: refetchCanMint } = useReadContract({
     address: HABIT_REGISTRY_ADDRESS,
     abi: HABIT_REGISTRY_ABI,
     functionName: "canRecordToday",
-    args: address ? [address] : undefined,
-    query: { enabled: isConnected && !!address && HABIT_REGISTRY_ADDRESS !== "0x0000000000000000000000000000000000000000" },
+    args: activeAddress ? [activeAddress] : undefined,
+    query: { enabled: !!activeAddress && HABIT_REGISTRY_ADDRESS !== "0x0000000000000000000000000000000000000000" },
   });
 
   const habitBalance = habitBalanceRaw ? Math.floor(Number(habitBalanceRaw) / 1e18) : 0;
@@ -127,14 +130,14 @@ export default function DashboardPage() {
   });
 
   const handleMintToday = async () => {
-    if (!address || !todayWorkout) return;
+    if (!activeAddress || !todayWorkout) return;
     setIsMinting(true);
     try {
       const res = await fetch("/api/web3/record-habit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          targetWallet: address,
+          targetWallet: activeAddress,
           habitType: todayWorkout.type || "other",
           metadataUri: "ipfs://placeholder",
         }),
@@ -428,10 +431,10 @@ export default function DashboardPage() {
                                 disabled={isMinting}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (!isConnected) {
-                                    openConnectModal?.();
-                                  } else {
+                                  if (hasWallet) {
                                     handleMintToday();
+                                  } else {
+                                    toast.info("Set up your wallet in the Earn on Avalanche card below");
                                   }
                                 }}
                               >
@@ -501,16 +504,14 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {!isConnected ? (
+                {!hasWallet ? (
                   <>
                     <p className="text-sm text-muted-foreground">
                       {workouts.length > 0
-                        ? `You have ${workouts.length} workout${workouts.length !== 1 ? "s" : ""} — connect a wallet to earn $HABIT tokens & NFT badges.`
-                        : "Connect a wallet to earn $HABIT tokens and NFT badges for every check-in."}
+                        ? `You have ${workouts.length} workout${workouts.length !== 1 ? "s" : ""} — get a wallet to earn $HABIT tokens & NFT badges.`
+                        : "Get a wallet to earn $HABIT tokens and NFT badges for every check-in."}
                     </p>
-                    <div className="flex justify-center pt-1">
-                      <ConnectButton />
-                    </div>
+                    <WalletConnectSection userId={user?.id} />
                   </>
                 ) : (
                   <div className="space-y-3">

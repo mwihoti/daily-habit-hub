@@ -20,14 +20,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, isSameDay } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useWriteContract, usePublicClient } from "wagmi";
-import { parseEventLogs } from "viem";
-import { avalancheFuji, avalanche } from "wagmi/chains";
-import {
-  HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS,
-  ACHIEVEMENT_NFT_ABI, ACHIEVEMENTS,
-} from "@/lib/web3/habitRegistry";
+import { useAccount } from "wagmi";
+import { WalletConnectSection } from "@/components/WalletConnectSection";
+import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 
 const workoutTypes = [
   { id: "gym",     icon: Dumbbell,        label: "Gym",            emoji: "🏋️" },
@@ -153,14 +148,10 @@ export default function CheckInPage() {
   const [photo, setPhoto]                   = useState<File | null>(null);
   const [photoPreview, setPhotoPreview]     = useState<string | null>(null);
   const [isPublic, setIsPublic]             = useState(true);
-  const [recordOnChain, setRecordOnChain]   = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [finalStreak, setFinalStreak]       = useState(0);
-  const [earnedNft, setEarnedNft]           = useState<{ name: string; emoji: string; description: string } | undefined>();
+  const [finalStreak, setFinalStreak]         = useState(0);
 
-  const { isConnected, address, chain } = useAccount();
-  const { writeContractAsync }          = useWriteContract();
-  const publicClient                    = usePublicClient();
+  const { isConnected, address } = useAccount();
   const fileInputRef                    = useRef<HTMLInputElement>(null);
   const supabase                        = createClient();
   const router                          = useRouter();
@@ -173,6 +164,9 @@ export default function CheckInPage() {
       return user;
     },
   });
+
+  // Must be after the user query so user?.id is in scope
+  const { activeAddress, hasWallet } = useEmbeddedWallet(user?.id);
 
   // Sync wallet to profile
   useEffect(() => {
@@ -254,62 +248,26 @@ export default function CheckInPage() {
       const { data: streakData } = await supabase.rpc("record_checkin", { p_user_id: user.id });
       const newStreak = streakData?.[0]?.new_streak ?? profile?.streak ?? 0;
 
-      // 5. On-chain recording
-      let nftEarned: typeof ACHIEVEMENTS[number] | undefined;
-
-      if (isConnected && recordOnChain && address) {
-        // Approach 1: user self-signs (they pay gas)
-        try {
-          const txHash = await writeContractAsync({
-            address: HABIT_REGISTRY_ADDRESS,
-            abi: HABIT_REGISTRY_ABI,
-            functionName: "recordHabit",
-            args: [selectedType || "other", metadataUri],
-            account: address,
-            chain,
-          });
-          toast.info("Proof of Progress minted on Avalanche ⛓️");
-
-          // Parse receipt for AchievementMinted events
-          if (publicClient && txHash) {
-            try {
-              const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash as `0x${string}` });
-              const logs = parseEventLogs({
-                abi: ACHIEVEMENT_NFT_ABI,
-                eventName: "AchievementMinted",
-                logs: receipt.logs,
-              });
-              if (logs.length > 0) {
-                const earnedType = Number((logs[0] as any).args.achievementType);
-                nftEarned = ACHIEVEMENTS.find((a) => a.type === earnedType);
-              }
-            } catch { /* non-blocking — celebration still shows */ }
-          }
-        } catch (web3Err: any) {
-          toast.warning("Check-in saved, but on-chain mint failed.");
-        }
-      } else if (profile?.wallet_address && !isConnected) {
-        // Approach 2: server admin mints on behalf (no gas for user)
-        try {
-          fetch("/api/web3/record-habit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              targetWallet: profile.wallet_address,
-              habitType:    selectedType || "other",
-              metadataUri,
-            }),
-          }); // fire-and-forget
-        } catch { /* non-blocking */ }
+      // 5. On-chain recording — always via admin wallet (zero gas for user)
+      const walletAddr = activeAddress || profile?.wallet_address;
+      if (walletAddr) {
+        fetch("/api/web3/record-habit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            targetWallet: walletAddr,
+            habitType:    selectedType || "other",
+            metadataUri,
+          }),
+        }); // fire-and-forget — non-blocking
       }
 
-      return { newStreak, nftEarned };
+      return { newStreak };
     },
-    onSuccess: ({ newStreak, nftEarned }) => {
+    onSuccess: ({ newStreak }) => {
       queryClient.invalidateQueries({ queryKey: ["workouts"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       setFinalStreak(newStreak);
-      if (nftEarned) setEarnedNft({ name: nftEarned.name, emoji: nftEarned.emoji, description: nftEarned.description });
       setShowCelebration(true);
     },
     onError: (err: any) => {
@@ -340,7 +298,6 @@ export default function CheckInPage() {
       <CelebrationScreen
         streak={finalStreak}
         workoutType={selectedType}
-        earnedNft={earnedNft}
         onContinue={() => router.push("/dashboard")}
       />
     );
@@ -427,15 +384,13 @@ export default function CheckInPage() {
               <div>
                 <p className="font-display font-bold">Earn on Avalanche</p>
                 <p className="text-xs text-muted-foreground">
-                  {isConnected
-                    ? `Connected — earn 10 $HABIT per check-in`
-                    : "Connect wallet to earn $HABIT tokens + NFT badges"}
+                  {hasWallet
+                    ? "Wallet ready — earn 10 $HABIT per check-in (gasless)"
+                    : "Get a wallet to earn $HABIT tokens + NFT badges"}
                 </p>
               </div>
             </div>
-            <div className="flex justify-center">
-              <ConnectButton />
-            </div>
+            <WalletConnectSection userId={user?.id} />
           </CardContent>
         </Card>
 
@@ -533,25 +488,6 @@ export default function CheckInPage() {
               </CardContent>
             </Card>
 
-            {/* Avalanche Toggle */}
-            {isConnected && (
-              <Card className="mb-6 border-accent/20 bg-accent/5">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full gradient-chain flex items-center justify-center">
-                      <Coins className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <Label htmlFor="chain-toggle" className="font-bold">Mint Proof of Progress</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Earn 10 $HABIT — you pay gas
-                      </p>
-                    </div>
-                  </div>
-                  <Switch id="chain-toggle" checked={recordOnChain} onCheckedChange={setRecordOnChain} />
-                </CardContent>
-              </Card>
-            )}
 
             {/* Check-in CTA */}
             <Button
