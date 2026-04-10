@@ -409,20 +409,21 @@ export default function AchievementsPage() {
                         <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
                           {item.onChainType !== undefined
                             ? 'Soulbound NFT minted on Avalanche.'
-                            : 'Recorded on-chain via $HABIT activity.'}
+                            : 'Badge saved to your account. Future check-ins mint $HABIT on-chain.'}
                         </p>
                       </div>
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 gap-1.5 text-xs"
+                          className={cn("gap-1.5 text-xs", item.onChainType !== undefined ? "flex-1" : "w-full")}
                           onClick={() => handleDownload(item, claimData?.claimedAt)}
                         >
                           <Download className="w-3.5 h-3.5" />
                           Download Badge
                         </Button>
-                        {stats.walletAddress ? (
+                        {/* Snowscan only for badges that actually have on-chain NFTs */}
+                        {item.onChainType !== undefined && stats.walletAddress && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -430,41 +431,16 @@ export default function AchievementsPage() {
                             asChild
                           >
                             <a
-                              href={
-                                item.onChainType !== undefined
-                                  ? snowscanNftUrl(stats.walletAddress)
-                                  : snowscanWalletUrl(stats.walletAddress)
-                              }
+                              href={snowscanNftUrl(stats.walletAddress)}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
-                              {item.onChainType !== undefined ? 'View NFT' : 'View Wallet'}
+                              View NFT
                             </a>
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 gap-1.5 text-xs opacity-50 cursor-not-allowed"
-                            disabled
-                            title="Connect a wallet to view on Snowscan"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            Snowscan
                           </Button>
                         )}
                       </div>
-                      {!stats.walletAddress && (
-                        <p className="text-[10px] text-amber-600 dark:text-amber-400 text-center leading-relaxed">
-                          Connect a wallet on your profile to view this on Snowscan.
-                        </p>
-                      )}
-                      {item.onChainType === undefined && stats.walletAddress && (
-                        <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
-                          Your $HABIT token activity on Snowscan proves this milestone.
-                        </p>
-                      )}
                     </div>
                   )}
 
