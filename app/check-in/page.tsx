@@ -20,7 +20,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, isSameDay } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useAccount } from "wagmi";
 import { WalletConnectSection } from "@/components/WalletConnectSection";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 
@@ -157,7 +156,6 @@ export default function CheckInPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [finalStreak, setFinalStreak]         = useState(0);
 
-  const { isConnected, address } = useAccount();
   const fileInputRef                    = useRef<HTMLInputElement>(null);
   const supabase                        = createClient();
   const router                          = useRouter();
@@ -174,12 +172,12 @@ export default function CheckInPage() {
   // Must be after the user query so user?.id is in scope
   const { activeAddress, hasWallet } = useEmbeddedWallet(user?.id);
 
-  // Sync wallet to profile
+  // Sync active wallet address to profile (covers both embedded and external wallets)
   useEffect(() => {
-    if (isConnected && address && user?.id) {
-      supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
+    if (activeAddress && user?.id) {
+      supabase.from("profiles").update({ wallet_address: activeAddress }).eq("id", user.id);
     }
-  }, [isConnected, address, user?.id, supabase]);
+  }, [activeAddress, user?.id, supabase]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
