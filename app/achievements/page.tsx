@@ -395,7 +395,9 @@ export default function AchievementsPage() {
                       <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                         <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-                          Soulbound to your wallet forever.
+                          {item.onChainType !== undefined
+                            ? 'Soulbound NFT minted on Avalanche.'
+                            : 'Recorded on-chain via $HABIT activity.'}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -408,7 +410,7 @@ export default function AchievementsPage() {
                           <Download className="w-3.5 h-3.5" />
                           Download Badge
                         </Button>
-                        {stats.walletAddress && item.onChainType !== undefined && (
+                        {stats.walletAddress && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -416,16 +418,25 @@ export default function AchievementsPage() {
                             asChild
                           >
                             <a
-                              href={snowscanNftUrl(stats.walletAddress)}
+                              href={
+                                item.onChainType !== undefined
+                                  ? snowscanNftUrl(stats.walletAddress)
+                                  : snowscanWalletUrl(stats.walletAddress)
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
-                              Snowscan
+                              {item.onChainType !== undefined ? 'View NFT' : 'View Wallet'}
                             </a>
                           </Button>
                         )}
                       </div>
+                      {item.onChainType === undefined && stats.walletAddress && (
+                        <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
+                          App-layer badge — your $HABIT token transactions on Snowscan prove this milestone.
+                        </p>
+                      )}
                     </div>
                   )}
 

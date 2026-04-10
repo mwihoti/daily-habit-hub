@@ -42,15 +42,37 @@ export async function POST(request: Request) {
 
   const config = MILESTONES[milestone]
 
-  // Fetch user profile stats
-  const { data: profile, error: profileError } = await supabase
+  // Fetch user profile stats — auto-create row if missing (handles users whose
+  // on_auth_user_created trigger didn't fire or who signed up before the trigger existed)
+  let { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('streak, total_workouts, wallet_address')
     .eq('id', user.id)
     .single()
 
   if (profileError || !profile) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    // Attempt to insert a default profile row (DO NOTHING if it somehow already exists
+    // to avoid overwriting streak/total_workouts with zeroes)
+    const { error: upsertProfileError } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, streak: 0, total_workouts: 0 }, { onConflict: 'id', ignoreDuplicates: true })
+
+    if (upsertProfileError) {
+      return NextResponse.json({ error: 'Profile not found and could not be created' }, { status: 500 })
+    }
+
+    // Re-fetch after upsert
+    const { data: newProfile, error: refetchError } = await supabase
+      .from('profiles')
+      .select('streak, total_workouts, wallet_address')
+      .eq('id', user.id)
+      .single()
+
+    if (refetchError || !newProfile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    profile = newProfile
   }
 
   const streak = profile.streak ?? 0
