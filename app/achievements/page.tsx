@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { downloadBadge } from "@/lib/web3/badgeGenerator";
 import { ACHIEVEMENT_NFT_ADDRESS } from "@/lib/web3/habitRegistry";
+import { useAccount } from "wagmi";
 
 const FUJI_SNOWSCAN = 'https://testnet.snowscan.xyz';
 
@@ -112,6 +113,7 @@ export default function AchievementsPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const [claiming, setClaiming] = useState<MilestoneId | null>(null);
+  const { address: wagmiAddress, isConnected } = useAccount();
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -120,6 +122,15 @@ export default function AchievementsPage() {
       return user;
     },
   });
+
+  // Sync external wallet address to profile whenever it changes
+  useEffect(() => {
+    if (isConnected && wagmiAddress && user?.id) {
+      supabase.from('profiles').update({ wallet_address: wagmiAddress }).eq('id', user.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['achievement-stats', user.id] });
+      });
+    }
+  }, [isConnected, wagmiAddress, user?.id]);
 
   const { data: profile, isLoading: statsLoading } = useQuery({
     queryKey: ['achievement-stats', user?.id],
@@ -154,7 +165,8 @@ export default function AchievementsPage() {
   const stats = {
     currentStreak: profile?.streak ?? 0,
     totalWorkouts: profile?.total_workouts ?? 0,
-    walletAddress: profile?.wallet_address ?? undefined,
+    // Use profile DB value OR live wagmi address — whichever is available
+    walletAddress: profile?.wallet_address ?? (isConnected ? wagmiAddress : undefined),
   };
 
   const { data: claimedMap = {} } = useQuery({
