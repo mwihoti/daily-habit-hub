@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Home, Users, CheckCircle, BarChart3, MessageCircle,
   User, LogOut, Target, ListTodo, TrendingUp, Dumbbell, Menu,
+  Trophy, Medal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,14 +16,16 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const mainNavItems = [
-  { href: "/",          icon: Home,         label: "Home"      },
-  { href: "/community", icon: Users,        label: "Community" },
-  { href: "/check-in",  icon: CheckCircle,  label: "Check-in"  },
-  { href: "/trainers",  icon: Dumbbell,     label: "Coaches"   },
-  { href: "/dashboard", icon: BarChart3,    label: "Dashboard" },
-  { href: "/progress",  icon: TrendingUp,   label: "Progress"  },
-  { href: "/tasks",     icon: ListTodo,     label: "Tasks"     },
-  { href: "/goals",     icon: Target,       label: "Goals"     },
+  { href: "/",             icon: Home,          label: "Home"         },
+  { href: "/community",    icon: Users,         label: "Community"    },
+  { href: "/check-in",     icon: CheckCircle,   label: "Check-in"     },
+  { href: "/trainers",     icon: Dumbbell,      label: "Coaches"      },
+  { href: "/dashboard",    icon: BarChart3,     label: "Dashboard"    },
+  { href: "/progress",     icon: TrendingUp,    label: "Progress"     },
+  { href: "/achievements", icon: Trophy,        label: "Achievements" },
+  { href: "/leaderboard",  icon: Medal,         label: "Leaderboard"  },
+  { href: "/tasks",        icon: ListTodo,      label: "Tasks"        },
+  { href: "/goals",        icon: Target,        label: "Goals"        },
 ];
 
 // 4 primary items always visible in the mobile bottom bar
@@ -35,12 +38,14 @@ const mobileNavItems = [
 
 // Items shown in the "More" bottom sheet
 const moreNavItems = [
-  { href: "/messages",  icon: MessageCircle, label: "Messages"  },
-  { href: "/goals",     icon: Target,        label: "Goals"     },
-  { href: "/profile",   icon: User,          label: "Profile"   },
-  { href: "/progress",  icon: TrendingUp,    label: "Progress"  },
-  { href: "/tasks",     icon: ListTodo,      label: "Tasks"     },
-  { href: "/trainers",  icon: Dumbbell,      label: "Coaches"   },
+  { href: "/messages",     icon: MessageCircle, label: "Messages"     },
+  { href: "/achievements", icon: Trophy,        label: "Achievements" },
+  { href: "/leaderboard",  icon: Medal,         label: "Leaderboard"  },
+  { href: "/goals",        icon: Target,        label: "Goals"        },
+  { href: "/profile",      icon: User,          label: "Profile"      },
+  { href: "/progress",     icon: TrendingUp,    label: "Progress"     },
+  { href: "/tasks",        icon: ListTodo,      label: "Tasks"        },
+  { href: "/trainers",     icon: Dumbbell,      label: "Coaches"      },
 ];
 
 export function MobileNav() {

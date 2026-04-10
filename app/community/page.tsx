@@ -291,7 +291,10 @@ function CommentInput({ postId }: { postId: string }) {
       setContent("");
       queryClient.invalidateQueries({ queryKey: ['community-posts'] });
       toast.success("Comment added!");
-    }
+    },
+    onError: (err: Error) => {
+      toast.error(err?.message || "Failed to post comment. Please try again.");
+    },
   });
 
   return (

@@ -68,6 +68,12 @@ function CelebrationScreen({
   earnedNft?: { name: string; emoji: string; description: string };
   onContinue: () => void;
 }) {
+  // Auto-dismiss after 6 seconds
+  useEffect(() => {
+    const t = setTimeout(onContinue, 6000);
+    return () => clearTimeout(t);
+  }, [onContinue]);
+
   return (
     <div className="fixed inset-0 z-50 gradient-hero flex flex-col items-center justify-center p-6 text-white">
       <Confetti />
@@ -259,7 +265,16 @@ export default function CheckInPage() {
             habitType:    selectedType || "other",
             metadataUri,
           }),
-        }); // fire-and-forget — non-blocking
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.success) {
+              setTimeout(() => toast.success("$HABIT tokens minted to your wallet! ✨", { duration: 4000 }), 2500);
+            } else if (!data.skipped) {
+              setTimeout(() => toast.error("On-chain recording failed — will retry next check-in."), 2500);
+            }
+          })
+          .catch(() => {}); // network error — silent
       }
 
       return { newStreak };

@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSameDay } from "date-fns";
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 import { ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
 
 const FUJI_RPC = 'https://api.avax-test.network/ext/bc/C/rpc';
@@ -27,8 +27,6 @@ export default function ProgressPage() {
   }, []);
 
   const supabase = createClient();
-  const { address } = useAccount();
-
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
@@ -36,6 +34,9 @@ export default function ProgressPage() {
       return user;
     }
   });
+
+  // Use unified wallet hook — works for both embedded and external wallets
+  const { activeAddress } = useEmbeddedWallet(user?.id);
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -61,10 +62,10 @@ export default function ProgressPage() {
 
   // On-chain achievement status — raw eth_call, no wagmi/viem generics
   const { data: onChainAchievements } = useQuery({
-    queryKey: ['achievements', address],
-    enabled: !!address && isMounted,
+    queryKey: ['achievements', activeAddress],
+    enabled: !!activeAddress && isMounted,
     queryFn: async (): Promise<boolean[]> => {
-      const addr = (address as string).replace('0x', '').toLowerCase().padStart(64, '0');
+      const addr = (activeAddress as string).replace('0x', '').toLowerCase().padStart(64, '0');
       const results = await Promise.all(
         ACHIEVEMENTS.map(async (a) => {
           const typeHex = a.type.toString(16).padStart(64, '0');
@@ -301,9 +302,9 @@ export default function ProgressPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!address ? (
+            {!activeAddress ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Connect your wallet on the check-in page to earn soulbound NFT badges on Avalanche.
+                Set up a wallet on the check-in page to earn soulbound NFT badges on Avalanche.
               </p>
             ) : (
               <div className="grid sm:grid-cols-3 gap-4">

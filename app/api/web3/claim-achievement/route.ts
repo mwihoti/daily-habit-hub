@@ -2,9 +2,7 @@
  * POST /api/web3/claim-achievement
  *
  * Records that a user has claimed a milestone NFT badge.
- * Validates eligibility against their real Supabase stats (streak / total_workouts).
- * If the user has a wallet, fires a background on-chain record-habit call to
- * advance their on-chain count toward the contract's auto-mint thresholds (7, 30).
+ * Validates eligibility against real Supabase stats (streak / total_workouts).
  *
  * Body: { milestone: 'genesis' | 'iron_will' | 'three_weeks' | 'month_champion' | 'consistency_legend' }
  */
@@ -12,12 +10,19 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const MILESTONES: Record<string, { label: string; threshold: number; thresholdType: 'workouts' | 'streak' }> = {
-  genesis:             { label: 'Genesis NFT Badge',     threshold: 1,  thresholdType: 'workouts' },
-  iron_will:           { label: 'Iron Will',             threshold: 7,  thresholdType: 'streak'   },
-  three_weeks:         { label: 'Three Weeks Strong',    threshold: 21, thresholdType: 'workouts' },
-  month_champion:      { label: 'Month Champion',        threshold: 30, thresholdType: 'streak'   },
-  consistency_legend:  { label: 'Consistency Legend',    threshold: 49, thresholdType: 'streak'   },
+interface MilestoneConfig {
+  label: string
+  // Threshold for BOTH streak and workouts — check the right one per milestone
+  streakThreshold?: number    // requires profile.streak >= this value
+  workoutsThreshold?: number  // requires profile.total_workouts >= this value
+}
+
+const MILESTONES: Record<string, MilestoneConfig> = {
+  genesis:            { label: 'Genesis Badge',        workoutsThreshold: 1  },
+  iron_will:          { label: 'Iron Will',             streakThreshold: 7,   workoutsThreshold: 7  },
+  three_weeks:        { label: 'Three Weeks Strong',    workoutsThreshold: 21 },
+  month_champion:     { label: 'Month Champion',        streakThreshold: 30,  workoutsThreshold: 30 },
+  consistency_legend: { label: 'Consistency Legend',    streakThreshold: 49,  workoutsThreshold: 49 },
 }
 
 export async function POST(request: Request) {
@@ -48,18 +53,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
-  // Check eligibility — compare against both streak AND total_workouts (whichever is stricter)
   const streak = profile.streak ?? 0
   const totalWorkouts = profile.total_workouts ?? 0
-  const value = config.thresholdType === 'streak' ? Math.max(streak, totalWorkouts) : totalWorkouts
 
-  if (value < config.threshold) {
+  // For streak-based milestones: eligible if streak OR total_workouts meets the threshold
+  // (total_workouts fallback supports retroactive claiming when streak was reset)
+  // For workouts-based milestones: only total_workouts counts
+  let eligible = false
+
+  if (config.streakThreshold !== undefined) {
+    eligible = streak >= config.streakThreshold || totalWorkouts >= config.streakThreshold
+  }
+  if (!eligible && config.workoutsThreshold !== undefined) {
+    eligible = totalWorkouts >= config.workoutsThreshold
+  }
+
+  if (!eligible) {
+    const needed = config.streakThreshold ?? config.workoutsThreshold ?? 0
+    const current = config.streakThreshold !== undefined
+      ? `streak: ${streak} days, workouts: ${totalWorkouts}`
+      : `${totalWorkouts} check-ins`
     return NextResponse.json({
-      error: `Not yet eligible. Need ${config.threshold} ${config.thresholdType === 'streak' ? 'streak days' : 'check-ins'}, currently at ${value}.`,
+      error: `Not yet eligible for ${config.label}. Need ${needed}, currently: ${current}.`,
     }, { status: 403 })
   }
 
-  // Upsert into user_achievements (idempotent — can re-claim without error)
+  // Check if already claimed
   const { data: existing } = await supabase
     .from('user_achievements')
     .select('id, claimed_at')
@@ -68,9 +87,10 @@ export async function POST(request: Request) {
     .single()
 
   if (existing?.claimed_at) {
-    return NextResponse.json({ alreadyClaimed: true, milestone })
+    return NextResponse.json({ alreadyClaimed: true, milestone, label: config.label })
   }
 
+  // Upsert claim record
   const { error: upsertError } = await supabase
     .from('user_achievements')
     .upsert({
@@ -84,5 +104,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: upsertError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, milestone, label: config.label })
+  return NextResponse.json({
+    success: true,
+    milestone,
+    label: config.label,
+    walletAddress: profile.wallet_address ?? null,
+  })
 }

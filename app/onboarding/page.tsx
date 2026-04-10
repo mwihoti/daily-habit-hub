@@ -73,8 +73,18 @@ export default function OnboardingPage() {
         })
         .eq("id", user.id);
 
-      toast.success("You're all set! 🎉", { description: "Let's get your first check-in done." });
-      router.push("/check-in");
+      // Check if they've already checked in today — send to dashboard if so
+      const today = new Date().toISOString().slice(0, 10);
+      const { count } = await supabase
+        .from("workouts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", today);
+
+      toast.success("You're all set! 🎉", {
+        description: count ? "Welcome back! Check your dashboard." : "Let's get your first check-in done.",
+      });
+      router.push(count ? "/dashboard" : "/check-in");
     } catch (err: any) {
       toast.error("Could not save preferences: " + err?.message);
     } finally {
