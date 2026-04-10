@@ -54,7 +54,13 @@ export async function POST(request: Request) {
   }
 
   const streak = profile.streak ?? 0
-  const totalWorkouts = profile.total_workouts ?? 0
+
+  // Count workouts directly — don't rely solely on denormalized total_workouts
+  const { count: liveCount } = await supabase
+    .from('workouts')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+  const totalWorkouts = Math.max(profile.total_workouts ?? 0, liveCount ?? 0)
 
   // For streak-based milestones: eligible if streak OR total_workouts meets the threshold
   // (total_workouts fallback supports retroactive claiming when streak was reset)
@@ -101,6 +107,26 @@ export async function POST(request: Request) {
     }, { onConflict: 'user_id,milestone' })
 
   if (upsertError) {
+    // If table doesn't exist (migration 004 not yet applied), surface a clear message
+    if (upsertError.message.includes('relation') && upsertError.message.includes('does not exist')) {
+      return NextResponse.json({
+        error: 'Achievement table not set up yet. Please run migration 004 in your Supabase SQL Editor.',
+        migration: `CREATE TABLE IF NOT EXISTS user_achievements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  milestone TEXT NOT NULL,
+  earned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  claimed_at TIMESTAMPTZ,
+  is_on_chain BOOLEAN NOT NULL DEFAULT false,
+  tx_hash TEXT,
+  UNIQUE(user_id, milestone)
+);
+ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "achievements_select_own" ON user_achievements FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "achievements_insert_own" ON user_achievements FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "achievements_update_own" ON user_achievements FOR UPDATE USING (auth.uid() = user_id);`,
+      }, { status: 503 })
+    }
     return NextResponse.json({ error: upsertError.message }, { status: 500 })
   }
 

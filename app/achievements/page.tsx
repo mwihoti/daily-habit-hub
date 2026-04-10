@@ -125,12 +125,29 @@ export default function AchievementsPage() {
     queryKey: ['achievement-stats', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('streak, total_workouts, wallet_address')
-        .eq('id', user!.id)
-        .single();
-      return data;
+      // Fetch profile AND actual workout count in parallel.
+      // We count directly from the workouts table so the claim buttons appear
+      // even if the denormalized total_workouts column is out of sync.
+      const [profileRes, countRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('streak, total_workouts, wallet_address')
+          .eq('id', user!.id)
+          .single(),
+        supabase
+          .from('workouts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user!.id),
+      ]);
+      return {
+        streak: profileRes.data?.streak ?? 0,
+        // Use whichever is higher: denormalized column or live count
+        total_workouts: Math.max(
+          profileRes.data?.total_workouts ?? 0,
+          countRes.count ?? 0,
+        ),
+        wallet_address: profileRes.data?.wallet_address ?? null,
+      };
     },
   });
 
@@ -144,10 +161,12 @@ export default function AchievementsPage() {
     queryKey: ['user-achievements', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_achievements')
         .select('milestone, claimed_at, is_on_chain, tx_hash')
         .eq('user_id', user!.id);
+      // Table might not exist yet if migration 004 hasn't been applied — treat as no claims
+      if (error) return {};
       const map: Record<string, { claimedAt: string; isOnChain: boolean; txHash?: string }> = {};
       for (const row of (data ?? [])) {
         if (row.claimed_at) {

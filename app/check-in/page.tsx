@@ -282,6 +282,8 @@ export default function CheckInPage() {
     onSuccess: ({ newStreak }) => {
       queryClient.invalidateQueries({ queryKey: ["workouts"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      // Invalidate achievement stats so claim buttons appear immediately after check-in
+      queryClient.invalidateQueries({ queryKey: ["achievement-stats"] });
       setFinalStreak(newStreak);
       setShowCelebration(true);
     },
