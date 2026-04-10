@@ -410,7 +410,7 @@ export default function AchievementsPage() {
                           <Download className="w-3.5 h-3.5" />
                           Download Badge
                         </Button>
-                        {stats.walletAddress && (
+                        {stats.walletAddress ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -430,11 +430,27 @@ export default function AchievementsPage() {
                               {item.onChainType !== undefined ? 'View NFT' : 'View Wallet'}
                             </a>
                           </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 gap-1.5 text-xs opacity-50 cursor-not-allowed"
+                            disabled
+                            title="Connect a wallet to view on Snowscan"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            Snowscan
+                          </Button>
                         )}
                       </div>
+                      {!stats.walletAddress && (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 text-center leading-relaxed">
+                          Connect a wallet on your profile to view this on Snowscan.
+                        </p>
+                      )}
                       {item.onChainType === undefined && stats.walletAddress && (
                         <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
-                          App-layer badge — your $HABIT token transactions on Snowscan prove this milestone.
+                          Your $HABIT token activity on Snowscan proves this milestone.
                         </p>
                       )}
                     </div>
