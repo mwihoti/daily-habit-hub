@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatCard, WeekCalendar, StreakHero } from "@/components/StreakComponents";
 import Link from "next/link";
-import { 
-  Flame, Trophy, Target, TrendingUp, Calendar, 
-  CheckCircle, Plus, BarChart3, Users, Camera, X, Upload, Globe, Lock
+import {
+  Flame, Trophy, Target, TrendingUp, Calendar,
+  CheckCircle, Plus, BarChart3, Users, Camera, X, Upload, Globe, Lock, Coins
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useAccount, useReadContract } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import {
+  HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS,
+  HABIT_TOKEN_ABI, HABIT_TOKEN_ADDRESS,
+} from "@/lib/web3/habitRegistry";
 
 const workoutEmojis: Record<string, string> = {
   gym: "🏋️",
@@ -36,12 +42,15 @@ export default function DashboardPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   const [selectedWorkout, setSelectedWorkout] = useState<any>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+
+  const { isConnected, address } = useAccount();
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -76,6 +85,69 @@ export default function DashboardPage() {
       return data || [];
     }
   });
+
+  // Sync wallet address to profile whenever wallet connects
+  useEffect(() => {
+    if (isConnected && address && user?.id) {
+      supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
+    }
+  }, [isConnected, address, user?.id, supabase]);
+
+  // Read $HABIT token balance
+  const { data: habitBalanceRaw } = useReadContract({
+    address: HABIT_TOKEN_ADDRESS,
+    abi: HABIT_TOKEN_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: isConnected && !!address && HABIT_TOKEN_ADDRESS !== "0x0000000000000000000000000000000000000000" },
+  });
+
+  // Check if the connected wallet can still mint today
+  const { data: canMintOnChain, refetch: refetchCanMint } = useReadContract({
+    address: HABIT_REGISTRY_ADDRESS,
+    abi: HABIT_REGISTRY_ABI,
+    functionName: "canRecordToday",
+    args: address ? [address] : undefined,
+    query: { enabled: isConnected && !!address && HABIT_REGISTRY_ADDRESS !== "0x0000000000000000000000000000000000000000" },
+  });
+
+  const habitBalance = habitBalanceRaw ? Math.floor(Number(habitBalanceRaw) / 1e18) : 0;
+
+  const todayWorkout = workouts.find((w: any) => {
+    const d = new Date(w.created_at);
+    const t = new Date();
+    return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+  });
+
+  const handleMintToday = async () => {
+    if (!address || !todayWorkout) return;
+    setIsMinting(true);
+    try {
+      const res = await fetch("/api/web3/record-habit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetWallet: address,
+          habitType: todayWorkout.type || "other",
+          metadataUri: "ipfs://placeholder",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Proof of Progress minted on Avalanche ⛓️");
+        refetchCanMint();
+      } else if (data.skipped) {
+        toast.info("Already recorded on-chain today");
+        refetchCanMint();
+      } else {
+        toast.error(data.error || "Mint failed");
+      }
+    } catch {
+      toast.error("Mint failed — try again");
+    } finally {
+      setIsMinting(false);
+    }
+  };
 
   const uploadPhotoMutation = useMutation({
     mutationFn: async ({ workoutId, file }: { workoutId: string, file: File }) => {
@@ -374,6 +446,73 @@ export default function DashboardPage() {
                     Community Feed
                   </Link>
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Earn on Avalanche */}
+            <Card className="border-orange-500/20 bg-orange-500/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-orange-500" />
+                  Earn on Avalanche
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {!isConnected ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      {workouts.length > 0
+                        ? `You have ${workouts.length} workout${workouts.length !== 1 ? "s" : ""} — connect a wallet to earn $HABIT tokens & NFT badges.`
+                        : "Connect a wallet to earn $HABIT tokens and NFT badges for every check-in."}
+                    </p>
+                    <div className="flex justify-center pt-1">
+                      <ConnectButton />
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/60">
+                      <span className="text-sm font-medium text-muted-foreground">$HABIT Balance</span>
+                      <span className="font-display font-bold text-orange-500">{habitBalance}</span>
+                    </div>
+
+                    {todayWorkout && canMintOnChain && (
+                      <div className="p-3 rounded-xl border border-orange-500/20 bg-orange-500/5 space-y-2">
+                        <p className="text-xs text-muted-foreground">
+                          Today&apos;s check-in isn&apos;t on-chain yet — mint to earn 10 $HABIT.
+                        </p>
+                        <Button
+                          variant="hero"
+                          size="sm"
+                          className="w-full"
+                          onClick={handleMintToday}
+                          disabled={isMinting}
+                        >
+                          {isMinting ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <Coins className="w-4 h-4" />
+                              Mint $HABIT
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+
+                    {todayWorkout && canMintOnChain === false && (
+                      <p className="text-xs text-center text-muted-foreground py-1">
+                        Today&apos;s check-in is on-chain ✓
+                      </p>
+                    )}
+
+                    {!todayWorkout && (
+                      <p className="text-xs text-center text-muted-foreground py-1">
+                        Check in today to earn 10 $HABIT.
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
