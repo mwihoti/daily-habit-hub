@@ -23,7 +23,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAccount, useReadContract } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   HABIT_REGISTRY_ABI, HABIT_REGISTRY_ADDRESS,
   HABIT_TOKEN_ABI, HABIT_TOKEN_ADDRESS,
@@ -51,6 +51,13 @@ export default function DashboardPage() {
   const [isMinting, setIsMinting] = useState(false);
 
   const { isConnected, address } = useAccount();
+  const { openConnectModal } = useConnectModal();
+
+  const isActivityToday = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const t = new Date();
+    return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
+  };
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -402,23 +409,59 @@ export default function DashboardPage() {
                             </span>
                           </p>
                         </div>
-                        {activity.photo_url ? (
-                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-border">
-                            <img src={activity.photo_url} alt="Proof" className="w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="w-8 h-8 rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Don't trigger privacy toggle
-                              handleOpenPhotoDialog(activity);
-                            }}
-                          >
-                            <Camera className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* On-chain mint button — today's activity only */}
+                          {isActivityToday(activity.created_at) && (
+                            canMintOnChain === false ? (
+                              <div
+                                title="Proof of Progress on-chain ✓"
+                                className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center"
+                              >
+                                <Coins className="w-4 h-4 text-green-500" />
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title={isConnected ? "Mint Proof of Progress on-chain" : "Connect wallet to mint $HABIT"}
+                                className="w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white transition-all"
+                                disabled={isMinting}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isConnected) {
+                                    openConnectModal?.();
+                                  } else {
+                                    handleMintToday();
+                                  }
+                                }}
+                              >
+                                {isMinting
+                                  ? <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                                  : <Coins className="w-4 h-4" />
+                                }
+                              </Button>
+                            )
+                          )}
+
+                          {/* Photo thumbnail or upload button */}
+                          {activity.photo_url ? (
+                            <div className="w-10 h-10 rounded-lg overflow-hidden border border-border">
+                              <img src={activity.photo_url} alt="Proof" className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="w-8 h-8 rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenPhotoDialog(activity);
+                              }}
+                            >
+                              <Camera className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))
                   ) : (
