@@ -14,13 +14,21 @@ import { NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT || 'mailto:admin@fittribe.ke',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+let vapidInitialized = false;
+function initVapid() {
+  if (vapidInitialized) return;
+  const subject = process.env.VAPID_SUBJECT || 'mailto:admin@fittribe.ke';
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!publicKey || !privateKey) {
+    throw new Error('VAPID env vars not set: NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are required');
+  }
+  webpush.setVapidDetails(subject, publicKey, privateKey);
+  vapidInitialized = true;
+}
 
 export async function POST(request: Request) {
+  initVapid();
   // Allow authenticated users to send to themselves, or secret-key callers to broadcast
   const secret = request.headers.get('x-push-secret');
   const isAdmin = secret === process.env.PUSH_SEND_SECRET;
