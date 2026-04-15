@@ -137,18 +137,29 @@ Every daily active user on Daily Habit Hub generates a real on-chain transaction
 
 ## Achievement NFTs (FITA)
 
-Soulbound ERC-721 — non-transferable, permanently tied to the earning wallet.
+Soulbound ERC-721 — non-transferable, permanently tied to the earning wallet. You can't buy them, transfer them, or fake them. The only way to get one is to show up.
 
-| Badge | Trigger | On-chain |
+### How You Earn a Badge
+
+1. **Check in daily** — log your workout in the app. Each check-in calls the HabitRegistry contract on Avalanche mainnet and mints 10 $HABIT to your wallet.
+2. **Hit a milestone** — the contract automatically tracks your on-chain check-in count. At 7, 30, and 100 check-ins it triggers the AchievementNFT contract and mints the badge directly to your wallet. No extra steps needed.
+3. **Claim app badges** — for streak-based milestones (e.g. 7-day streak, 49-day streak), hit the Claim button in the Achievements page once you've hit the threshold. These are recorded in your account and come with a downloadable SVG badge.
+4. **Retroactive claiming** — if you built a streak before connecting a wallet, you can still claim your earned badges. Connect a wallet and the app will recognise your history.
+
+### Badge Tiers
+
+| Badge | How to Earn | Where It Lives |
 |---|---|---|
-| Week Warrior | 7 on-chain check-ins | Auto-minted by contract |
-| Iron Consistent | 30 on-chain check-ins | Auto-minted by contract |
-| Century Club | 100 on-chain check-ins | Auto-minted by contract |
-| Genesis Badge | 1st check-in | App-layer (Supabase) |
-| Three Weeks Strong | 21 check-ins | App-layer (Supabase) |
-| Consistency Legend | 49-day streak | App-layer (Supabase) |
+| Genesis Badge | Complete your 1st check-in | App (Supabase) |
+| Iron Will | Maintain a 7-day streak | App (Supabase) |
+| Week Warrior | 7 on-chain check-ins | Avalanche — auto-minted by contract |
+| Three Weeks Strong | 21 total check-ins | App (Supabase) |
+| Month Champion | Maintain a 30-day streak | App (Supabase) |
+| Iron Consistent | 30 on-chain check-ins | Avalanche — auto-minted by contract |
+| Consistency Legend | Maintain a 49-day streak | App (Supabase) |
+| Century Club | 100 on-chain check-ins | Avalanche — auto-minted by contract |
 
-Retroactive claiming supported — users who built streaks before connecting a wallet can still claim.
+On-chain badges are verifiable on Snowscan and permanently attached to your wallet address. Nobody can take them from you.
 
 ---
 
