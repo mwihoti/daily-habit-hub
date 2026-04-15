@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npx hardhat:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npm run:*)",
+      "Bash(find /home/mwihotidan/work/startups/daily-habit-hub -maxdepth 3 -type f \\\\\\(-name *.sql -o -name *profiles* \\\\\\))",
+      "Bash(grep -r from\\\\\\(/home/mwihotidan/work/startups/daily-habit-hub/app --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"INSERT INTO profiles\\\\|CREATE TABLE.*profiles\" /home/mwihotidan/work/startups/daily-habit-hub --include=*.sql --include=*.ts --include=*.tsx)",
+      "Bash(grep:*)",
+      "Bash(find /home/mwihotidan/work/startups/daily-habit-hub -maxdepth 2 -name .env* -o -name *.example)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
