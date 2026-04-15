@@ -132,7 +132,7 @@ export function generateBadgeSVG(
   <text x="200" y="352" text-anchor="middle"
         font-family="system-ui,-apple-system,sans-serif"
         font-size="11" fill="rgba(255,255,255,0.55)">
-    Avalanche Fuji Testnet
+    Avalanche C-Chain
   </text>
 
   <!-- Claimed date -->

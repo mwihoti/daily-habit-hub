@@ -1,6 +1,6 @@
 # Daily Habit Hub — Pitch & Strategy
 
-**Build exercise habits. Earn crypto. Prove your consistency on-chain.**
+**Show up every day. Earn crypto. Build a fitness record no one can fake.**
 
 Live App: https://daily-habit-hub.vercel.app
 
@@ -8,155 +8,115 @@ Live App: https://daily-habit-hub.vercel.app
 
 ## The Problem
 
-Fitness apps have a retention problem. Most people quit within 30 days because there is no real cost to stopping and no tangible reward for continuing. Traditional social features — likes, streaks, badges — are forgettable.
+Most people quit fitness apps within 30 days. Not because they stop caring — but because there is nothing real at stake. Likes disappear. Streaks reset. Badges mean nothing outside the app.
 
-In Kenya and East Africa, this problem is compounded:
-- No dominant fitness app built for local context
-- Personal trainers earn inconsistently through WhatsApp referrals
-- Crypto adoption is among the highest in Africa yet no fitness app taps into it
+In Kenya this hits differently. Personal trainers are talented but survive on WhatsApp referrals and inconsistent cash payments. Gym-goers want accountability but have no community that keeps them showing up. Meanwhile Kenya is one of the most crypto-active countries in the world, yet not a single fitness app has touched that.
 
----
-
-## The Solution
-
-Daily Habit Hub rewards consistency with assets users actually own:
-- **$HABIT tokens** — 10 ERC-20 tokens minted per verified daily check-in
-- **Soulbound NFT badges** — non-transferable achievement proof at 7, 30, 100 on-chain check-ins
-- **Zero gas fees** — admin wallet pays all gas, users never need AVAX
-- **No MetaMask required** — one-click in-app wallet with PIN-encrypted cloud backup
+We think that's a big missed opportunity.
 
 ---
 
-## Target Users
+## What We Built
 
-### Primary — The Nairobi Hustler
-Age 22–35, income KES 30K–120K/month, based in Nairobi (Kilimani, Westlands, Kasarani, Thika Road).
+Daily Habit Hub is a fitness accountability app where your consistency lives on the blockchain. Every time you check in, you earn $HABIT tokens and — at milestones — soulbound NFT badges that are permanently tied to your wallet. You can't fake them, transfer them, or buy them. You can only earn them by showing up.
 
-- Already works out but lacks accountability
-- Familiar with M-Pesa — digital rewards feel natural
-- Crypto-curious but not crypto-native
-- Responds to streaks, leaderboards, and tangible rewards
+What makes it actually usable:
+- **Zero gas fees** — we cover all transaction costs. Users never touch AVAX.
+- **No MetaMask, no seed phrases** — one tap creates an in-app wallet with PIN-encrypted cloud backup.
+- **Real community** — leaderboard, public workout feed, likes, comments, trainer marketplace with live chat.
 
-**Why they stay:** Quitting means leaving $HABIT tokens on the table.
-
-### Secondary Segments
-
-| Segment | Profile | Value |
-|---|---|---|
-| Kenyan Fitness Trainers | Mid-tier gym PTs, independent coaches | Marketplace revenue, retention driver |
-| Diaspora (UK/US/CA) | Kenyans abroad, higher crypto literacy | Token demand, premium revenue, word of mouth |
-| Campus Athletes | UoN, Strathmore, USIU students | Viral growth engine, future core users |
-| Corporate Employees | Safaricom, KCB, tech companies | B2B contracts, low churn |
-
-### Who Is Not the User Yet
-Rural Kenya (smartphone penetration too low), serious athletes (use Garmin/Strava), pure crypto traders (want speculation not discipline).
+If you quit, you leave tokens on the table. That's the hook.
 
 ---
 
-## Value Acquisition & Monetization
+## Who It's For
 
-### Revenue Streams
+### The Nairobi Hustler
+22–35 years old. Earns KES 30K–120K/month. Already working out but struggling to stay consistent. Grew up on M-Pesa — digital rewards make sense. Crypto-curious but not deep in it. Responds to competition, streaks, and anything that feels like a win.
 
-**1. Trainer Marketplace Commission**
-10–15% on every coaching session booked. Trainers list sessions priced in KES or $HABIT.
-- 100 trainers × 10 sessions/month × $20 average = ~$20K/month at early scale
+### Also Built For
 
-**2. Premium Subscription**
-- Free tier: 10 $HABIT per check-in
-- Premium ($5/month or stake 500 $HABIT): 15 $HABIT per check-in, advanced analytics, nutrition log
-- Creates buy pressure — users must acquire $HABIT to unlock multipliers
-
-**3. Corporate Wellness B2B**
-Companies pay per-seat monthly fees. HR dashboard shows team streak health.
-Target: Safaricom, KCB, NCBA, Andela, Cellulant.
-Recurring, predictable revenue with no token dependency.
-
-**4. Sponsored Challenges**
-Brands (Nike Kenya, supplement companies, gyms) pay to create 30-day branded challenges.
-Winners split a pooled $HABIT prize. Protocol takes a setup fee.
-
-### Token Value Loop
-
-```
-User checks in daily
-  → earns $HABIT
-  → stakes $HABIT for reward multiplier   (locks supply)
-  → pays trainer in $HABIT                (real utility)
-  → trainer converts portion to AVAX      (cross-token flow)
-  → more users join to earn               (demand rises)
-  → early holders benefit                 (community-aligned incentives)
-```
-
-Hard cap of 21M $HABIT enforced at contract level. At 10,000 DAU the cap is hit in under a year — after that, all utility demand goes to secondary market.
-
----
-
-## Value to the Avalanche Ecosystem
-
-| Contribution | Why It Matters |
+| Who | Why They Care |
 |---|---|
-| Real daily on-chain transactions | Every check-in = 1 tx → network fees, activity metrics |
-| Non-speculative new wallets | Fitness users are not crypto-native — expands the AVAX user base |
-| Gasless onboarding pattern | Proves admin-wallet UX works; replicable by other builders |
-| $HABIT token liquidity | Future DEX listing (Trader Joe / Pangolin) adds TVL and volume |
-| Soulbound NFT use case | Demonstrates non-financial NFT utility |
-| Sub-Saharan Africa market | Region Avalanche has not cracked — strategic for ecosystem grants |
+| Independent fitness trainers | Get paid in $HABIT, build a client base through the marketplace |
+| Kenyan diaspora (UK/US/CA) | Higher crypto literacy, drive token demand and referrals |
+| Campus athletes (UoN, Strathmore, USIU) | Viral streak competitions between halls and courses |
+| Corporate HR teams | Team wellness dashboards, employee accountability, B2B contracts |
 
 ---
 
-## Why Kenya
+## How We Make Money
 
-- 54M population, ~40% smartphone penetration and growing fast
-- M-Pesa familiarity — Kenyans are already comfortable with mobile digital value transfer
-- Kenya ranks top 5 globally in grassroots crypto usage (Chainalysis 2023)
-- No incumbent fitness app with Web3 rewards — first-mover advantage is real
-- Fitness trainer income is broken — your marketplace solves a real livelihood problem
+**Trainer marketplace** — we take 10–15% on every session booked. At 100 active trainers doing 10 sessions/month at $20 average, that's ~$20K/month.
+
+**Premium tier** — free users earn 10 $HABIT/check-in. Premium ($5/month or stake 500 $HABIT) earns 15, unlocks advanced analytics and a nutrition log. Staking locks supply, creating buy pressure.
+
+**Corporate wellness** — per-seat monthly contracts with companies like Safaricom, KCB, Andela. Recurring revenue with no token dependency.
+
+**Sponsored challenges** — brands pay to run 30-day challenges. Winners split a pooled $HABIT prize. We take a setup fee.
+
+### The Token Loop
+
+```
+You check in → earn $HABIT
+  → stake to boost rewards       (supply locks)
+  → pay your trainer in $HABIT   (real utility)
+  → trainer converts some to AVAX (cross-token flow)
+  → new users join to earn        (demand grows)
+  → early consistent users win    (community-aligned)
+```
+
+Hard cap: 21 million $HABIT. No pre-mine. The team earns tokens the same way users do — by showing up.
 
 ---
 
-## Traction & Product Status
+## Why This Matters for Avalanche
 
-### Phase 1 — Core App (Complete)
-- Daily check-in with photo upload and IPFS pinning
-- Streak tracking via Supabase RPC (atomic, cheat-proof)
-- Community feed with likes and comments
+Kenya is a market Avalanche hasn't cracked yet. We're building the entry point.
+
+Every daily active user on Daily Habit Hub generates a real on-chain transaction, a new Avalanche wallet, and genuine $HABIT token velocity. These aren't speculators. They're gym-goers who don't even know they're using a blockchain. That's the kind of organic adoption that makes an ecosystem grow.
+
+- 54M population, ~40% smartphone penetration and rising fast
+- Top 5 globally in grassroots crypto adoption (Chainalysis 2023)
+- M-Pesa-native — digital value transfer is second nature here
+- No Web3 fitness competitor in the market
+- Our gasless onboarding pattern is replicable by any Avalanche builder
+
+---
+
+## Where We Are
+
+**Done:**
+- Full web app live at daily-habit-hub.vercel.app
+- Daily check-in with IPFS photo pinning
+- Cheat-proof streak tracking
+- Community feed, leaderboard (top 50, live)
 - Trainer marketplace with real-time messaging
-- Goals and tasks management
-- Progress analytics and workout heatmap
+- In-app self-custodial wallet, PIN backup, cross-device restore
+- HabitRegistry, HabitToken ($HABIT), AchievementNFT — all deployed on Avalanche C-Chain mainnet
+- Soulbound NFT badges verified on Snowscan
 
-### Phase 2 — Web3 Integration (Complete)
-- HabitRegistry, HabitToken ($HABIT), AchievementNFT deployed on Avalanche Fuji
-- Admin wallet gasless minting — zero AVAX cost to users
-- In-app self-custodial wallet (no MetaMask required)
-- PIN-encrypted cloud key backup with cross-device restore
-- Achievement badges with Snowscan verification
-- SVG badge download
-- Leaderboard (top 50 by streak, live)
-
-### Phase 3 — Growth & Mainnet (Q2–Q3 2026)
-- Deploy contracts to Avalanche C-Chain mainnet
-- $HABIT DEX listing (Trader Joe / Pangolin)
-- Push notifications — workout reminders
+**Next with grant support:**
+- Grassroots marketing in Nairobi — gym partnerships, trainer onboarding, streak challenges
+- List $HABIT on Trader Joe / Pangolin
 - Mobile app (React Native / Expo)
-- Coach payment in $HABIT tokens
-- Premium subscription tier
+- Push notification workout reminders
+- Coach payments in $HABIT
 
-### Phase 4 — Ecosystem (Q4 2026+)
-- Governance: $HABIT holders vote on badge types and emission rate
-- Staking: stake $HABIT to boost streak multiplier
-- Group challenges with pooled $HABIT prizes
-- API for third-party fitness app integration
-- East Africa expansion: Uganda, Tanzania, Rwanda
+**Later:**
+- $HABIT governance and staking
+- Group challenges with pooled prizes
+- East Africa expansion — Uganda, Tanzania, Rwanda
 
 ---
 
-## Smart Contracts (Avalanche Fuji Testnet)
+## Smart Contracts (Avalanche C-Chain Mainnet)
 
 | Contract | Address |
 |---|---|
-| HabitRegistry | `0xC578af79b6b727a10505f5aFd288931C75ae37cD` |
-| HabitToken ($HABIT) | `0xF93A86243012c7ABB2B0F2aE0a189614F37aF014` |
-| AchievementNFT (FITA) | `0xc62030e01969c147a2bD3Fe3441de67c75941f92` |
+| HabitRegistry | `0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597` |
+| HabitToken ($HABIT) | `0xf392A21a7230a103271ecb88028aDE17B470A267` |
+| AchievementNFT (FITA) | `0xc10e391172fE5E6723422F05197bBc95b35D9188` |
 
 ---
 
@@ -204,9 +164,11 @@ Retroactive claiming supported — users who built streaks before connecting a w
 
 ---
 
-## Grant Pitch (One Paragraph)
+## Grant Pitch
 
-Daily Habit Hub is the first fitness-to-earn app built natively on Avalanche with a fully gasless UX, targeting Kenya's 54M population where no Web3 fitness competitor exists. Every daily active user generates on-chain transactions, $HABIT token velocity, and a new permanent wallet on the Avalanche network. We have a working product live at daily-habit-hub.vercel.app with smart contracts deployed on Fuji, a trainer marketplace, community features, and a tokenomics model with a hard-capped supply and zero pre-mine. We are seeking ecosystem grant support to deploy to mainnet, list $HABIT on a DEX, and launch in Nairobi with an initial cohort of 500 users and 50 certified trainers.
+We started Daily Habit Hub because we watched talented trainers in Nairobi struggle to find clients and watched motivated people quit their fitness goals because no app gave them a real reason to stay. We built the product we wished existed — one where showing up every day actually means something, where your consistency is provable and rewarded with assets you own.
+
+The app is live. The contracts are on mainnet. The community is starting to form. What we need now is fuel — to get into Nairobi gyms, onboard the first wave of trainers, and show the Avalanche ecosystem what real grassroots Web3 adoption looks like from East Africa.
 
 ---
 

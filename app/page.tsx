@@ -100,11 +100,11 @@ const testimonials = [
 ];
 
 const CONTRACT_ADDRESSES = {
-  HabitRegistry:   "0xC578af79b6b727a10505f5aFd288931C75ae37cD",
-  HabitToken:      "0xF93A86243012c7ABB2B0F2aE0a189614F37aF014",
-  AchievementNFT:  "0xc62030e01969c147a2bD3Fe3441de67c75941f92",
+  HabitRegistry:   "0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597",
+  HabitToken:      "0xf392A21a7230a103271ecb88028aDE17B470A267",
+  AchievementNFT:  "0xc10e391172fE5E6723422F05197bBc95b35D9188",
 };
-const SNOWSCAN = "https://testnet.snowscan.xyz";
+const SNOWSCAN = "https://snowscan.xyz";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -338,7 +338,7 @@ export default function LandingPage() {
               <div className="flex items-center gap-2 mb-4">
                 <Globe className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-                  Live Contracts — Avalanche Fuji Testnet
+                  Live Contracts — Avalanche C-Chain Mainnet
                 </h3>
               </div>
               <div className="space-y-3">

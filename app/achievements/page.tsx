@@ -18,7 +18,7 @@ import { downloadBadge } from "@/lib/web3/badgeGenerator";
 import { ACHIEVEMENT_NFT_ADDRESS } from "@/lib/web3/habitRegistry";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 
-const FUJI_SNOWSCAN = 'https://testnet.snowscan.xyz';
+const FUJI_SNOWSCAN = 'https://snowscan.xyz';
 
 // ── Milestone definitions ─────────────────────────────────────────────────────
 

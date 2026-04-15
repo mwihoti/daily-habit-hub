@@ -48,7 +48,7 @@ Daily Habit Hub solves this with **skin-in-the-game accountability**: your consi
 | In-App Wallet | Generate a self-custodial wallet in one click (no MetaMask) |
 | Cloud Key Backup | PIN-encrypted private key synced to Supabase (AES-GCM 256-bit) |
 | Cross-device Restore | Restore wallet from encrypted backup on any device |
-| Snowscan Verification | Every achievement and transaction visible on Avalanche Fuji explorer |
+| Snowscan Verification | Every achievement and transaction visible on Avalanche mainnet explorer |
 | Milestone Claiming | Retroactive claim for users who reached milestones before wallet setup |
 
 ---
@@ -61,13 +61,13 @@ Daily Habit Hub solves this with **skin-in-the-game accountability**: your consi
 - **EVM-compatible** — full Solidity + wagmi/viem tooling support
 - **Growing ecosystem** — strong DeFi + gaming + health track communities
 
-### Smart Contracts (Fuji Testnet)
+### Smart Contracts (Avalanche C-Chain Mainnet)
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| HabitRegistry | [`0xC578af79b6b727a10505f5aFd288931C75ae37cD`](https://testnet.snowscan.xyz/address/0xC578af79b6b727a10505f5aFd288931C75ae37cD) | Core check-in registry, rate-limited to 1/wallet/UTC day |
-| HabitToken ($HABIT) | [`0xF93A86243012c7ABB2B0F2aE0a189614F37aF014`](https://testnet.snowscan.xyz/address/0xF93A86243012c7ABB2B0F2aE0a189614F37aF014) | ERC-20 reward token, 21M cap |
-| AchievementNFT (FITA) | [`0xc62030e01969c147a2bD3Fe3441de67c75941f92`](https://testnet.snowscan.xyz/address/0xc62030e01969c147a2bD3Fe3441de67c75941f92) | Soulbound ERC-721, non-transferable achievement badges |
+| HabitRegistry | [`0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597`](https://snowscan.xyz/address/0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597) | Core check-in registry, rate-limited to 1/wallet/UTC day |
+| HabitToken ($HABIT) | [`0xf392A21a7230a103271ecb88028aDE17B470A267`](https://snowscan.xyz/address/0xf392A21a7230a103271ecb88028aDE17B470A267) | ERC-20 reward token, 21M cap |
+| AchievementNFT (FITA) | [`0xc10e391172fE5E6723422F05197bBc95b35D9188`](https://snowscan.xyz/address/0xc10e391172fE5E6723422F05197bBc95b35D9188) | Soulbound ERC-721, non-transferable achievement badges |
 
 ### Architecture
 
@@ -160,22 +160,21 @@ Badges are **retroactively claimable** — users who built streaks before connec
 - [x] Progress analytics + workout heatmap
 
 ### ✅ Phase 2 — Web3 Integration (Complete)
-- [x] HabitRegistry, HabitToken, AchievementNFT deployed on Fuji
+- [x] HabitRegistry, HabitToken, AchievementNFT deployed on Avalanche mainnet
 - [x] Admin wallet minting (zero gas for users)
 - [x] In-app self-custodial wallet (no MetaMask required)
 - [x] PIN-encrypted cloud key backup + cross-device restore
 - [x] Achievements page with Snowscan verification links
 - [x] Badge SVG download
 
-### 🔄 Phase 3 — Growth & Mainnet (Q2–Q3 2025)
-- [ ] Deploy contracts to Avalanche C-Chain mainnet
-- [ ] WalletConnect production project ID
+### 🔄 Phase 3 — Growth (Q2–Q3 2026)
 - [ ] $HABIT token listing on DEX (Trader Joe / Pangolin)
 - [ ] Push notifications via service worker (workout reminders)
 - [ ] Mobile app (React Native / Expo)
 - [ ] Coach payment in $HABIT tokens
+- [ ] Nairobi gym partnerships and user onboarding
 
-### 🔮 Phase 4 — Ecosystem (Q4 2025+)
+### 🔮 Phase 4 — Ecosystem (Q4 2026+)
 - [ ] Governance: $HABIT holders vote on new badge types and emission rate
 - [ ] Staking: stake $HABIT to boost streak multiplier (earn 15 instead of 10)
 - [ ] Challenges: group fitness challenges with pooled $HABIT prizes
@@ -197,7 +196,7 @@ Badges are **retroactively claimable** — users who built streaks before connec
 | Styling | Tailwind CSS v3, shadcn/ui (Radix UI) |
 | State | TanStack Query v5 |
 | Testing | Vitest + Testing Library |
-| Deployment | Vercel (app), Avalanche Fuji (contracts) |
+| Deployment | Vercel (app), Avalanche C-Chain mainnet (contracts) |
 
 ---
 
@@ -224,10 +223,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Web3 (deployed contract addresses)
-NEXT_PUBLIC_HABIT_REGISTRY_ADDRESS=0xC578af79b6b727a10505f5aFd288931C75ae37cD
-NEXT_PUBLIC_HABIT_TOKEN_ADDRESS=0xF93A86243012c7ABB2B0F2aE0a189614F37aF014
-NEXT_PUBLIC_ACHIEVEMENT_NFT_ADDRESS=0xc62030e01969c147a2bD3Fe3441de67c75941f92
+# Web3 (Avalanche C-Chain mainnet contract addresses)
+NEXT_PUBLIC_HABIT_REGISTRY_ADDRESS=0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597
+NEXT_PUBLIC_HABIT_TOKEN_ADDRESS=0xf392A21a7230a103271ecb88028aDE17B470A267
+NEXT_PUBLIC_ACHIEVEMENT_NFT_ADDRESS=0xc10e391172fE5E6723422F05197bBc95b35D9188
 
 # Admin wallet for gasless minting (server-only, never expose to client)
 PRIVATE_ADMIN_KEY=0xyour_admin_wallet_private_key
@@ -270,25 +269,16 @@ npm run test:run
 npx hardhat compile
 ```
 
-### Deploy to Fuji Testnet
+### Deploy to Avalanche Mainnet
 ```bash
-npx hardhat run scripts/deploy.ts --network fuji
+npx hardhat run scripts/deploy.ts --network avalanche
 ```
 Copy the deployed addresses into your `.env` file.
 
-### Verify on Snowtrace/Snowscan
+### Verify on Snowscan
 ```bash
-npx hardhat verify --network fuji <CONTRACT_ADDRESS> [constructor args]
+npx hardhat verify --network avalanche <CONTRACT_ADDRESS> [constructor args]
 ```
-
-### Mainnet Migration (Phase 3)
-To deploy to Avalanche C-Chain mainnet:
-1. Update `hardhat.config.ts` — add `mainnet` network with RPC `https://api.avax.network/ext/bc/C/rpc` and Chain ID `43114`
-2. Fund admin wallet with AVAX for gas
-3. Run `npx hardhat run scripts/deploy.ts --network mainnet`
-4. Update `.env`: replace Fuji addresses with mainnet addresses
-5. Update `app/api/web3/record-habit/route.ts`: the `isProduction` flag automatically switches to mainnet chain when `NODE_ENV=production`
-6. Set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in Vercel production env vars
 
 ---
 

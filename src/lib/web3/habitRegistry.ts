@@ -1,5 +1,5 @@
 // ─── Contract Addresses ───────────────────────────────────────────────────────
-// Update these after running: npx hardhat run scripts/deploy.ts --network fuji
+// Update these after running: npx hardhat run scripts/deploy.ts --network avalanche
 
 export const HABIT_REGISTRY_ADDRESS = (
   process.env.NEXT_PUBLIC_HABIT_REGISTRY_ADDRESS || '0x0000000000000000000000000000000000000000'

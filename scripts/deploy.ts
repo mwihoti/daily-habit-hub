@@ -50,9 +50,9 @@ async function main() {
   console.log(`NEXT_PUBLIC_ACHIEVEMENT_NFT_ADDRESS=${nftAddr}`);
   console.log("═══════════════════════════════════════════════════\n");
   console.log("Next steps:");
-  console.log("  npx hardhat verify --network fuji", registryAddr, tokenAddr, nftAddr);
-  console.log("  npx hardhat verify --network fuji", tokenAddr);
-  console.log("  npx hardhat verify --network fuji", nftAddr);
+  console.log("  npx hardhat verify --network avalanche", registryAddr, tokenAddr, nftAddr);
+  console.log("  npx hardhat verify --network avalanche", tokenAddr);
+  console.log("  npx hardhat verify --network avalanche", nftAddr);
 }
 
 main().catch((error) => {

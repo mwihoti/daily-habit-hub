@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server'
 import { createPublicClient, createWalletClient, http, parseAbi } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { avalancheFuji, avalanche } from 'viem/chains'
+import { avalanche } from 'viem/chains'
 import { createClient } from '@/lib/supabase/server'
 
 // Minimal ABI slice — only what this route needs
@@ -22,11 +22,8 @@ const REGISTRY_ABI = parseAbi([
   'function canRecordToday(address user) external view returns (bool)',
 ])
 
-const isProduction = process.env.NODE_ENV === 'production'
-const chain = isProduction ? avalanche : avalancheFuji
-const rpcUrl = isProduction
-  ? 'https://api.avax.network/ext/bc/C/rpc'
-  : 'https://api.avax-test.network/ext/bc/C/rpc'
+const chain = avalanche
+const rpcUrl = 'https://api.avax.network/ext/bc/C/rpc'
 
 export async function POST(request: Request) {
   try {

@@ -40,8 +40,8 @@ const steps = [
   },
   {
     n: 5,
-    title: 'Switch to Avalanche Fuji',
-    desc: 'In MetaMask, switch the network to "Avalanche Fuji C-Chain" (Chain ID 43113). Your $HABIT tokens and NFTs will be visible there.',
+    title: 'Switch to Avalanche C-Chain',
+    desc: 'In MetaMask, switch the network to "Avalanche C-Chain" (Chain ID 43114). Your $HABIT tokens and NFTs will be visible there.',
   },
 ]
 
