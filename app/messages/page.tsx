@@ -94,22 +94,23 @@ function MessagesContent() {
       const res = await fetch("/api/conversations");
       if (res.status === 401) return; // not logged in
       const data = await res.json();
-      setConversations(data.conversations ?? []);
+      const convs: Conversation[] = data.conversations ?? [];
+      setConversations(convs);
 
-      // Auto-select first conversation if none selected and no URL param
-      if (!selectedConvId && data.conversations?.length > 0) {
-        setSelectedConvId(data.conversations[0].id);
+      // Auto-select first conversation if none is currently selected
+      if (convs.length > 0) {
+        setSelectedConvId((prev) => prev ?? convs[0].id);
       }
     } catch {
       // ignore
     } finally {
       setLoadingConvs(false);
     }
-  }, [selectedConvId]);
+  }, []);
 
   useEffect(() => {
     fetchConversations();
-  }, []);
+  }, [fetchConversations]);
 
   // Fetch messages for selected conversation
   useEffect(() => {

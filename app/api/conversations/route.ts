@@ -11,13 +11,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = await supabase
+    const { data: conversations, error } = await supabase
       .from('conversations')
-      .select(`
-        *,
-        trainer:trainer_profiles!conversations_trainer_id_fkey(id, full_name, avatar_url, user_id),
-        user_profile:profiles!conversations_user_id_fkey(id, full_name, avatar_url)
-      `)
+      .select('*')
       .or(`user_id.eq.${user.id},trainer_id.eq.${user.id}`)
       .order('last_message_at', { ascending: false, nullsFirst: false })
 
@@ -25,7 +21,31 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ conversations: data })
+    if (!conversations || conversations.length === 0) {
+      return NextResponse.json({ conversations: [] })
+    }
+
+    const trainerIds = [...new Set(conversations.map((c) => c.trainer_id))]
+    const userIds = [...new Set(conversations.map((c) => c.user_id))]
+
+    const [{ data: trainerProfiles }, { data: userProfiles }] = await Promise.all([
+      supabase
+        .from('trainer_profiles')
+        .select('id, full_name, avatar_url, user_id')
+        .in('user_id', trainerIds),
+      supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds),
+    ])
+
+    const enriched = conversations.map((conv) => ({
+      ...conv,
+      trainer: trainerProfiles?.find((t) => t.user_id === conv.trainer_id) ?? null,
+      user_profile: userProfiles?.find((u) => u.id === conv.user_id) ?? null,
+    }))
+
+    return NextResponse.json({ conversations: enriched })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? 'Server error' }, { status: 500 })
   }
