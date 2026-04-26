@@ -322,7 +322,11 @@ function MessagesContent() {
 
           {/* Chat View */}
           <Card className={cn("flex flex-col", !selectedConvId && "hidden md:flex")}>
-            {selectedConv ? (
+            {loadingConvs && selectedConvId ? (
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : selectedConv ? (
               <>
                 {/* Header */}
                 <div className="flex items-center gap-3 p-4 border-b border-border">
