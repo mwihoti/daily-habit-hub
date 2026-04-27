@@ -36,5 +36,10 @@ async function generateIcon(size) {
 }
 
 console.log('Generating PWA icons...');
-await Promise.all(SIZES.map(generateIcon));
-console.log('Done — icons saved to public/icons/');
+try {
+  await Promise.all(SIZES.map(generateIcon));
+  console.log('Done — icons saved to public/icons/');
+} catch (err) {
+  console.warn('Icon generation failed (non-fatal):', err.message);
+  process.exit(0);
+}
