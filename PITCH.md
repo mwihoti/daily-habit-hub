@@ -32,7 +32,7 @@ If you quit, you leave tokens on the table. That's the hook.
 ## Who It's For
 
 ### The Nairobi Hustler
-22–35 years old. Earns KES 30K–120K/month. Already working out but struggling to stay consistent. Grew up on M-Pesa — digital rewards make sense. Crypto-curious but not deep in it. Responds to competition, streaks, and anything that feels like a win.
+22–35 years old. who want to be part of a community. Already working out but struggling to stay consistent. Grew up on M-Pesa — digital rewards make sense. Crypto-curious but not deep in it. Responds to competition, streaks, and anything that feels like a win. 
 
 ### Also Built For
 
