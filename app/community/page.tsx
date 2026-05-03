@@ -17,7 +17,7 @@ import { ACTIVITY_OPTIONS, getActivityEmoji, getActivityLabel } from "@/lib/acti
 const filters = [
   { label: "All", value: "all" },
   ...ACTIVITY_OPTIONS.filter((option) =>
-    ["gym", "run", "walk", "home", "cycling", "mobility", "recovery", "meal_prep", "coach_task", "custom"].includes(option.id),
+    ["gym", "run", "walk", "home", "cycling", "mobility", "recovery", "meal_prep", "coach_task", "personal_project", "custom"].includes(option.id),
   ).map((option) => ({
     label: option.label,
     value: option.id,

@@ -34,6 +34,7 @@ const GROUP_ORDER = ["move", "recover", "build"] as const;
 const ENERGY_LEVELS = ["low", "steady", "high"] as const;
 const EFFORT_LEVELS = ["light", "moderate", "hard"] as const;
 const DURATION_OPTIONS = [10, 20, 30, 45, 60, 90];
+const PROJECT_DURATION_OPTIONS = [15, 30, 45, 60, 90, 120];
 
 // ─── Confetti Particle ────────────────────────────────────────────────────────
 function Confetti() {
@@ -156,6 +157,7 @@ export default function CheckInPage() {
   const [note, setNote]                     = useState("");
   const [todayWin, setTodayWin]             = useState("");
   const [duration, setDuration]             = useState<number | null>(null);
+  const [customDuration, setCustomDuration] = useState("");
   const [energy, setEnergy]                 = useState<string | null>(null);
   const [effort, setEffort]                 = useState<string | null>(null);
   const [photo, setPhoto]                   = useState<File | null>(null);
@@ -237,11 +239,14 @@ export default function CheckInPage() {
       const activityTitle = selectedType === "custom"
         ? customTitle.trim() || "Custom Win"
         : getActivityLabel(selectedType);
+      const effectiveDuration = customDuration.trim()
+        ? Number.parseInt(customDuration, 10) || null
+        : duration;
       const formattedNote = buildActivityNote(note, {
         todayWin,
         energy: energy ?? undefined,
         effort: effort ?? undefined,
-        duration,
+        duration: effectiveDuration,
       });
 
       try {
@@ -270,7 +275,7 @@ export default function CheckInPage() {
           type: selectedType,
           activity_title: activityTitle,
           note: formattedNote,
-          duration_minutes: duration,
+          duration_minutes: effectiveDuration,
           energy_level: energy,
           effort_level: effort,
           photo_url,
@@ -344,6 +349,8 @@ export default function CheckInPage() {
     label: ACTIVITY_GROUP_LABELS[group],
     options: ACTIVITY_OPTIONS.filter((option) => option.group === group),
   }));
+  const isProjectCheckIn = selectedType === "personal_project";
+  const durationChoices = isProjectCheckIn ? PROJECT_DURATION_OPTIONS : DURATION_OPTIONS;
   const selectedActivityLabel = getActivityLabel(selectedType, customTitle);
   const selectedActivityDescription = getActivityDescription(selectedType);
 
@@ -511,6 +518,15 @@ export default function CheckInPage() {
                   </p>
                 </div>
 
+                {isProjectCheckIn && (
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                    <p className="font-semibold">Log the actual work block</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Track the focused time you spent on the project, not your whole day.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="today-win" className="font-semibold">Today's win</Label>
                   <input
@@ -525,13 +541,18 @@ export default function CheckInPage() {
 
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label className="font-semibold">Duration</Label>
+                    <Label className="font-semibold">
+                      {isProjectCheckIn ? "Time spent" : "Duration"}
+                    </Label>
                     <div className="flex flex-wrap gap-2">
-                      {DURATION_OPTIONS.map((value) => (
+                      {durationChoices.map((value) => (
                         <button
                           key={value}
                           type="button"
-                          onClick={() => setDuration(duration === value ? null : value)}
+                          onClick={() => {
+                            setCustomDuration("");
+                            setDuration(duration === value ? null : value);
+                          }}
                           className={cn(
                             "px-3 py-2 rounded-full border text-xs font-medium transition-colors",
                             duration === value
@@ -543,6 +564,20 @@ export default function CheckInPage() {
                         </button>
                       ))}
                     </div>
+                    <input
+                      type="number"
+                      min={5}
+                      max={480}
+                      step={5}
+                      inputMode="numeric"
+                      value={customDuration}
+                      onChange={(e) => {
+                        setCustomDuration(e.target.value);
+                        if (e.target.value) setDuration(null);
+                      }}
+                      placeholder={isProjectCheckIn ? "Custom minutes, e.g. 75" : "Optional custom minutes"}
+                      className="w-full p-3 rounded-xl border-2 border-border bg-background focus:border-primary focus:outline-none transition-colors"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="font-semibold">Energy</Label>
@@ -681,7 +716,7 @@ export default function CheckInPage() {
 
         {/* Community Check-ins */}
         <div className="mt-8">
-          <h3 className="font-display font-bold text-lg mb-4">Your tribe is working out 👀</h3>
+          <h3 className="font-display font-bold text-lg mb-4">Your tribe is showing up 👀</h3>
           <div className="space-y-3">
             {recentCheckins.length > 0 ? (
               recentCheckins.map((checkin: any, i: number) => (
