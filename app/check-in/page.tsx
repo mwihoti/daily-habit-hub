@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StreakBadge, WeekCalendar } from "@/components/StreakComponents";
 import {
-  CheckCircle, Dumbbell, Heart, Bike, PersonStanding,
-  Home, Timer, Camera, X, Globe, Lock, Coins, Share2,
+  CheckCircle, Camera, X, Globe, Lock, Coins, Share2,
   ArrowRight, Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,15 +21,19 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { WalletConnectSection } from "@/components/WalletConnectSection";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
+import {
+  ACTIVITY_OPTIONS,
+  ACTIVITY_GROUP_LABELS,
+  buildActivityNote,
+  getActivityDescription,
+  getActivityEmoji,
+  getActivityLabel,
+} from "@/lib/activityTypes";
 
-const workoutTypes = [
-  { id: "gym",     icon: Dumbbell,        label: "Gym",            emoji: "🏋️" },
-  { id: "run",     icon: PersonStanding,  label: "Run/Walk",       emoji: "🏃" },
-  { id: "home",    icon: Home,            label: "Home Workout",   emoji: "🏠" },
-  { id: "cycling", icon: Bike,            label: "Cycling",        emoji: "🚴" },
-  { id: "yoga",    icon: Heart,           label: "Yoga/Stretch",   emoji: "🧘" },
-  { id: "other",   icon: Timer,           label: "Other",          emoji: "💪" },
-];
+const GROUP_ORDER = ["move", "recover", "build"] as const;
+const ENERGY_LEVELS = ["low", "steady", "high"] as const;
+const EFFORT_LEVELS = ["light", "moderate", "hard"] as const;
+const DURATION_OPTIONS = [10, 20, 30, 45, 60, 90];
 
 // ─── Confetti Particle ────────────────────────────────────────────────────────
 function Confetti() {
@@ -111,16 +114,16 @@ function CelebrationScreen({
             className="bg-white/15 border-white/30 text-white hover:bg-white/25 gap-2"
             onClick={async () => {
               const typeLabel = workoutType
-                ? workoutTypes.find((t) => t.id === workoutType)?.label ?? workoutType
+                ? getActivityLabel(workoutType)
                 : null;
               const text = typeLabel
-                ? `I just completed a ${typeLabel} and hit a ${streak}-day streak on Daily Habit Hub! 🔥`
-                : `I just hit a ${streak}-day streak on Daily Habit Hub! 🔥`;
+                ? `I just logged ${typeLabel} and hit a ${streak}-day streak on FitTribe! 🔥`
+                : `I just hit a ${streak}-day streak on FitTribe! 🔥`;
               const url = `${window.location.origin}/community`;
 
               if (navigator.share) {
                 try {
-                  await navigator.share({ title: "Daily Habit Hub", text, url });
+                  await navigator.share({ title: "FitTribe", text, url });
                 } catch {
                   // user cancelled — do nothing
                 }
@@ -149,7 +152,12 @@ function CelebrationScreen({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CheckInPage() {
   const [selectedType, setSelectedType]     = useState<string | null>(null);
+  const [customTitle, setCustomTitle]       = useState("");
   const [note, setNote]                     = useState("");
+  const [todayWin, setTodayWin]             = useState("");
+  const [duration, setDuration]             = useState<number | null>(null);
+  const [energy, setEnergy]                 = useState<string | null>(null);
+  const [effort, setEffort]                 = useState<string | null>(null);
   const [photo, setPhoto]                   = useState<File | null>(null);
   const [photoPreview, setPhotoPreview]     = useState<string | null>(null);
   const [isPublic, setIsPublic]             = useState(true);
@@ -226,11 +234,25 @@ export default function CheckInPage() {
 
       // 2. Pin metadata to IPFS (non-blocking — graceful fallback)
       let metadataUri = "ipfs://placeholder";
+      const activityTitle = selectedType === "custom"
+        ? customTitle.trim() || "Custom Win"
+        : getActivityLabel(selectedType);
+      const formattedNote = buildActivityNote(note, {
+        todayWin,
+        energy: energy ?? undefined,
+        effort: effort ?? undefined,
+        duration,
+      });
+
       try {
         const ipfsRes = await fetch("/api/ipfs/pin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ workout_type: selectedType, note, photo_url }),
+          body: JSON.stringify({
+            workout_type: activityTitle,
+            note: formattedNote,
+            photo_url,
+          }),
         });
         if (ipfsRes.ok) {
           const ipfsData = await ipfsRes.json();
@@ -243,7 +265,17 @@ export default function CheckInPage() {
       // 3. Save to Supabase (uses new record_checkin RPC for streak)
       const { data: workout, error: wErr } = await supabase
         .from("workouts")
-        .insert({ user_id: user.id, type: selectedType, note, photo_url, is_public: isPublic })
+        .insert({
+          user_id: user.id,
+          type: selectedType,
+          activity_title: activityTitle,
+          note: formattedNote,
+          duration_minutes: duration,
+          energy_level: energy,
+          effort_level: effort,
+          photo_url,
+          is_public: isPublic,
+        })
         .select()
         .single();
       if (wErr) throw wErr;
@@ -260,7 +292,7 @@ export default function CheckInPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             targetWallet: walletAddr,
-            habitType:    selectedType || "other",
+            habitType:    activityTitle,
             metadataUri,
           }),
         })
@@ -307,6 +339,13 @@ export default function CheckInPage() {
     return workouts.some((w: any) => isSameDay(new Date(w.created_at), d));
   });
   const hasCheckedInToday = workouts.some((w: any) => isSameDay(new Date(w.created_at), new Date()));
+  const groupedActivityOptions = GROUP_ORDER.map((group) => ({
+    group,
+    label: ACTIVITY_GROUP_LABELS[group],
+    options: ACTIVITY_OPTIONS.filter((option) => option.group === group),
+  }));
+  const selectedActivityLabel = getActivityLabel(selectedType, customTitle);
+  const selectedActivityDescription = getActivityDescription(selectedType);
 
   if (showCelebration) {
     return (
@@ -364,12 +403,12 @@ export default function CheckInPage() {
             <span className="text-4xl">{hasCheckedInToday ? "🎉" : "💪"}</span>
           </div>
           <h1 className="text-3xl font-display font-bold mb-2">
-            {hasCheckedInToday ? "You showed up!" : "Did you work out today?"}
+            {hasCheckedInToday ? "You showed up!" : "What progress did you make today?"}
           </h1>
           <p className="text-muted-foreground">
             {hasCheckedInToday
               ? "Keep the streak alive tomorrow."
-              : "Log it. Own it. Earn your $HABIT."}
+              : "Log the win, keep the streak moving, and earn your $HABIT."}
           </p>
         </div>
 
@@ -411,42 +450,146 @@ export default function CheckInPage() {
 
         {!hasCheckedInToday ? (
           <>
-            {/* Workout Type */}
+            {/* Activity Type */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="font-display">What did you do?</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-3">
-                  {workoutTypes.map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => setSelectedType(type.id)}
-                      className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200",
-                        selectedType === type.id
-                          ? "border-primary bg-primary/10 shadow-glow scale-105"
-                          : "border-border hover:border-primary/30 hover:bg-muted"
-                      )}
-                    >
-                      <span className="text-2xl">{type.emoji}</span>
-                      <span className="text-xs font-semibold">{type.label}</span>
-                    </button>
-                  ))}
-                </div>
+              <CardContent className="space-y-5">
+                {groupedActivityOptions.map((section) => (
+                  <div key={section.group} className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      {section.label}
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {section.options.map((type) => (
+                        <button
+                          key={type.id}
+                          onClick={() => setSelectedType(type.id)}
+                          className={cn(
+                            "flex flex-col items-start gap-1.5 p-4 rounded-2xl border-2 text-left transition-all duration-200",
+                            selectedType === type.id
+                              ? "border-primary bg-primary/10 shadow-glow scale-[1.02]"
+                              : "border-border hover:border-primary/30 hover:bg-muted"
+                          )}
+                        >
+                          <span className="text-2xl">{type.emoji}</span>
+                          <span className="text-sm font-semibold leading-tight">{type.label}</span>
+                          <span className="text-[11px] text-muted-foreground">{type.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {selectedType === "custom" && (
+                  <div className="rounded-2xl border p-4 space-y-2">
+                    <Label htmlFor="custom-title" className="font-semibold">Name your win</Label>
+                    <input
+                      id="custom-title"
+                      value={customTitle}
+                      onChange={(e) => setCustomTitle(e.target.value)}
+                      placeholder="Example: Extra steps, meal prep, stretch block..."
+                      className="w-full p-3 rounded-xl border-2 border-border bg-background focus:border-primary focus:outline-none transition-colors"
+                      maxLength={60}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Notes + Photo */}
+            {/* Momentum details */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle className="font-display">Add details (optional)</CardTitle>
+                <CardTitle className="font-display">Make the check-in feel real</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-2xl border p-4 bg-muted/30">
+                  <p className="font-semibold">{selectedActivityLabel || "Pick an activity to continue"}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedType ? selectedActivityDescription : "You can log workouts, recovery, nutrition wins, sleep targets, or any custom progress."}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="today-win" className="font-semibold">Today's win</Label>
+                  <input
+                    id="today-win"
+                    value={todayWin}
+                    onChange={(e) => setTodayWin(e.target.value)}
+                    placeholder="What mattered most today?"
+                    className="w-full p-3 rounded-xl border-2 border-border bg-background focus:border-primary focus:outline-none transition-colors"
+                    maxLength={80}
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Duration</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {DURATION_OPTIONS.map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setDuration(duration === value ? null : value)}
+                          className={cn(
+                            "px-3 py-2 rounded-full border text-xs font-medium transition-colors",
+                            duration === value
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/30"
+                          )}
+                        >
+                          {value} min
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Energy</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {ENERGY_LEVELS.map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setEnergy(energy === value ? null : value)}
+                          className={cn(
+                            "px-3 py-2 rounded-full border text-xs font-medium capitalize transition-colors",
+                            energy === value
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/30"
+                          )}
+                        >
+                          {value}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Effort</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {EFFORT_LEVELS.map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setEffort(effort === value ? null : value)}
+                          className={cn(
+                            "px-3 py-2 rounded-full border text-xs font-medium capitalize transition-colors",
+                            effort === value
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/30"
+                          )}
+                        >
+                          {value}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="How was your workout? 💬"
+                  placeholder="Add context, what felt good, what was hard, or what you want to remember. 💬"
                   className="w-full p-4 rounded-xl border-2 border-border bg-background resize-none h-24 focus:border-primary focus:outline-none transition-colors"
                   maxLength={200}
                 />
@@ -510,7 +653,7 @@ export default function CheckInPage() {
               size="lg"
               className="w-full text-lg h-14 shadow-glow"
               onClick={() => checkInMutation.mutate()}
-              disabled={checkInMutation.isPending || !selectedType}
+              disabled={checkInMutation.isPending || !selectedType || (selectedType === "custom" && !customTitle.trim())}
             >
               {checkInMutation.isPending ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -561,8 +704,8 @@ export default function CheckInPage() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {workoutTypes.find((t) => t.id === checkin.type)?.emoji}{" "}
-                        {workoutTypes.find((t) => t.id === checkin.type)?.label}
+                        {getActivityEmoji(checkin.type)}{" "}
+                        {getActivityLabel(checkin.type, checkin.activity_title)}
                       </p>
                     </div>
                     <StreakBadge streak={checkin.profiles?.streak || 0} size="sm" showLabel={false} />

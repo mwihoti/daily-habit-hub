@@ -5,29 +5,29 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StreakBadge } from "@/components/StreakComponents";
-import { Heart, MessageCircle, Share2, Filter, Loader2, Send } from "lucide-react";
+import { Heart, MessageCircle, Share2, Loader2, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import Link from "next/link";
+import { ACTIVITY_OPTIONS, getActivityEmoji, getActivityLabel } from "@/lib/activityTypes";
 
-const workoutEmojis: Record<string, string> = {
-  gym: "🏋️",
-  run: "🏃",
-  home: "🏠",
-  yoga: "🧘",
-  cycling: "🚴",
-  other: "💪",
-};
-
-const filters = ["All", "Gym", "Run", "Home", "Yoga", "Cycling"];
+const filters = [
+  { label: "All", value: "all" },
+  ...ACTIVITY_OPTIONS.filter((option) =>
+    ["gym", "run", "walk", "home", "cycling", "mobility", "recovery", "meal_prep", "coach_task", "custom"].includes(option.id),
+  ).map((option) => ({
+    label: option.label,
+    value: option.id,
+  })),
+];
 
 export default function CommunityPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeFilter, setActiveFilter] = useState("all");
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -51,8 +51,8 @@ export default function CommunityPage() {
         .eq('is_public', true)
         .order('created_at', { ascending: false });
 
-      if (activeFilter !== "All") {
-        query = query.eq('type', activeFilter.toLowerCase());
+      if (activeFilter !== "all") {
+        query = query.eq('type', activeFilter);
       }
 
       const { data, error } = await query;
@@ -97,13 +97,13 @@ export default function CommunityPage() {
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {filters.map((filter) => (
             <Button
-              key={filter}
-              variant={activeFilter === filter ? "default" : "outline"}
+              key={filter.value}
+              variant={activeFilter === filter.value ? "default" : "outline"}
               size="sm"
-              onClick={() => setActiveFilter(filter)}
+              onClick={() => setActiveFilter(filter.value)}
               className="shrink-0 rounded-full"
             >
-              {filter}
+              {filter.label}
             </Button>
           ))}
         </div>
@@ -199,7 +199,7 @@ function CommunityPost({ post, currentUser, onLike, index }: any) {
 
   const handleShare = async () => {
     const name = post.profiles?.full_name || post.profiles?.username || "Someone";
-    const type = post.type ? `${post.type} session` : "workout";
+    const type = getActivityLabel(post.type, post.activity_title);
     const text = `${name} just logged a ${type} on FitTribe! 💪`;
     const url = `${window.location.origin}/community#post-${post.id}`;
 
@@ -240,8 +240,10 @@ function CommunityPost({ post, currentUser, onLike, index }: any) {
               </span>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-lg">{workoutEmojis[post.type] || "💪"}</span>
-              <span className="text-sm font-medium capitalize text-primary/80">{post.type} session</span>
+              <span className="text-lg">{getActivityEmoji(post.type)}</span>
+              <span className="text-sm font-medium text-primary/80">
+                {getActivityLabel(post.type, post.activity_title)}
+              </span>
             </div>
           </div>
           <StreakBadge streak={post.profiles?.streak || 0} size="sm" showLabel={false} />

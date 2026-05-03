@@ -29,15 +29,7 @@ import {
 } from "@/lib/web3/habitRegistry";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 import { WalletConnectSection } from "@/components/WalletConnectSection";
-
-const workoutEmojis: Record<string, string> = {
-  gym: "🏋️",
-  run: "🏃",
-  home: "🏠",
-  yoga: "🧘",
-  cycling: "🚴",
-  other: "💪",
-};
+import { getActivityEmoji, getActivityLabel } from "@/lib/activityTypes";
 
 export default function DashboardPage() {
   const supabase = createClient();
@@ -138,7 +130,7 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetWallet: activeAddress,
-          habitType: todayWorkout.type || "other",
+          habitType: todayWorkout.activity_title || getActivityLabel(todayWorkout.type),
           metadataUri: "ipfs://placeholder",
         }),
       });
@@ -396,10 +388,12 @@ export default function DashboardPage() {
                         })}
                       >
                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl">
-                          {workoutEmojis[activity.type] || "💪"}
+                          {getActivityEmoji(activity.type)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{activity.note || "Workout session"}</p>
+                          <p className="font-medium truncate">
+                            {activity.activity_title || getActivityLabel(activity.type) || activity.note || "Progress logged"}
+                          </p>
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             {format(new Date(activity.created_at), "MMM d, h:mm a")}
                             <span className="mx-1">•</span>
