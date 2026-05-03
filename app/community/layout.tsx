@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
+import { buildPublicMetadata } from "@/lib/seo";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
-
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicMetadata({
   title: "Fitness Community Nairobi | Workout Together in Kilimani, Karen & CBD",
   description:
     "Join Nairobi's most active fitness community. Connect with workout partners in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu and Allsops. Share progress, stay accountable.",
@@ -17,15 +16,11 @@ export const metadata: Metadata = {
     "fitness tribe Allsops",
     "online fitness community Kenya",
   ],
-  alternates: { canonical: `${siteUrl}/community` },
-  openGraph: {
-    title: "Fitness Community Nairobi | FitTribe",
-    description:
-      "Join thousands of Nairobi fitness enthusiasts in Kilimani, Karen, CBD, Thika Road, Roysambu & Allsops.",
-    url: `${siteUrl}/community`,
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-  },
-};
+  path: "/community",
+  openGraphTitle: "Fitness Community Nairobi | FitTribe",
+  openGraphDescription:
+    "Join thousands of Nairobi fitness enthusiasts in Kilimani, Karen, CBD, Thika Road, Roysambu and Allsops.",
+});
 
 export default function CommunityLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

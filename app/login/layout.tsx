@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
+import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Sign In | FitTribe Nairobi",
   description: "Sign in to your FitTribe account and continue your fitness journey.",
-  alternates: { canonical: `${siteUrl}/login` },
+  alternates: { canonical: absoluteUrl("/login") },
   robots: { index: false, follow: false },
 };
 

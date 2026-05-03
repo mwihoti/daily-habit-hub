@@ -11,26 +11,7 @@ import {
   Loader2, Languages, Clock, Award, GraduationCap, Instagram,
   Youtube, Globe, Zap,
 } from "lucide-react";
-
-// Parse qualifications metadata embedded in bio by the trainer-setup form
-function parseQualifications(bio: string | null) {
-  if (!bio) return { cleanBio: null, qualifications: null };
-  const match = bio.match(/<!--qualifications:([\s\S]+?)-->$/);
-  if (!match) return { cleanBio: bio, qualifications: null };
-  try {
-    return {
-      cleanBio: bio.replace(/\n\n<!--qualifications:[\s\S]+-->$/, "").trim(),
-      qualifications: JSON.parse(match[1]) as {
-        certifications: string[];
-        education: string | null;
-        training_style: string | null;
-        social: { instagram: string | null; youtube: string | null; website: string | null };
-      },
-    };
-  } catch {
-    return { cleanBio: bio, qualifications: null };
-  }
-}
+import { parseQualifications } from "@/lib/trainerProfile";
 
 const TRAINING_STYLE_LABELS: Record<string, { emoji: string; label: string }> = {
   structured:     { emoji: "📋", label: "Structured Programs" },
@@ -348,6 +329,46 @@ export default function TrainerProfilePage() {
                 </CardContent>
               </Card>
             )}
+
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <h2 className="font-bold text-lg">Why members choose this trainer</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-border p-4">
+                    <p className="font-semibold mb-1">Clear specialization</p>
+                    <p className="text-sm text-muted-foreground">
+                      {trainer.specialties.length > 0
+                        ? `${trainer.full_name.split(" ")[0]} focuses on ${trainer.specialties.slice(0, 3).join(", ")}.`
+                        : "This coach can be a fit for members who want structured support and accountability."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border p-4">
+                    <p className="font-semibold mb-1">Coaching fit</p>
+                    <p className="text-sm text-muted-foreground">
+                      {qualifications?.training_style && TRAINING_STYLE_LABELS[qualifications.training_style]
+                        ? `This trainer uses a ${TRAINING_STYLE_LABELS[qualifications.training_style].label.toLowerCase()} approach.`
+                        : "Review the trainer profile and message them directly to understand how they coach."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border p-4">
+                    <p className="font-semibold mb-1">Language and access</p>
+                    <p className="text-sm text-muted-foreground">
+                      {trainer.languages.length > 0
+                        ? `Available in ${trainer.languages.join(", ")}.`
+                        : "Language details can be discussed directly in chat before booking."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border p-4">
+                    <p className="font-semibold mb-1">Experience signal</p>
+                    <p className="text-sm text-muted-foreground">
+                      {trainer.experience_years > 0
+                        ? `${trainer.experience_years} year${trainer.experience_years !== 1 ? "s" : ""} of coaching experience listed on profile.`
+                        : "This profile is live on FitTribe and can be evaluated through specialties, availability, and direct conversation."}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar — Pricing & CTA */}
@@ -395,6 +416,26 @@ export default function TrainerProfilePage() {
                   )}
                   Message {trainer.full_name.split(" ")[0]}
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 space-y-3">
+                <h2 className="font-bold text-lg">Related FitTribe pages</h2>
+                <div className="space-y-2 text-sm">
+                  <Link href="/trainers" className="block text-primary hover:underline">
+                    Back to the trainer marketplace
+                  </Link>
+                  <Link href="/fitness-habit-tracker" className="block text-primary hover:underline">
+                    Learn how the habit tracker works
+                  </Link>
+                  <Link href="/community" className="block text-primary hover:underline">
+                    See the workout community
+                  </Link>
+                  <Link href="/about-fittribe" className="block text-primary hover:underline">
+                    Read about FitTribe
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>

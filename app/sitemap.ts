@@ -1,40 +1,75 @@
 import { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
+import { absoluteUrl } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: siteUrl,
+      url: absoluteUrl(),
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1.0,
     },
     {
-      url: `${siteUrl}/trainers`,
+      url: absoluteUrl("/trainers"),
       lastModified: new Date(),
       changeFrequency: "hourly",
       priority: 0.9,
     },
     {
-      url: `${siteUrl}/community`,
+      url: absoluteUrl("/community"),
       lastModified: new Date(),
       changeFrequency: "hourly",
       priority: 0.8,
     },
     {
-      url: `${siteUrl}/register`,
+      url: absoluteUrl("/leaderboard"),
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "hourly",
+      priority: 0.7,
+    },
+    {
+      url: absoluteUrl("/goals"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    },
+    {
+      url: absoluteUrl("/fitness-habit-tracker"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
       priority: 0.8,
     },
     {
-      url: `${siteUrl}/login`,
+      url: absoluteUrl("/crypto-fitness-app"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/blockchain-fitness-rewards"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/nft-fitness-badges"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/about-fittribe"),
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.5,
+      priority: 0.7,
+    },
+    {
+      url: absoluteUrl("/register"),
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
   ];
 
@@ -45,14 +80,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const { data: trainers } = await supabase
       .from("trainer_profiles")
       .select("id, updated_at")
-      .eq("is_verified", true);
+      .eq("is_active", true);
 
     if (trainers) {
       trainerRoutes = trainers.map((trainer) => ({
-        url: `${siteUrl}/trainers/${trainer.id}`,
+        url: absoluteUrl(`/trainers/${trainer.id}`),
         lastModified: trainer.updated_at ? new Date(trainer.updated_at) : new Date(),
         changeFrequency: "weekly" as const,
-        priority: 0.7,
+        priority: 0.8,
       }));
     }
   } catch {

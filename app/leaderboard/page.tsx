@@ -224,6 +224,59 @@ export default function LeaderboardPage() {
             )}
           </CardContent>
         </Card>
+
+        <section className="mt-12 space-y-6">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold">Why the workout streak leaderboard exists</h2>
+              <p className="text-muted-foreground">
+                The FitTribe leaderboard turns consistency into something visible. Members can
+                compare workout streaks, total check-ins, and community momentum without losing
+                the simplicity of a daily habit tracker.
+              </p>
+              <p className="text-muted-foreground">
+                For people searching for a workout streak tracker or accountability fitness app,
+                this page shows how public rankings support motivation and routine-building.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Track the habit</h3>
+                <p className="text-sm text-muted-foreground">
+                  Learn how daily check-ins, streaks, and routine-building fit into the wider product.
+                </p>
+                <a href="/fitness-habit-tracker" className="text-sm text-primary hover:underline">
+                  Read about habit tracking
+                </a>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">See community momentum</h3>
+                <p className="text-sm text-muted-foreground">
+                  Rankings matter more when they sit beside a live workout accountability community.
+                </p>
+                <a href="/community" className="text-sm text-primary hover:underline">
+                  Visit the community
+                </a>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Understand rewards</h3>
+                <p className="text-sm text-muted-foreground">
+                  FitTribe combines public streaks with blockchain fitness rewards and milestone badges.
+                </p>
+                <a href="/blockchain-fitness-rewards" className="text-sm text-primary hover:underline">
+                  Learn how rewards work
+                </a>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
       </div>
     </Layout>
   );

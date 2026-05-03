@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
+import { buildPublicMetadata, absoluteUrl } from "@/lib/seo";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
-
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicMetadata({
   title: "Personal Trainers in Nairobi | Kilimani, Karen, CBD, Thika Road",
   description:
     "Find verified personal trainers near you in Nairobi. Coaches in Kilimani, Karen, Ngong Road, Nairobi CBD, Thika Road, Roysambu, Allsops & Westlands. Weight loss, strength, yoga, HIIT & more.",
@@ -24,22 +23,18 @@ export const metadata: Metadata = {
     "yoga instructor Nairobi",
     "HIIT trainer Nairobi",
   ],
-  alternates: { canonical: `${siteUrl}/trainers` },
-  openGraph: {
-    title: "Personal Trainers in Nairobi | FitTribe",
-    description:
-      "Browse verified personal trainers across Nairobi — Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu and Allsops.",
-    url: `${siteUrl}/trainers`,
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
-  },
-};
+  path: "/trainers",
+  openGraphTitle: "Personal Trainers in Nairobi | FitTribe",
+  openGraphDescription:
+    "Browse verified personal trainers across Nairobi — Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu and Allsops.",
+});
 
 const trainerListingSchema = {
   "@context": "https://schema.org",
   "@type": "ItemList",
   name: "Personal Trainers in Nairobi",
   description: "Verified personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu and Allsops",
-  url: `${siteUrl}/trainers`,
+  url: absoluteUrl("/trainers"),
   areaServed: [
     "Kilimani", "Karen", "Ngong Road", "Nairobi CBD",
     "Thika Road", "Roysambu", "Allsops", "Westlands", "Lavington",

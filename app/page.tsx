@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Layout } from "@/components/Layout";
+import { JsonLd } from "@/components/JsonLd";
 import { StreakBadge, StatCard, WeekCalendar } from "@/components/StreakComponents";
 import {
   ArrowRight, Users, CheckCircle, Trophy, Flame, Target, Heart,
@@ -106,6 +107,80 @@ const CONTRACT_ADDRESSES = {
 };
 const SNOWSCAN = "https://snowscan.xyz";
 
+const seoPages = [
+  {
+    href: "/about-fittribe",
+    title: "About FitTribe",
+    description: "Understand the platform, how it fits habit tracking with coaching and rewards, and what the public pages are meant to explain.",
+  },
+  {
+    href: "/fitness-habit-tracker",
+    title: "Fitness Habit Tracker",
+    description: "Understand how FitTribe helps you build a repeatable workout habit with streaks, check-ins, and accountability.",
+  },
+  {
+    href: "/crypto-fitness-app",
+    title: "Crypto Fitness App",
+    description: "See how FitTribe combines workout tracking with wallet-based rewards and zero-fee on-chain recording.",
+  },
+  {
+    href: "/blockchain-fitness-rewards",
+    title: "Blockchain Fitness Rewards",
+    description: "Explore how Avalanche-based rewards, proof of activity, and token incentives fit into the product.",
+  },
+  {
+    href: "/nft-fitness-badges",
+    title: "NFT Fitness Badges",
+    description: "Learn how milestone badges work, what soulbound means, and how achievements stay tied to your wallet.",
+  },
+];
+
+const faqs = [
+  {
+    question: "What is FitTribe?",
+    answer:
+      "FitTribe is a fitness habit tracker that combines daily workout check-ins, community accountability, trainer discovery, and on-chain rewards on Avalanche.",
+  },
+  {
+    question: "How does FitTribe work?",
+    answer:
+      "You log your workout with a daily check-in, build a streak, and if you have a wallet connected the app records your progress on-chain and rewards eligible activity with $HABIT tokens.",
+  },
+  {
+    question: "Is FitTribe free to use?",
+    answer:
+      "Yes. FitTribe is free to use, and the app is designed so users do not need to pay gas fees for routine on-chain fitness reward activity.",
+  },
+  {
+    question: "Do I need MetaMask to use FitTribe?",
+    answer:
+      "No. FitTribe supports an in-app wallet experience, so you can get started without installing MetaMask first.",
+  },
+  {
+    question: "What are the NFT fitness badges on FitTribe?",
+    answer:
+      "They are milestone-based, soulbound achievement badges that reflect your consistency and stay connected to your wallet as proof of progress.",
+  },
+  {
+    question: "Can I find a fitness coach on FitTribe?",
+    answer:
+      "Yes. FitTribe includes a trainer marketplace where you can browse coaches, compare profiles, and start a conversation directly in the app.",
+  },
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
@@ -165,6 +240,7 @@ export default function LandingPage() {
 
   return (
     <Layout>
+      {!user && <JsonLd schema={faqSchema} />}
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
@@ -411,6 +487,67 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {!user && (
+        <>
+          <section className="py-16 md:py-24 bg-muted/20">
+            <div className="container">
+              <div className="max-w-4xl mx-auto text-center space-y-4 mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  More than a habit tracking app
+                </h2>
+                <p className="text-muted-foreground text-lg">
+                  FitTribe sits at the overlap of habit tracking, crypto fitness rewards,
+                  trainer discovery, and community accountability. That combination is the
+                  core reason people search for terms like fitness habit tracker, crypto
+                  fitness app, workout streak tracker, and accountability fitness app.
+                </p>
+              </div>
+              <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {seoPages.map((page) => (
+                  <Card key={page.href} className="card-hover h-full">
+                    <CardContent className="p-6 space-y-4">
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold">{page.title}</h3>
+                        <p className="text-sm text-muted-foreground">{page.description}</p>
+                      </div>
+                      <Button variant="outline" asChild className="w-full">
+                        <Link href={page.href}>
+                          Explore <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="py-16 md:py-24">
+            <div className="container">
+              <div className="max-w-4xl mx-auto space-y-4 mb-12 text-center">
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  Frequently asked questions about FitTribe
+                </h2>
+                <p className="text-muted-foreground text-lg">
+                  Answers to common questions about wallet setup, on-chain rewards, daily
+                  workout tracking, and how the product fits into a long-term consistency routine.
+                </p>
+              </div>
+              <div className="max-w-4xl mx-auto grid gap-4">
+                {faqs.map((faq) => (
+                  <Card key={faq.question}>
+                    <CardContent className="p-6 space-y-2">
+                      <h3 className="text-lg font-semibold">{faq.question}</h3>
+                      <p className="text-muted-foreground">{faq.answer}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* ── Testimonials ── */}
       {!user && (

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { JsonLd } from "@/components/JsonLd";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
+import { absoluteUrl, DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -21,6 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: "Trainer Profile | FitTribe Nairobi",
       description: "View personal trainer profile on FitTribe Nairobi.",
+      robots: { index: false, follow: false },
     };
   }
 
@@ -41,13 +41,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `certified trainer ${location}`,
       "personal trainer Nairobi",
     ],
-    alternates: { canonical: `${siteUrl}/trainers/${id}` },
+    alternates: { canonical: absoluteUrl(`/trainers/${id}`) },
     openGraph: {
       title: `${name} — Personal Trainer in ${location}`,
       description: `${name} offers ${specialties} coaching in ${location}, Nairobi. ${trainer.experience_years} years experience.`,
-      url: `${siteUrl}/trainers/${id}`,
+      url: absoluteUrl(`/trainers/${id}`),
       type: "profile",
-      images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      locale: "en_KE",
+      images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: `${name} on FitTribe` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} — Personal Trainer in ${location}`,
+      description: `${name} offers ${specialties} coaching in ${location}, Nairobi.`,
+      images: [DEFAULT_OG_IMAGE],
     },
   };
 }
@@ -75,7 +82,7 @@ export default async function TrainerProfileLayout({
         jobTitle: "Personal Trainer",
         description: trainer.bio?.replace(/<!--qualifications:[\s\S]+-->$/, "").trim(),
         image: trainer.avatar_url,
-        url: `${siteUrl}/trainers/${id}`,
+        url: absoluteUrl(`/trainers/${id}`),
         worksFor: { "@type": "Organization", name: "FitTribe" },
         address: {
           "@type": "PostalAddress",

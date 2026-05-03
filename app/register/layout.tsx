@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
+import { buildPublicMetadata } from "@/lib/seo";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
-
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicMetadata({
   title: "Join FitTribe | Free Fitness Community in Nairobi",
   description:
     "Create your free FitTribe account and join thousands of fitness enthusiasts across Nairobi — Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu and Allsops.",
@@ -12,8 +11,8 @@ export const metadata: Metadata = {
     "register FitTribe Nairobi",
     "workout app Kenya",
   ],
-  alternates: { canonical: `${siteUrl}/register` },
-};
+  path: "/register",
+});
 
 export default function RegisterLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;

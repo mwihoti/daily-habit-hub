@@ -11,24 +11,34 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
 import { metadata as rootMetadata } from '../app/layout';
 import { metadata as trainersMetadata } from '../app/trainers/layout';
 import { metadata as communityMetadata } from '../app/community/layout';
 import { metadata as goalsMetadata } from '../app/goals/layout';
 import { metadata as registerMetadata } from '../app/register/layout';
+import { metadata as leaderboardMetadata } from '../app/leaderboard/layout';
+import { metadata as fitnessHabitTrackerMetadata } from '../app/fitness-habit-tracker/page';
+import { metadata as cryptoFitnessAppMetadata } from '../app/crypto-fitness-app/page';
+import { metadata as blockchainRewardsMetadata } from '../app/blockchain-fitness-rewards/page';
+import { metadata as nftFitnessBadgesMetadata } from '../app/nft-fitness-badges/page';
+import { metadata as aboutFittribeMetadata } from '../app/about-fittribe/page';
 import { metadata as dashboardMetadata } from '../app/dashboard/layout';
 import { metadata as loginMetadata } from '../app/login/layout';
 import { metadata as checkInMetadata } from '../app/check-in/layout';
 import { metadata as achievementsMetadata } from '../app/achievements/layout';
+import { metadata as messagesMetadata } from '../app/messages/layout';
+import { metadata as onboardingMetadata } from '../app/onboarding/layout';
+import { metadata as profileMetadata } from '../app/profile/layout';
+import { metadata as progressMetadata } from '../app/progress/layout';
+import { metadata as tasksMetadata } from '../app/tasks/layout';
+import { metadata as authTestMetadata } from '../app/auth-test/layout';
+import robots from '../app/robots';
 import {
   organizationSchema,
   websiteSchema,
   localBusinessSchema,
+  webApplicationSchema,
 } from '../src/components/JsonLd';
-
-const ROOT = resolve(__dirname, '..');
 
 const NAIROBI_AREAS = [
   'Kilimani', 'Karen', 'Ngong Road', 'CBD', 'Thika Road', 'Roysambu', 'Allsops',
@@ -185,6 +195,44 @@ describe('Goals page metadata', () => {
   });
 });
 
+describe('Leaderboard page metadata', () => {
+  it('title mentions leaderboard or streaks', () => {
+    const title = titleString(leaderboardMetadata).toLowerCase();
+    expect(title).toMatch(/leaderboard|streak/);
+  });
+
+  it('description is not empty', () => {
+    expect(descriptionString(leaderboardMetadata).length).toBeGreaterThan(40);
+  });
+});
+
+describe('SEO landing page metadata', () => {
+  it('fitness habit tracker page targets habit tracking', () => {
+    const title = titleString(fitnessHabitTrackerMetadata).toLowerCase();
+    expect(title).toContain('habit tracker');
+  });
+
+  it('crypto fitness app page targets crypto fitness', () => {
+    const title = titleString(cryptoFitnessAppMetadata).toLowerCase();
+    expect(title).toContain('crypto fitness app');
+  });
+
+  it('blockchain rewards page targets blockchain rewards', () => {
+    const desc = descriptionString(blockchainRewardsMetadata).toLowerCase();
+    expect(desc).toContain('blockchain fitness rewards');
+  });
+
+  it('nft badges page targets nft badges', () => {
+    const title = titleString(nftFitnessBadgesMetadata).toLowerCase();
+    expect(title).toContain('nft fitness badges');
+  });
+
+  it('about page targets FitTribe brand/entity terms', () => {
+    const title = titleString(aboutFittribeMetadata).toLowerCase();
+    expect(title).toContain('about fittribe');
+  });
+});
+
 // ── Register page ─────────────────────────────────────────────────────────────
 
 describe('Register page metadata', () => {
@@ -212,6 +260,12 @@ describe('Private pages are marked noindex', () => {
     { name: 'dashboard', metadata: dashboardMetadata },
     { name: 'login',     metadata: loginMetadata },
     { name: 'check-in',  metadata: checkInMetadata },
+    { name: 'messages',  metadata: messagesMetadata },
+    { name: 'onboarding', metadata: onboardingMetadata },
+    { name: 'profile', metadata: profileMetadata },
+    { name: 'progress', metadata: progressMetadata },
+    { name: 'tasks', metadata: tasksMetadata },
+    { name: 'auth-test', metadata: authTestMetadata },
   ];
 
   for (const { name, metadata } of privatePages) {
@@ -229,6 +283,11 @@ describe('Achievements page metadata', () => {
   it('title mentions achievements or rewards', () => {
     const title = titleString(achievementsMetadata).toLowerCase();
     expect(title).toMatch(/achievement|reward|nft/);
+  });
+
+  it('is marked noindex', () => {
+    const robots = achievementsMetadata.robots as Record<string, unknown>;
+    expect(robots.index).toBe(false);
   });
 });
 
@@ -273,8 +332,8 @@ describe('WebSite JSON-LD schema', () => {
 });
 
 describe('LocalBusiness JSON-LD schema', () => {
-  it('type is SportsActivityLocation', () => {
-    expect(localBusinessSchema['@type']).toBe('SportsActivityLocation');
+  it('type is HealthClub', () => {
+    expect(localBusinessSchema['@type']).toBe('HealthClub');
   });
 
   it('geo coordinates are set for Nairobi', () => {
@@ -303,30 +362,37 @@ describe('LocalBusiness JSON-LD schema', () => {
   });
 });
 
-// ── robots.txt ────────────────────────────────────────────────────────────────
+describe('WebApplication JSON-LD schema', () => {
+  it('declares a web application', () => {
+    expect(webApplicationSchema['@type']).toBe('WebApplication');
+  });
 
-describe('robots.txt', () => {
-  const robots = readFileSync(resolve(ROOT, 'public/robots.txt'), 'utf-8');
+  it('uses a health app category', () => {
+    expect(webApplicationSchema.applicationCategory).toBe('HealthApplication');
+  });
+});
+
+// ── robots route ──────────────────────────────────────────────────────────────
+
+describe('robots route', () => {
+  const rules = robots();
 
   it('allows all crawlers at root', () => {
-    expect(robots).toContain('User-agent: *');
-    expect(robots).toContain('Allow: /');
+    expect(rules.rules).toBeTruthy();
+    expect(Array.isArray(rules.rules)).toBe(true);
+    const globalRule = (rules.rules as Array<Record<string, unknown>>)[0];
+    expect(globalRule.userAgent).toBe('*');
+    expect(globalRule.allow).toBe('/');
   });
 
   it('has a Sitemap directive', () => {
-    expect(robots).toContain('Sitemap:');
+    expect(String(rules.sitemap)).toContain('/sitemap.xml');
   });
 
   it('blocks private routes', () => {
-    expect(robots).toContain('Disallow: /dashboard');
-    expect(robots).toContain('Disallow: /api/');
-  });
-
-  it('allows Googlebot', () => {
-    expect(robots).toContain('User-agent: Googlebot');
-  });
-
-  it('allows Twitterbot for social cards', () => {
-    expect(robots).toContain('User-agent: Twitterbot');
+    const globalRule = (rules.rules as Array<Record<string, unknown>>)[0];
+    const disallow = globalRule.disallow as string[];
+    expect(disallow).toContain('/dashboard');
+    expect(disallow).toContain('/api/');
   });
 });

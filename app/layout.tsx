@@ -5,8 +5,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Providers } from "./providers";
-import { JsonLd, organizationSchema, websiteSchema, localBusinessSchema } from "@/components/JsonLd";
+import {
+  JsonLd,
+  organizationSchema,
+  websiteSchema,
+  localBusinessSchema,
+  webApplicationSchema,
+} from "@/components/JsonLd";
 import { PWAManager } from "./components/PWAManager";
+import { SITE_URL, SITE_NAME } from "@/lib/seo";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -22,8 +29,6 @@ const nunito = Nunito({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
-
 // Viewport export is required for themeColor in Next.js 14+
 export const viewport: Viewport = {
   themeColor: "#f97316",
@@ -34,57 +39,57 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "FitTribe — Fitness & Personal Trainers in Nairobi",
+    default: "FitTribe Nairobi | Personal Trainers, Fitness Community & Workout Tracking",
     template: "%s | FitTribe Nairobi",
   },
   description:
-    "Nairobi's fitness app. Find personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops. Track workouts, earn rewards.",
+    "Find personal trainers in Nairobi, join a fitness community, and track workouts with FitTribe across Kilimani, Karen, Ngong Road, CBD, Roysambu, and Allsops.",
   keywords: [
     "personal trainer Nairobi",
-    "fitness trainer Kilimani",
-    "gym Nairobi Karen",
-    "personal trainer Ngong Road",
-    "fitness coach Nairobi CBD",
-    "workout trainer Thika Road",
-    "personal trainer Roysambu",
+    "fitness app Nairobi",
+    "fitness community Nairobi",
+    "workout tracker Kenya",
+    "personal trainers Kilimani",
+    "personal trainers Karen Nairobi",
+    "fitness coach Ngong Road",
+    "gym trainer Nairobi CBD",
+    "workout coach Thika Road",
+    "trainer Roysambu",
     "fitness coach Allsops",
     "online fitness coach Kenya",
-    "certified personal trainer Nairobi",
-    "weight loss trainer Nairobi",
+    "weight loss coach Nairobi",
     "home workout trainer Nairobi",
-    "fitness habit tracker Kenya",
+    "workout accountability app",
     "FitTribe Nairobi",
-    "workout accountability Nairobi",
-    "fitness community Nairobi",
   ],
-  authors: [{ name: "FitTribe", url: siteUrl }],
-  creator: "FitTribe",
-  publisher: "FitTribe",
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
   category: "Health & Fitness",
   openGraph: {
-    title: "FitTribe — Fitness & Personal Trainers in Nairobi",
+    title: "FitTribe Nairobi | Personal Trainers, Fitness Community & Workout Tracking",
     description:
-      "Find verified personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops. Track workouts daily and earn rewards.",
+      "Find verified personal trainers in Nairobi, track workouts daily, and join a fitness community built for consistency.",
     type: "website",
-    url: siteUrl,
-    siteName: "FitTribe",
+    url: SITE_URL,
+    siteName: SITE_NAME,
     locale: "en_KE",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "FitTribe — Nairobi Fitness Community",
+        alt: "FitTribe Nairobi fitness community and personal trainers",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FitTribe — Fitness & Personal Trainers in Nairobi",
+    title: "FitTribe Nairobi | Personal Trainers & Workout Tracking",
     description:
-      "Find verified personal trainers in Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu & Allsops.",
+      "Find personal trainers in Nairobi, join a fitness community, and track daily workouts on FitTribe.",
     images: ["/og-image.png"],
     creator: "@FitTribeKE",
   },
@@ -100,7 +105,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: siteUrl,
+    canonical: SITE_URL,
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
@@ -111,6 +116,11 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "FitTribe",
     startupImage: "/icons/icon-512x512.png",
+  },
+  appLinks: {
+    web: {
+      url: SITE_URL,
+    },
   },
   formatDetection: { telephone: false },
   icons: {
@@ -136,6 +146,7 @@ export default function RootLayout({
         <JsonLd schema={organizationSchema} />
         <JsonLd schema={websiteSchema} />
         <JsonLd schema={localBusinessSchema} />
+        <JsonLd schema={webApplicationSchema} />
         <Providers>
           <TooltipProvider>
             {children}

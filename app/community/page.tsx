@@ -134,6 +134,60 @@ export default function CommunityPage() {
             </Card>
           )}
         </div>
+
+        <section className="mt-12 space-y-6">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold">Why the FitTribe community matters</h2>
+              <p className="text-muted-foreground">
+                FitTribe is designed as a workout accountability community, not just a place
+                to post updates. The public feed gives members visible momentum, encourages
+                regular check-ins, and supports the habit-forming side of fitness tracking.
+              </p>
+              <p className="text-muted-foreground">
+                For people searching for a web3 fitness community or an accountability fitness
+                app, this page shows the social layer of the product: real check-ins, activity
+                streaks, and a visible record of consistency.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Track your streak</h3>
+                <p className="text-sm text-muted-foreground">
+                  Keep your daily workout history moving and build a routine that compounds over time.
+                </p>
+                <Link href="/fitness-habit-tracker" className="text-sm text-primary hover:underline">
+                  Learn about streak tracking
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Earn on-chain rewards</h3>
+                <p className="text-sm text-muted-foreground">
+                  FitTribe connects consistent activity with blockchain fitness rewards on Avalanche.
+                </p>
+                <Link href="/blockchain-fitness-rewards" className="text-sm text-primary hover:underline">
+                  See how rewards work
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Find coaching support</h3>
+                <p className="text-sm text-muted-foreground">
+                  Move from self-guided consistency into structured coaching when you need extra support.
+                </p>
+                <Link href="/trainers" className="text-sm text-primary hover:underline">
+                  Browse trainers
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
       </div>
     </Layout>
   );
@@ -146,12 +200,12 @@ function CommunityPost({ post, currentUser, onLike, index }: any) {
   const handleShare = async () => {
     const name = post.profiles?.full_name || post.profiles?.username || "Someone";
     const type = post.type ? `${post.type} session` : "workout";
-    const text = `${name} just logged a ${type} on Daily Habit Hub! 💪`;
+    const text = `${name} just logged a ${type} on FitTribe! 💪`;
     const url = `${window.location.origin}/community#post-${post.id}`;
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Daily Habit Hub", text, url });
+        await navigator.share({ title: "FitTribe", text, url });
       } catch {
         // user cancelled — do nothing
       }

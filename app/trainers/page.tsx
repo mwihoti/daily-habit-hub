@@ -277,6 +277,60 @@ export default function TrainersPage() {
             </Button>
           </CardContent>
         </Card>
+
+        <section className="mt-12 space-y-6">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold">Personal trainers and online fitness coaching on FitTribe</h2>
+              <p className="text-muted-foreground">
+                FitTribe helps members compare coaches by specialty, location, pricing, and
+                experience. That makes this page useful for people searching for personal
+                trainers in Nairobi, affordable online coaching, and a fitness coach marketplace.
+              </p>
+              <p className="text-muted-foreground">
+                Use the filters to narrow by goals like weight loss, gym training, beginners,
+                home workouts, and running support. Then open a trainer profile to compare
+                availability, qualifications, and next steps.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Start with the habit tracker</h3>
+                <p className="text-sm text-muted-foreground">
+                  Build daily momentum with streaks and check-ins before layering on deeper coaching support.
+                </p>
+                <Link href="/fitness-habit-tracker" className="text-sm text-primary hover:underline">
+                  Explore the tracker
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Stay accountable publicly</h3>
+                <p className="text-sm text-muted-foreground">
+                  Use the community feed to keep motivation visible while your coach guides the plan.
+                </p>
+                <Link href="/community" className="text-sm text-primary hover:underline">
+                  Visit the community
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5 space-y-2">
+                <h3 className="font-semibold">Understand the reward layer</h3>
+                <p className="text-sm text-muted-foreground">
+                  FitTribe also connects coaching and consistency to blockchain fitness rewards on Avalanche.
+                </p>
+                <Link href="/crypto-fitness-app" className="text-sm text-primary hover:underline">
+                  See the crypto fitness side
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
       </div>
     </Layout>
   );

@@ -1,3 +1,5 @@
+import { SITE_NAME, SITE_URL } from "@/lib/seo";
+
 interface JsonLdProps {
   schema: Record<string, unknown>;
 }
@@ -10,15 +12,12 @@ export function JsonLd({ schema }: JsonLdProps) {
     />
   );
 }
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
-
 export const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "FitTribe",
-  url: siteUrl,
-  logo: `${siteUrl}/favicon.ico`,
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.ico`,
   description:
     "Nairobi's fitness habit tracking platform connecting members with verified personal trainers across Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu and Allsops.",
   address: {
@@ -47,14 +46,15 @@ export const organizationSchema = {
 export const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "FitTribe",
-  url: siteUrl,
+  name: SITE_NAME,
+  alternateName: "FitTribe Nairobi",
+  url: SITE_URL,
   description: "Fitness habit tracking and personal trainer marketplace in Nairobi, Kenya",
   potentialAction: {
     "@type": "SearchAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: `${siteUrl}/trainers?search={search_term_string}`,
+      urlTemplate: `${SITE_URL}/trainers?search={search_term_string}`,
     },
     "query-input": "required name=search_term_string",
   },
@@ -62,9 +62,9 @@ export const websiteSchema = {
 
 export const localBusinessSchema = {
   "@context": "https://schema.org",
-  "@type": "SportsActivityLocation",
-  name: "FitTribe — Nairobi Fitness Hub",
-  url: siteUrl,
+  "@type": "HealthClub",
+  name: "FitTribe Nairobi",
+  url: SITE_URL,
   description:
     "Online fitness platform and personal trainer marketplace serving Nairobi — Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu, Allsops and surrounding areas.",
   address: {
@@ -93,4 +93,24 @@ export const localBusinessSchema = {
     opens: "00:00",
     closes: "23:59",
   },
+};
+
+export const webApplicationSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: SITE_NAME,
+  url: SITE_URL,
+  applicationCategory: "HealthApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "KES",
+  },
+  areaServed: {
+    "@type": "City",
+    name: "Nairobi",
+  },
+  description:
+    "Fitness habit tracker, trainer marketplace, and workout accountability app for Nairobi members and coaches.",
 };

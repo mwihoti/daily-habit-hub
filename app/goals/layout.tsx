@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
+import { buildPublicMetadata } from "@/lib/seo";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
-
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicMetadata({
   title: "Fitness Goal Tracker Nairobi | Set & Achieve Workout Goals",
   description:
     "Set, track and crush your fitness goals. Used by members across Nairobi — Kilimani, Karen, CBD, Thika Road, Roysambu and Allsops.",
@@ -13,8 +12,8 @@ export const metadata: Metadata = {
     "weight loss goals Kilimani",
     "fitness tracker Nairobi",
   ],
-  alternates: { canonical: `${siteUrl}/goals` },
-};
+  path: "/goals",
+});
 
 export default function GoalsLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
