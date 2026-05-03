@@ -125,7 +125,7 @@ export function generateBadgeSVG(
   <text x="200" y="330" text-anchor="middle"
         font-family="system-ui,-apple-system,sans-serif"
         font-size="13" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.3">
-    Daily Habit Hub
+    FitTribe
   </text>
 
   <!-- Network -->
@@ -157,7 +157,7 @@ export function downloadBadge(milestoneId: string, walletAddress?: string, claim
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `dhh-${milestoneId}-badge.svg`
+  a.download = `fittribe-${milestoneId}-badge.svg`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

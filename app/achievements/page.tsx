@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Trophy, Medal, Flame, Star, Crown, ShieldCheck,
   Sparkles, Lock, CheckCircle2, Loader2, Download, ExternalLink,
+  Share2, Copy, EyeOff,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
@@ -17,95 +18,18 @@ import { toast } from "sonner";
 import { downloadBadge } from "@/lib/web3/badgeGenerator";
 import { ACHIEVEMENT_NFT_ADDRESS } from "@/lib/web3/habitRegistry";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
+import { ACHIEVEMENT_META, type MilestoneId, type AchievementMeta } from "@/lib/achievementMeta";
 
 const FUJI_SNOWSCAN = 'https://snowscan.xyz';
 
 // ── Milestone definitions ─────────────────────────────────────────────────────
-
-type MilestoneId = 'genesis' | 'iron_will' | 'three_weeks' | 'month_champion' | 'consistency_legend';
-
-interface Milestone {
-  id: MilestoneId;
-  title: string;
-  description: string;
-  unlockLabel: string;
-  threshold: number;
-  thresholdType: 'workouts' | 'streak';
-  icon: React.ElementType;
-  color: string;
-  bg: string;
-  borderColor: string;
-  /** On-chain achievement type (0 = Week Warrior, 1 = Iron Consistent). Present if contract auto-mints this. */
-  onChainType?: number;
-  onChainNote?: string;
-}
-
-const MILESTONES: Milestone[] = [
-  {
-    id: 'genesis',
-    title: 'Genesis Badge',
-    description: 'You showed up. That first step is the hardest — and you did it.',
-    unlockLabel: '1 Check-in',
-    threshold: 1,
-    thresholdType: 'workouts',
-    icon: Star,
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/30',
-  },
-  {
-    id: 'iron_will',
-    title: 'Iron Will',
-    description: 'Seven days of showing up. Habits are officially forming.',
-    unlockLabel: '7-Day Streak',
-    threshold: 7,
-    thresholdType: 'streak',
-    icon: ShieldCheck,
-    color: 'text-orange-500',
-    bg: 'bg-orange-500/10',
-    borderColor: 'border-orange-500/30',
-    onChainType: 0,
-    onChainNote: 'On-chain NFT auto-minted by contract at 7 check-ins',
-  },
-  {
-    id: 'three_weeks',
-    title: 'Three Weeks Strong',
-    description: "Science says 21 days builds a habit. You've proven it.",
-    unlockLabel: '21 Check-ins',
-    threshold: 21,
-    thresholdType: 'workouts',
-    icon: Flame,
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/30',
-  },
-  {
-    id: 'month_champion',
-    title: 'Month Champion',
-    description: 'A full month of commitment. You are the definition of consistency.',
-    unlockLabel: '30-Day Streak',
-    threshold: 30,
-    thresholdType: 'streak',
-    icon: Trophy,
-    color: 'text-red-500',
-    bg: 'bg-red-500/10',
-    borderColor: 'border-red-500/30',
-    onChainType: 1,
-    onChainNote: 'On-chain NFT auto-minted by contract at 30 check-ins',
-  },
-  {
-    id: 'consistency_legend',
-    title: 'Consistency Legend',
-    description: "7 consecutive weeks — this is no longer a habit. It's who you are.",
-    unlockLabel: '49-Day Streak',
-    threshold: 49,
-    thresholdType: 'streak',
-    icon: Crown,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-    borderColor: 'border-yellow-500/30',
-  },
-];
+const ICONS: Record<MilestoneId, React.ElementType> = {
+  genesis: Star,
+  iron_will: ShieldCheck,
+  three_weeks: Flame,
+  month_champion: Trophy,
+  consistency_legend: Crown,
+};
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -175,22 +99,75 @@ export default function AchievementsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_achievements')
-        .select('milestone, claimed_at, is_on_chain, tx_hash')
+        .select('milestone, claimed_at, is_on_chain, tx_hash, share_slug, is_public')
         .eq('user_id', user!.id);
       // Table might not exist yet if migration 004 hasn't been applied — treat as no claims
       if (error) return {};
-      const map: Record<string, { claimedAt: string; isOnChain: boolean; txHash?: string }> = {};
+      const map: Record<string, { claimedAt: string; isOnChain: boolean; txHash?: string; shareSlug?: string; isPublic?: boolean }> = {};
       for (const row of (data ?? [])) {
         if (row.claimed_at) {
           map[row.milestone] = {
             claimedAt: row.claimed_at,
             isOnChain: row.is_on_chain ?? false,
             txHash: row.tx_hash ?? undefined,
+            shareSlug: row.share_slug ?? undefined,
+            isPublic: row.is_public ?? false,
           };
         }
       }
       return map;
     },
+  });
+
+  const shareMutation = useMutation({
+    mutationFn: async (milestone: MilestoneId) => {
+      const res = await fetch('/api/achievements/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ milestone }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not create public share link');
+      return json as { url: string };
+    },
+    onSuccess: async (data) => {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'My FitTribe achievement',
+            text: 'Check out this achievement I shared from FitTribe.',
+            url: data.url,
+          });
+        } else {
+          await navigator.clipboard.writeText(data.url);
+          toast.success('Public share link copied');
+        }
+      } catch {
+        await navigator.clipboard.writeText(data.url);
+        toast.success('Public share link copied');
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ['user-achievements'] });
+      }
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const unshareMutation = useMutation({
+    mutationFn: async (milestone: MilestoneId) => {
+      const res = await fetch('/api/achievements/share', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ milestone }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not unshare achievement');
+      return json;
+    },
+    onSuccess: () => {
+      toast.success('Public achievement link disabled');
+      queryClient.invalidateQueries({ queryKey: ['user-achievements'] });
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const claimMutation = useMutation({
@@ -223,9 +200,15 @@ export default function AchievementsPage() {
     claimMutation.mutate(milestoneId);
   };
 
-  const handleDownload = (item: Milestone, claimedAt?: string) => {
+  const handleDownload = (item: AchievementMeta, claimedAt?: string) => {
     downloadBadge(item.id, stats.walletAddress, claimedAt);
     toast.success('Badge downloaded as SVG!');
+  };
+
+  const handleCopyShareLink = async (shareSlug: string) => {
+    const url = `${window.location.origin}/share/achievement/${shareSlug}`;
+    await navigator.clipboard.writeText(url);
+    toast.success('Public share link copied');
   };
 
   const snowscanNftUrl = (walletAddress: string) =>
@@ -236,7 +219,7 @@ export default function AchievementsPage() {
 
   const isLoading = statsLoading || !profile;
 
-  const earnedCount = MILESTONES.filter((m) => {
+  const earnedCount = ACHIEVEMENT_META.filter((m) => {
     if (isLoading) return false;
     const val = m.thresholdType === 'streak'
       ? Math.max(stats.currentStreak, stats.totalWorkouts)
@@ -306,8 +289,8 @@ export default function AchievementsPage() {
 
         {/* Achievement Cards */}
         <div className="grid md:grid-cols-2 gap-6">
-          {MILESTONES.map((item) => {
-            const Icon = item.icon;
+          {ACHIEVEMENT_META.map((item) => {
+            const Icon = ICONS[item.id];
             const progress = isLoading ? 0 : (() => {
               const val = item.thresholdType === 'streak'
                 ? Math.max(stats.currentStreak, stats.totalWorkouts)
@@ -441,6 +424,46 @@ export default function AchievementsPage() {
                           </Button>
                         )}
                       </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          disabled={shareMutation.isPending}
+                          onClick={() => shareMutation.mutate(item.id)}
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          {claimData?.isPublic ? 'Share Again' : 'Create Public Share Link'}
+                        </Button>
+                        {claimData?.shareSlug && claimData?.isPublic ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs"
+                            onClick={() => handleCopyShareLink(claimData.shareSlug!)}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            Copy Link
+                          </Button>
+                        ) : null}
+                      </div>
+                      {claimData?.isPublic && claimData?.shareSlug && (
+                        <>
+                          <p className="text-[10px] text-muted-foreground text-center">
+                            Anyone with the link can view this shared achievement without logging in.
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full gap-1.5 text-xs text-muted-foreground"
+                            disabled={unshareMutation.isPending}
+                            onClick={() => unshareMutation.mutate(item.id)}
+                          >
+                            <EyeOff className="w-3.5 h-3.5" />
+                            Disable Public Link
+                          </Button>
+                        </>
+                      )}
                     </div>
                   )}
 
