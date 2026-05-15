@@ -82,7 +82,7 @@ export default function ProfilePage() {
       const res = await fetch("/api/accountability/summary", { cache: "no-store" });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Could not load AI summary");
-      return data as { summary: string; provider: string; fallback: boolean };
+      return data as { summary: string; provider: string; fallback: boolean; cached?: boolean; generatedAt?: string };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -104,6 +104,23 @@ export default function ProfilePage() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Could not save accountability settings");
+    },
+  });
+
+  const refreshAiSummaryMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/accountability/summary?refresh=1", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Could not refresh AI summary");
+      return data as { summary: string; provider: string; fallback: boolean; cached?: boolean; generatedAt?: string };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['accountability-ai-summary'], data);
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+      toast.success(`AI summary refreshed via ${data.provider}`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Could not refresh AI summary");
     },
   });
 
@@ -207,9 +224,19 @@ export default function ProfilePage() {
 
             <Card className="border-primary/20">
               <CardContent className="p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  <p className="font-semibold">Accountability Summary</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <p className="font-semibold">Accountability Summary</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refreshAiSummaryMutation.mutate()}
+                    disabled={refreshAiSummaryMutation.isPending}
+                  >
+                    {refreshAiSummaryMutation.isPending ? "Refreshing..." : "Refresh AI"}
+                  </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {aiSummaryData?.summary ?? accountabilityInsight.momentumSummary}
@@ -220,6 +247,7 @@ export default function ProfilePage() {
                 {aiSummaryData?.provider && (
                   <p className="text-xs text-muted-foreground">
                     Provider: {aiSummaryData.provider}{aiSummaryData.fallback ? " fallback" : ""}
+                    {aiSummaryData.generatedAt ? ` · ${aiSummaryData.cached ? "cached" : "fresh"} ${format(new Date(aiSummaryData.generatedAt), "MMM d, h:mm a")}` : ""}
                   </p>
                 )}
                 <div className="text-xs text-muted-foreground">

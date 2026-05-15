@@ -101,7 +101,7 @@ export default function DashboardPage() {
       const res = await fetch("/api/accountability/summary", { cache: "no-store" });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Could not load AI summary");
-      return data as { summary: string; provider: string; fallback: boolean };
+      return data as { summary: string; provider: string; fallback: boolean; cached?: boolean; generatedAt?: string };
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -327,6 +327,23 @@ export default function DashboardPage() {
     },
   });
 
+  const refreshAiSummaryMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/accountability/summary?refresh=1", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Could not refresh AI summary");
+      return data as { summary: string; provider: string; fallback: boolean; cached?: boolean; generatedAt?: string };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["accountability-ai-summary"], data);
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      toast.success(`AI summary refreshed via ${data.provider}`);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Could not refresh AI summary");
+    },
+  });
+
   return (
     <Layout>
       <div className="container py-6 md:py-12">
@@ -509,9 +526,26 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-xl bg-muted/50 p-4">
-                  <p className="text-sm font-semibold">
-                    {accountabilityTier === "free" ? "Free plan" : accountabilityTier === "premium_trial" ? "Premium trial active" : "Premium active"}
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {accountabilityTier === "free" ? "Free plan" : accountabilityTier === "premium_trial" ? "Premium trial active" : "Premium active"}
+                      </p>
+                      {aiSummaryData?.generatedAt && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {aiSummaryData.cached ? "Cached" : "Fresh"} summary · {format(new Date(aiSummaryData.generatedAt), "MMM d, h:mm a")}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refreshAiSummaryMutation.mutate()}
+                      disabled={refreshAiSummaryMutation.isPending}
+                    >
+                      {refreshAiSummaryMutation.isPending ? "Refreshing..." : "Refresh AI"}
+                    </Button>
+                  </div>
                   <p className="text-sm text-muted-foreground mt-1">
                     {aiSummaryData?.summary ?? accountabilityInsight.premiumSummary}
                   </p>
