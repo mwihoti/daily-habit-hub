@@ -29,6 +29,12 @@ import {
   getActivityEmoji,
   getActivityLabel,
 } from "@/lib/activityTypes";
+import {
+  buildAccountabilityInsight,
+  getNextCheckinPrompt,
+  getStreakRiskTone,
+  getWeeklyNarrative,
+} from "@/lib/accountability";
 
 const GROUP_ORDER = ["move", "recover", "build"] as const;
 const ENERGY_LEVELS = ["low", "steady", "high"] as const;
@@ -353,6 +359,8 @@ export default function CheckInPage() {
   const durationChoices = isProjectCheckIn ? PROJECT_DURATION_OPTIONS : DURATION_OPTIONS;
   const selectedActivityLabel = getActivityLabel(selectedType, customTitle);
   const selectedActivityDescription = getActivityDescription(selectedType);
+  const accountabilityInsight = buildAccountabilityInsight(workouts, { hasCheckedInToday });
+  const streakRiskTone = getStreakRiskTone(accountabilityInsight.streakRisk);
 
   if (showCelebration) {
     return (
@@ -432,6 +440,18 @@ export default function CheckInPage() {
               </div>
             </div>
             <WeekCalendar checkedDays={checkedDays} />
+          </CardContent>
+        </Card>
+
+        <Card className={`mb-6 border ${streakRiskTone.className}`}>
+          <CardContent className="p-5 space-y-3">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+              <Flame className="w-4 h-4" />
+              {streakRiskTone.label}
+            </div>
+            <p className="font-semibold">{accountabilityInsight.recommendedAction}</p>
+            <p className="text-sm text-muted-foreground">{getWeeklyNarrative(accountabilityInsight)}</p>
+            <p className="text-sm text-muted-foreground">{getNextCheckinPrompt(accountabilityInsight)}</p>
           </CardContent>
         </Card>
 
@@ -515,6 +535,15 @@ export default function CheckInPage() {
                   <p className="font-semibold">{selectedActivityLabel || "Pick an activity to continue"}</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {selectedType ? selectedActivityDescription : "You can log workouts, recovery, nutrition wins, sleep targets, or any custom progress."}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                  <p className="font-semibold">Coach-style nudge</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {selectedType
+                      ? `Logging ${selectedActivityLabel} today protects momentum better than waiting for a perfect session.`
+                      : accountabilityInsight.recoveryPrompt}
                   </p>
                 </div>
 

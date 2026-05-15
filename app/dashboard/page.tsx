@@ -8,7 +8,7 @@ import { StatCard, WeekCalendar, StreakHero } from "@/components/StreakComponent
 import Link from "next/link";
 import {
   Flame, Trophy, Target, TrendingUp, Calendar,
-  CheckCircle, Plus, BarChart3, Users, Camera, X, Upload, Globe, Lock, Coins
+  CheckCircle, Plus, BarChart3, Users, Camera, X, Upload, Globe, Lock, Coins, Sparkles, BellRing, ShieldCheck
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +30,15 @@ import {
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 import { WalletConnectSection } from "@/components/WalletConnectSection";
 import { getActivityEmoji, getActivityLabel } from "@/lib/activityTypes";
+import { NotificationButton } from "../components/NotificationButton";
+import {
+  buildAccountabilityInsight,
+  formatInsightTimestamp,
+  getNextCheckinPrompt,
+  getReminderHourLabel,
+  getStreakRiskTone,
+  getWeeklyNarrative,
+} from "@/lib/accountability";
 
 export default function DashboardPage() {
   const supabase = createClient();
@@ -83,6 +92,18 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false });
       return data || [];
     }
+  });
+
+  const { data: aiSummaryData } = useQuery({
+    queryKey: ["accountability-ai-summary"],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const res = await fetch("/api/accountability/summary", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Could not load AI summary");
+      return data as { summary: string; provider: string; fallback: boolean };
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   // Unified wallet — merges embedded (in-app) and external (MetaMask) state
@@ -257,6 +278,55 @@ export default function DashboardPage() {
     new Date(w.created_at) >= startOfThisWeek
   ).length;
 
+  const accountabilityInsight = buildAccountabilityInsight(workouts, {
+    hasCheckedInToday: !!todayWorkout,
+  });
+  const streakRiskTone = getStreakRiskTone(accountabilityInsight.streakRisk);
+  const accountabilityTier = profile?.accountability_tier ?? "free";
+  const reminderHour = profile?.accountability_reminder_hour ?? 19;
+  const reminderEnabled = !!profile?.accountability_reminder_enabled;
+
+  const updateAccountabilityMutation = useMutation({
+    mutationFn: async (updates: Record<string, unknown>) => {
+      if (!user?.id) throw new Error("Not signed in");
+      const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Could not save accountability settings");
+    },
+  });
+
+  const sendTestNudgeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/push/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "FitTribe accountability nudge",
+          body: accountabilityInsight.streakRisk === "critical"
+            ? "Momentum slipped. Log one honest check-in today and restart the chain."
+            : "Protect the streak today. A small win counts.",
+          url: "/check-in",
+          tag: "accountability-test",
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Could not send test notification");
+      return data;
+    },
+    onSuccess: (data: any) => {
+      if (data?.sent) toast.success("Test nudge sent to your device");
+      else toast.info("Notifications are enabled, but no active subscription was found yet");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Could not send test nudge");
+    },
+  });
+
   return (
     <Layout>
       <div className="container py-6 md:py-12">
@@ -275,6 +345,26 @@ export default function DashboardPage() {
             </Link>
           </Button>
         </div>
+
+        <Card className={`mb-6 border ${streakRiskTone.className}`}>
+          <CardContent className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                <Sparkles className="w-4 h-4" />
+                {streakRiskTone.label}
+              </div>
+              <p className="text-lg font-semibold">{accountabilityInsight.recommendedAction}</p>
+              <p className="text-sm text-muted-foreground">
+                {getNextCheckinPrompt(accountabilityInsight)}
+              </p>
+            </div>
+            <Button variant="outline" asChild className="shrink-0">
+              <Link href="/check-in">
+                {todayWorkout ? "Plan Tomorrow's Win" : "Protect Today"}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Streak Hero — the most important element on this page */}
         <div className="mb-6">
@@ -365,8 +455,142 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                Accountability Intelligence
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-background p-4 border">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">14-day score</p>
+                  <p className="text-2xl font-display font-bold">{accountabilityInsight.consistencyScore}%</p>
+                  <p className="text-xs text-muted-foreground">{accountabilityInsight.activeDaysLast14} active days</p>
+                </div>
+                <div className="rounded-xl bg-background p-4 border">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Typical session</p>
+                  <p className="text-2xl font-display font-bold">
+                    {accountabilityInsight.averageDuration ? `${accountabilityInsight.averageDuration}m` : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">From your logged check-ins</p>
+                </div>
+              </div>
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-sm font-semibold">Top repeated habit</p>
+                <p className="mt-1 text-lg font-bold">
+                  {accountabilityInsight.topActivityLabel
+                    ? `${accountabilityInsight.topActivityEmoji} ${accountabilityInsight.topActivityLabel}`
+                    : "Still learning"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {accountabilityInsight.topActivityLabel
+                    ? `${accountabilityInsight.topActivityCount} check-ins recorded`
+                    : "A few more check-ins will reveal your strongest loop."}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-sm font-semibold">Focus and next step</p>
+                <p className="text-sm text-muted-foreground mt-2">{getWeeklyNarrative(accountabilityInsight)}</p>
+                <p className="text-sm text-muted-foreground mt-2">{accountabilityInsight.recoveryPrompt}</p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Sidebar */}
           <div className="space-y-6">
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                  Premium Accountability
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl bg-muted/50 p-4">
+                  <p className="text-sm font-semibold">
+                    {accountabilityTier === "free" ? "Free plan" : accountabilityTier === "premium_trial" ? "Premium trial active" : "Premium active"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {aiSummaryData?.summary ?? accountabilityInsight.premiumSummary}
+                  </p>
+                  {aiSummaryData?.provider && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Summary provider: {aiSummaryData.provider}{aiSummaryData.fallback ? " fallback" : ""}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Reminder time</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[6, 12, 18, 20].map((hour) => (
+                      <button
+                        key={hour}
+                        type="button"
+                        onClick={() => updateAccountabilityMutation.mutate({ accountability_reminder_hour: hour })}
+                        className={`px-3 py-2 rounded-full border text-xs font-medium transition-colors ${
+                          reminderHour === hour
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/30"
+                        }`}
+                      >
+                        {getReminderHourLabel(hour)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-sm">Daily accountability reminders</p>
+                      <p className="text-xs text-muted-foreground">
+                        Scheduled around {getReminderHourLabel(reminderHour)} when supported by your device.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateAccountabilityMutation.mutate({ accountability_reminder_enabled: !reminderEnabled })}
+                      className={`px-3 py-2 rounded-full text-xs font-semibold border transition-colors ${
+                        reminderEnabled
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {reminderEnabled ? "Enabled" : "Disabled"}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <NotificationButton showLabel />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => sendTestNudgeMutation.mutate()}
+                      disabled={sendTestNudgeMutation.isPending}
+                    >
+                      <BellRing className="w-4 h-4" />
+                      {sendTestNudgeMutation.isPending ? "Sending..." : "Send Test Nudge"}
+                    </Button>
+                  </div>
+                </div>
+
+                {accountabilityTier === "free" && (
+                  <Button
+                    variant="hero"
+                    className="w-full gap-2"
+                    onClick={() => updateAccountabilityMutation.mutate({ accountability_tier: "premium_trial" })}
+                    disabled={updateAccountabilityMutation.isPending}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Activate Premium Accountability
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Recent Activity */}
             <Card>
               <CardHeader>
@@ -474,6 +698,13 @@ export default function DashboardPage() {
                 <CardTitle className="text-lg">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="rounded-xl border bg-muted/30 p-4">
+                  <p className="text-sm font-semibold">Today&apos;s coach-style prompt</p>
+                  <p className="text-sm text-muted-foreground mt-1">{accountabilityInsight.recommendedAction}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Refreshed {formatInsightTimestamp()}
+                  </p>
+                </div>
                 <Button variant="outline" className="w-full justify-start" asChild>
                   <Link href="/progress" className="flex items-center gap-2">
                     <BarChart3 className="w-4 h-4" />

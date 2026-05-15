@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StreakBadge, WeekCalendar, WorkoutHeatmap } from "@/components/StreakComponents";
 import {
   TrendingUp, TrendingDown, Minus, Calendar,
-  Flame, Target, BarChart3, Trophy, Coins
+  Flame, Target, BarChart3, Trophy, Coins, Sparkles, ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -15,6 +15,12 @@ import { format, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSam
 import { useState, useEffect } from "react";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 import { ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
+import {
+  buildAccountabilityInsight,
+  getNextCheckinPrompt,
+  getStreakRiskTone,
+  getWeeklyNarrative,
+} from "@/lib/accountability";
 
 const FUJI_RPC = 'https://api.avax-test.network/ext/bc/C/rpc';
 // keccak256("hasAchievement(address,uint8)").slice(0,4) = 0x45fd14b0
@@ -144,6 +150,8 @@ export default function ProgressPage() {
       icon: Flame,
     },
   ];
+  const accountabilityInsight = buildAccountabilityInsight(workouts);
+  const streakRiskTone = getStreakRiskTone(accountabilityInsight.streakRisk);
 
   return (
     <Layout>
@@ -239,6 +247,64 @@ export default function ProgressPage() {
                 <p className="text-sm text-muted-foreground">Weekly Progress</p>
                 <p className="text-xl font-bold text-primary">{weeklyWorkoutCount}/7 Days</p>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6 mt-6">
+          <Card className="lg:col-span-2 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                Check-in Intelligence
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-3 gap-4">
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Dominant habit</p>
+                <p className="mt-2 text-lg font-bold">
+                  {accountabilityInsight.topActivityLabel
+                    ? `${accountabilityInsight.topActivityEmoji} ${accountabilityInsight.topActivityLabel}`
+                    : "Still learning"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {accountabilityInsight.topActivityCount > 0
+                    ? `${accountabilityInsight.topActivityCount} repeated check-ins`
+                    : "Keep logging to reveal your strongest loop."}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Best day</p>
+                <p className="mt-2 text-lg font-bold">
+                  {accountabilityInsight.strongestDayLabel ?? "No clear signal yet"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {accountabilityInsight.strongestDayLabel
+                    ? `You most often show up on ${accountabilityInsight.strongestDayLabel}s.`
+                    : "A stronger pattern appears after a few weeks of check-ins."}
+                </p>
+              </div>
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">14-day consistency</p>
+                <p className="mt-2 text-lg font-bold">{accountabilityInsight.consistencyScore}%</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {accountabilityInsight.activeDaysLast14} active days in the last two weeks.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={`border ${streakRiskTone.className}`}>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5" />
+                {streakRiskTone.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm">{getWeeklyNarrative(accountabilityInsight)}</p>
+              <p className="text-sm text-muted-foreground">{accountabilityInsight.recommendedAction}</p>
+              <p className="text-sm text-muted-foreground">{getNextCheckinPrompt(accountabilityInsight)}</p>
             </CardContent>
           </Card>
         </div>

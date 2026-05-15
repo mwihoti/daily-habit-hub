@@ -13,6 +13,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { startOfWeek, isSameDay } from "date-fns";
+import { ACTIVITY_GROUP_LABELS, getActivityEmoji, getActivityOption } from "@/lib/activityTypes";
 
 // ── Static content ─────────────────────────────────────────────────────────────
 
@@ -73,30 +74,6 @@ const web3Features = [
     emoji: "🔍",
     title: "Verified On-Chain",
     description: "Every achievement is visible on Snowscan. Your consistency is permanently provable.",
-  },
-];
-
-const testimonials = [
-  {
-    name: "Sarah M.",
-    location: "Nairobi",
-    text: "Finally found something that keeps me consistent! The community is so supportive.",
-    streak: 45,
-    avatar: "🏃‍♀️",
-  },
-  {
-    name: "James K.",
-    location: "Mombasa",
-    text: "My coach helped me lose 10kg in 3 months. And I earned $HABIT tokens doing it!",
-    streak: 89,
-    avatar: "💪",
-  },
-  {
-    name: "Mary W.",
-    location: "Kisumu",
-    text: "I've never been this consistent. The NFT badges make it feel real — not just another app.",
-    streak: 32,
-    avatar: "🧘‍♀️",
   },
 ];
 
@@ -237,6 +214,66 @@ export default function LandingPage() {
     return workouts.some((w: any) => isSameDay(new Date(w.created_at), d));
   });
   const weeklyWorkoutCount = workouts.filter((w: any) => new Date(w.created_at) >= startOfThisWeek).length;
+  const weeklyConsistencyRate = Math.round((weeklyWorkoutCount / 7) * 100);
+
+  const activityCounts = workouts.reduce((counts: Record<string, number>, workout: any) => {
+    const label = workout.activity_title?.trim() || workout.type || "custom";
+    counts[label] = (counts[label] ?? 0) + 1;
+    return counts;
+  }, {});
+
+  const topActivityEntry = (Object.entries(activityCounts) as Array<[string, number]>)
+    .sort((a, b) => b[1] - a[1])[0];
+  const topActivityType = workouts.find((workout: any) => {
+    const label = workout.activity_title?.trim() || workout.type || "custom";
+    return label === topActivityEntry?.[0];
+  })?.type;
+
+  const groupCounts = workouts.reduce((counts: Record<string, number>, workout: any) => {
+    const group = getActivityOption(workout.type)?.group ?? "build";
+    counts[group] = (counts[group] ?? 0) + 1;
+    return counts;
+  }, {});
+
+  const topGroupEntry = (Object.entries(groupCounts) as Array<[string, number]>)
+    .sort((a, b) => b[1] - a[1])[0];
+  const topGroupLabel = topGroupEntry
+    ? ACTIVITY_GROUP_LABELS[topGroupEntry[0] as keyof typeof ACTIVITY_GROUP_LABELS]
+    : null;
+
+  const consistencyMessage = weeklyWorkoutCount >= 5
+    ? "Strong rhythm. You're showing up most days this week."
+    : weeklyWorkoutCount >= 3
+      ? "Solid base. A couple more check-ins would lock the week in."
+      : "Your pattern is still forming. A few consecutive check-ins would change the trend fast.";
+
+  const intelligenceCards = user ? [
+    {
+      title: "Consistency Signal",
+      value: `${weeklyWorkoutCount}/7 days`,
+      detail: `${weeklyConsistencyRate}% weekly consistency`,
+      description: consistencyMessage,
+      emoji: "📈",
+    },
+    {
+      title: "Most Logged Activity",
+      value: topActivityEntry ? `${getActivityEmoji(topActivityType)} ${topActivityEntry[0]}` : "No pattern yet",
+      detail: topActivityEntry ? `${topActivityEntry[1]} check-ins recorded` : "Log a few workouts to unlock this signal",
+      description: topActivityEntry
+        ? "This is the habit you reinforce most often."
+        : "Your check-ins will surface your dominant habit automatically.",
+      emoji: "🧠",
+    },
+    {
+      title: "Current Focus",
+      value: topGroupLabel ?? "Still learning",
+      detail: topGroupEntry ? `${topGroupEntry[1]} check-ins in this category` : "Needs more history",
+      description: topGroupEntry
+        ? "Your recent check-ins suggest where your effort is concentrated."
+        : "Once you build history, the app can summarize where your energy goes.",
+      emoji: "🎯",
+    },
+  ] : [];
 
   return (
     <Layout>
@@ -549,43 +586,71 @@ export default function LandingPage() {
         </>
       )}
 
-      {/* ── Testimonials ── */}
-      {!user && (
-        <section className="py-16 md:py-24 bg-muted/20">
-          <div className="container">
-            <div className="text-center space-y-4 mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold">Real people. Real results.</h2>
-              <p className="text-muted-foreground text-lg">
-                Join the community building better habits across Kenya
-              </p>
-            </div>
+      {/* ── Check-in Intelligence ── */}
+      <section className="py-16 md:py-24 bg-muted/20">
+        <div className="container">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              {user ? "Intelligence from your check-ins" : "Built for check-in intelligence"}
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+              {user
+                ? "This layer uses your real activity history to surface patterns you can act on, instead of showing generic motivation."
+                : "Instead of fake testimonials, the product should learn from real user check-ins: consistency trends, dominant habits, recovery balance, and coaching prompts based on actual behavior."}
+            </p>
+          </div>
+
+          {user ? (
             <div className="grid md:grid-cols-3 gap-6">
-              {testimonials.map((t) => (
-                <Card key={t.name} className="card-hover">
+              {intelligenceCards.map((card) => (
+                <Card key={card.title} className="card-hover">
                   <CardContent className="p-6 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
-                        {t.avatar}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{t.name}</p>
-                        <p className="text-sm text-muted-foreground">{t.location}</p>
-                      </div>
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
+                      {card.emoji}
                     </div>
-                    <p className="text-muted-foreground">{t.text}</p>
-                    <div className="flex items-center justify-between">
-                      <StreakBadge streak={t.streak} size="sm" />
-                      <span className="text-xs text-amber-600 font-semibold">
-                        {t.streak * 10} $HABIT earned
-                      </span>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                      <h3 className="text-xl font-bold">{card.value}</h3>
+                      <p className="text-sm text-primary font-medium">{card.detail}</p>
                     </div>
+                    <p className="text-sm text-muted-foreground">{card.description}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="card-hover">
+                <CardContent className="p-6 space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">📈</div>
+                  <h3 className="text-xl font-bold">Consistency scoring</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Detect whether a user is building momentum, drifting, or at risk of breaking a streak.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="card-hover">
+                <CardContent className="p-6 space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">🧠</div>
+                  <h3 className="text-xl font-bold">Habit pattern detection</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Learn which activity types users repeat most and where they need support, recovery, or variety.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="card-hover">
+                <CardContent className="p-6 space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">💬</div>
+                  <h3 className="text-xl font-bold">Next-best prompts</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Trigger coach-like nudges such as “log recovery tomorrow” or “you usually train best midweek.”
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── Final CTA ── */}
       <section className="py-16 md:py-24 relative overflow-hidden">

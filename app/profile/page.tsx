@@ -11,17 +11,18 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   User as UserIcon, Settings as SettingsIcon, LogOut as LogOutIcon,
   Camera as CameraIcon, Trophy as TrophyIcon,
   Calendar as CalendarIcon, Flame as FlameIcon,
-  Mail as MailIcon, AtSign as AtSignIcon, Coins, Key
+  Mail as MailIcon, AtSign as AtSignIcon, Coins, Key, Sparkles, BellRing
 } from "lucide-react";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 
 import { format } from "date-fns";
+import { buildAccountabilityInsight, getReminderHourLabel } from "@/lib/accountability";
 
 export default function ProfilePage() {
   const supabase = createClient();
@@ -68,14 +69,43 @@ export default function ProfilePage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('workouts')
-        .select('id')
+        .select('id, created_at, type, activity_title, duration_minutes, energy_level, effort_level')
         .eq('user_id', user?.id);
       return data || [];
     }
   });
 
+  const { data: aiSummaryData } = useQuery({
+    queryKey: ['accountability-ai-summary'],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const res = await fetch("/api/accountability/summary", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "Could not load AI summary");
+      return data as { summary: string; provider: string; fallback: boolean };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Must be after user query so user?.id is in scope
   const { walletType, activeAddress, getExportKey } = useEmbeddedWallet(user?.id);
+  const accountabilityInsight = buildAccountabilityInsight(workouts);
+  const accountabilityTier = profile?.accountability_tier ?? "free";
+
+  const updateAccountabilityMutation = useMutation({
+    mutationFn: async (updates: Record<string, unknown>) => {
+      if (!user?.id) throw new Error("Not signed in");
+      const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+      toast.success("Accountability settings saved");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Could not save accountability settings");
+    },
+  });
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -174,6 +204,29 @@ export default function ProfilePage() {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card className="border-primary/20">
+              <CardContent className="p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <p className="font-semibold">Accountability Summary</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {aiSummaryData?.summary ?? accountabilityInsight.momentumSummary}
+                </p>
+                {!aiSummaryData?.summary && (
+                  <p className="text-sm text-muted-foreground">{accountabilityInsight.recommendedAction}</p>
+                )}
+                {aiSummaryData?.provider && (
+                  <p className="text-xs text-muted-foreground">
+                    Provider: {aiSummaryData.provider}{aiSummaryData.fallback ? " fallback" : ""}
+                  </p>
+                )}
+                <div className="text-xs text-muted-foreground">
+                  Tier: <span className="font-medium text-foreground">{accountabilityTier === 'free' ? 'Free' : accountabilityTier === 'premium_trial' ? 'Premium Trial' : 'Premium'}</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Main Content */}
@@ -258,6 +311,69 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BellRing className="w-5 h-5 text-primary" />
+                  Accountability Preferences
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <Label>Prompt Tone</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: "direct", label: "Direct" },
+                      { value: "supportive", label: "Supportive" },
+                      { value: "intense", label: "Intense" },
+                    ].map((tone) => (
+                      <button
+                        key={tone.value}
+                        type="button"
+                        onClick={() => updateAccountabilityMutation.mutate({ accountability_preferred_prompt_tone: tone.value })}
+                        className={`px-3 py-2 rounded-full border text-xs font-medium transition-colors ${
+                          (profile?.accountability_preferred_prompt_tone ?? 'direct') === tone.value
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/30"
+                        }`}
+                      >
+                        {tone.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Reminder Window</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[6, 12, 18, 20].map((hour) => (
+                      <button
+                        key={hour}
+                        type="button"
+                        onClick={() => updateAccountabilityMutation.mutate({ accountability_reminder_hour: hour })}
+                        className={`px-3 py-2 rounded-full border text-xs font-medium transition-colors ${
+                          (profile?.accountability_reminder_hour ?? 19) === hour
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/30"
+                        }`}
+                      >
+                        {getReminderHourLabel(hour)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border bg-muted/30 p-4">
+                  <p className="text-sm font-semibold">Last summary sent</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {profile?.accountability_last_summary_sent_at
+                      ? format(new Date(profile.accountability_last_summary_sent_at), "MMMM d, yyyy h:mm a")
+                      : "No summary has been sent yet."}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
             
             <Card>
               <CardHeader>
@@ -308,7 +424,9 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-border/50">
                   <span className="text-muted-foreground">Account Type</span>
-                  <span className="font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">Free Plan</span>
+                  <span className="font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">
+                    {accountabilityTier === 'free' ? 'Free Plan' : accountabilityTier === 'premium_trial' ? 'Premium Trial' : 'Premium Plan'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
