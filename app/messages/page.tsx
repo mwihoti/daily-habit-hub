@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { format, isToday, isYesterday } from "date-fns";
 
 interface Conversation {
   id: string;
@@ -20,8 +21,8 @@ interface Conversation {
   last_message_at: string | null;
   unread_user: number;
   unread_trainer: number;
-  trainer: { id: string; full_name: string; avatar_url: string | null; user_id: string } | null;
-  user_profile: { id: string; full_name: string; avatar_url: string | null } | null;
+  trainer: { id: string; full_name: string; avatar_url: string | null; user_id: string; last_seen_at?: string | null } | null;
+  user_profile: { id: string; full_name: string; avatar_url: string | null; last_seen_at?: string | null } | null;
 }
 
 interface Message {
@@ -30,7 +31,8 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
-  sender: { full_name: string; avatar_url: string | null } | null;
+  seen_at?: string | null;
+  sender: { full_name: string; avatar_url: string | null; last_seen_at?: string | null } | null;
 }
 
 function Avatar({ url, name, size = "md" }: { url: string | null; name: string; size?: "sm" | "md" }) {
@@ -64,6 +66,25 @@ function formatMessageTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function formatDayDivider(iso: string) {
+  const date = new Date(iso);
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "EEEE, MMM d");
+}
+
+function formatPresence(iso: string | null | undefined) {
+  if (!iso) return "Last active unknown";
+  const date = new Date(iso);
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes <= 2) return "Online now";
+  if (diffMinutes < 60) return `Last active ${diffMinutes}m ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `Last active ${diffHours}h ago`;
+  return `Last active ${date.toLocaleDateString()}`;
+}
+
 function MessagesContent() {
   const searchParams = useSearchParams();
   const initialConvId = searchParams.get("conversation");
@@ -77,6 +98,7 @@ function MessagesContent() {
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -93,7 +115,10 @@ function MessagesContent() {
     try {
       const res = await fetch("/api/conversations");
       if (res.status === 401) return; // not logged in
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || "Could not load conversations");
+      }
       const convs: Conversation[] = data.conversations ?? [];
       setConversations(convs);
 
@@ -101,8 +126,8 @@ function MessagesContent() {
       if (convs.length > 0) {
         setSelectedConvId((prev) => prev ?? convs[0].id);
       }
-    } catch {
-      // ignore
+    } catch (error: any) {
+      toast.error(error?.message || "Could not load conversations");
     } finally {
       setLoadingConvs(false);
     }
@@ -112,31 +137,35 @@ function MessagesContent() {
     fetchConversations();
   }, [fetchConversations]);
 
+  const fetchMessages = useCallback(async (conversationId: string) => {
+    setLoadingMsgs(true);
+    setLoadError(null);
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}/messages`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || "Could not load messages");
+      }
+      setMessages(data?.messages ?? []);
+      fetchConversations();
+    } catch (error: any) {
+      setMessages([]);
+      setLoadError(error?.message || "Could not load messages");
+    } finally {
+      setLoadingMsgs(false);
+    }
+  }, [fetchConversations]);
+
   // Fetch messages for selected conversation
   useEffect(() => {
     if (!selectedConvId) {
       setMessages([]);
+      setLoadError(null);
       return;
     }
 
     let cancelled = false;
-
-    async function fetchMessages() {
-      setLoadingMsgs(true);
-      try {
-        const res = await fetch(`/api/conversations/${selectedConvId}/messages`);
-        if (!cancelled) {
-          const data = await res.json();
-          setMessages(data.messages ?? []);
-        }
-      } catch {
-        // ignore
-      } finally {
-        if (!cancelled) setLoadingMsgs(false);
-      }
-    }
-
-    fetchMessages();
+    fetchMessages(selectedConvId).catch(() => {});
 
     // Real-time subscription for new messages
     const channel = supabase
@@ -149,16 +178,27 @@ function MessagesContent() {
           table: "messages",
           filter: `conversation_id=eq.${selectedConvId}`,
         },
-        (payload) => {
+        async (payload) => {
           if (!cancelled) {
-            setMessages((prev) => {
-              // Avoid duplicates
-              if (prev.some((m) => m.id === payload.new.id)) return prev;
-              return [...prev, payload.new as Message];
-            });
-            // Also refresh conversation list to update last_message
-            fetchConversations();
+            const incomingSender = (payload.new as { sender_id?: string }).sender_id;
+            if (incomingSender === currentUserId) {
+              fetchConversations();
+              return;
+            }
+            await fetchMessages(selectedConvId);
           }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversations",
+          filter: `id=eq.${selectedConvId}`,
+        },
+        () => {
+          if (!cancelled) fetchConversations();
         }
       )
       .subscribe();
@@ -167,19 +207,72 @@ function MessagesContent() {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [selectedConvId]);
+  }, [selectedConvId, currentUserId, fetchConversations, fetchMessages, supabase]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const channel = supabase
+      .channel(`conversation-list:${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "conversations",
+        },
+        () => {
+          fetchConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, fetchConversations, supabase]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const markSeen = () => {
+      supabase.from("profiles").update({ last_seen_at: new Date().toISOString() }).eq("id", currentUserId);
+    };
+
+    markSeen();
+    const interval = window.setInterval(markSeen, 60000);
+    const onFocus = () => markSeen();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [currentUserId, supabase]);
+
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedConvId || sending) return;
 
     setSending(true);
     const text = newMessage.trim();
+    const optimisticId = `temp-${Date.now()}`;
     setNewMessage("");
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: optimisticId,
+        conversation_id: selectedConvId,
+        sender_id: currentUserId ?? "me",
+        content: text,
+        created_at: new Date().toISOString(),
+        sender: null,
+      },
+    ]);
 
     try {
       const res = await fetch(`/api/conversations/${selectedConvId}/messages`, {
@@ -190,15 +283,30 @@ function MessagesContent() {
 
       if (res.status === 401) {
         toast.error("Please sign in to send messages");
+        setMessages((prev) => prev.filter((message) => message.id !== optimisticId));
+        setNewMessage(text);
         return;
       }
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const data = await res.json();
+        setMessages((prev) => prev.filter((message) => message.id !== optimisticId));
         toast.error(data.error || "Failed to send");
         setNewMessage(text); // restore
+        return;
       }
+      if (data?.message) {
+        setMessages((prev) => prev.map((message) => (
+          message.id === optimisticId ? data.message as Message : message
+        )));
+      } else {
+        setMessages((prev) => prev.filter((message) => message.id !== optimisticId));
+        await fetchMessages(selectedConvId);
+      }
+      fetchConversations();
     } catch {
+      setMessages((prev) => prev.filter((message) => message.id !== optimisticId));
       toast.error("Failed to send message");
       setNewMessage(text);
     } finally {
@@ -207,6 +315,8 @@ function MessagesContent() {
   };
 
   const selectedConv = conversations.find((c) => c.id === selectedConvId);
+  const selectedOtherParty = selectedConv ? getOtherParty(selectedConv) : null;
+  const lastSeenOwnMessageId = [...messages].reverse().find((msg) => msg.sender_id === currentUserId && msg.seen_at)?.id;
 
   function getOtherParty(conv: Conversation) {
     if (!currentUserId) return { name: "Unknown", avatar_url: null };
@@ -215,11 +325,13 @@ function MessagesContent() {
       return {
         name: conv.user_profile?.full_name ?? "User",
         avatar_url: conv.user_profile?.avatar_url ?? null,
+        last_seen_at: conv.user_profile?.last_seen_at ?? null,
       };
     }
     return {
       name: conv.trainer?.full_name ?? "Trainer",
       avatar_url: conv.trainer?.avatar_url ?? null,
+      last_seen_at: conv.trainer?.last_seen_at ?? null,
     };
   }
 
@@ -276,6 +388,12 @@ function MessagesContent() {
                     </Link>{" "}
                     and send a message to get started.
                   </p>
+                </div>
+              )}
+
+              {!loadingConvs && filteredConvs.length > 0 && selectedConvId && !filteredConvs.some((conv) => conv.id === selectedConvId) && (
+                <div className="text-center p-6 text-sm text-muted-foreground">
+                  The selected conversation is no longer available.
                 </div>
               )}
 
@@ -337,20 +455,18 @@ function MessagesContent() {
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                  {(() => {
-                    const other = getOtherParty(selectedConv);
-                    return (
-                      <>
-                        <Avatar url={other.avatar_url} name={other.name} size="sm" />
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{other.name}</h3>
-                          {isCoach(selectedConv) && (
-                            <p className="text-xs text-primary">Coach</p>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
+                  {selectedOtherParty && (
+                    <>
+                      <Avatar url={selectedOtherParty.avatar_url} name={selectedOtherParty.name} size="sm" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{selectedOtherParty.name}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {isCoach(selectedConv) ? "Coach · " : ""}
+                          {formatPresence(selectedOtherParty.last_seen_at)}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Messages */}
@@ -361,37 +477,60 @@ function MessagesContent() {
                     </div>
                   )}
 
-                  {!loadingMsgs && messages.length === 0 && (
+                  {!loadingMsgs && !loadError && messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                       <MessageCircle className="w-12 h-12 mb-3 opacity-20" />
                       <p>No messages yet. Say hello!</p>
                     </div>
                   )}
 
-                  {messages.map((msg) => {
+                  {!loadingMsgs && loadError && (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                      <MessageCircle className="w-12 h-12 mb-3 opacity-20" />
+                      <p className="font-medium mb-2">{loadError}</p>
+                      {selectedConvId && (
+                        <Button variant="outline" size="sm" onClick={() => fetchMessages(selectedConvId)}>
+                          Retry
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {!loadError && messages.map((msg, index) => {
                     const isMe = msg.sender_id === currentUserId;
+                    const previousMessage = index > 0 ? messages[index - 1] : null;
+                    const showDayDivider = !previousMessage || format(new Date(previousMessage.created_at), "yyyy-MM-dd") !== format(new Date(msg.created_at), "yyyy-MM-dd");
                     return (
-                      <div
-                        key={msg.id}
-                        className={cn("flex", isMe ? "justify-end" : "justify-start")}
-                      >
+                      <div key={msg.id}>
+                        {showDayDivider && (
+                          <div className="flex items-center justify-center my-4">
+                            <span className="px-3 py-1 rounded-full bg-muted text-xs text-muted-foreground">
+                              {formatDayDivider(msg.created_at)}
+                            </span>
+                          </div>
+                        )}
                         <div
-                          className={cn(
-                            "max-w-[80%] px-4 py-2 rounded-2xl",
-                            isMe
-                              ? "gradient-hero text-primary-foreground rounded-br-md"
-                              : "bg-muted rounded-bl-md"
-                          )}
+                          className={cn("flex", isMe ? "justify-end" : "justify-start")}
                         >
-                          <p>{msg.content}</p>
-                          <p
+                          <div
                             className={cn(
-                              "text-[10px] mt-1",
-                              isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                              "max-w-[80%] px-4 py-2 rounded-2xl",
+                              isMe
+                                ? "gradient-hero text-primary-foreground rounded-br-md"
+                                : "bg-muted rounded-bl-md"
                             )}
                           >
-                            {formatMessageTime(msg.created_at)}
-                          </p>
+                            <p>{msg.content}</p>
+                            <p
+                              className={cn(
+                                "text-[10px] mt-1",
+                                isMe ? "text-primary-foreground/70" : "text-muted-foreground"
+                              )}
+                            >
+                              {formatMessageTime(msg.created_at)}
+                              {isMe && lastSeenOwnMessageId === msg.id && msg.seen_at ? " · Seen" : ""}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     );

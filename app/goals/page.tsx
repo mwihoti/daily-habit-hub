@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { buildGoalInsight } from "@/lib/accountability";
 import {
   Dialog,
   DialogContent,
@@ -118,6 +119,8 @@ export default function GoalsPage() {
     );
   }
 
+  const goalInsight = buildGoalInsight(goals);
+
   return (
     <Layout>
       <div className="container py-12 max-w-4xl">
@@ -184,6 +187,34 @@ export default function GoalsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Goal load</p>
+              <p className="text-3xl font-bold mt-2">{goalInsight.activeGoals}</p>
+              <p className="text-sm text-muted-foreground mt-1">Active goals currently in motion</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Average progress</p>
+              <p className="text-3xl font-bold mt-2">{goalInsight.averageProgress}%</p>
+              <p className="text-sm text-muted-foreground mt-1">Across tracked goals</p>
+            </CardContent>
+          </Card>
+          <Card className={goalInsight.overdueGoals > 0 ? "border-red-500/20 bg-red-500/5" : ""}>
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Focus signal</p>
+              <p className="text-sm font-semibold mt-2">{goalInsight.recommendedAction}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {goalInsight.nextGoalDeadline
+                  ? `Next deadline: ${format(new Date(goalInsight.nextGoalDeadline), "MMM d, yyyy")}`
+                  : "No active deadline set"}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-6">

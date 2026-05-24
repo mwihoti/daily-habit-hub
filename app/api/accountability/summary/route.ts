@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const forceRefresh = url.searchParams.get("refresh") === "1";
 
-    const [{ data: profile }, { data: workouts, error: workoutsError }] = await Promise.all([
+    const [{ data: profile }, { data: workouts, error: workoutsError }, { data: goals }, { data: tasks }] = await Promise.all([
       supabase
         .from("profiles")
         .select("streak, fitness_goal, total_workouts, accountability_preferred_prompt_tone")
@@ -27,6 +27,14 @@ export async function GET(request: Request) {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50),
+      supabase
+        .from("goals")
+        .select("title, target_date, status, progress")
+        .eq("user_id", user.id),
+      supabase
+        .from("tasks")
+        .select("title, due_date, reminder_at, is_completed")
+        .eq("user_id", user.id),
     ]);
 
     if (workoutsError) {
@@ -64,6 +72,8 @@ export async function GET(request: Request) {
     const summary = await generateAccountabilitySummary({
       profile: profile ?? {},
       workouts: workouts ?? [],
+      goals: goals ?? [],
+      tasks: tasks ?? [],
     });
 
     await supabase

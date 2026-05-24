@@ -27,21 +27,37 @@ export async function GET() {
 
     const trainerIds = [...new Set(conversations.map((c) => c.trainer_id))]
     const userIds = [...new Set(conversations.map((c) => c.user_id))]
+    const profileIds = [...new Set([...trainerIds, ...userIds])]
 
-    const [{ data: trainerProfiles }, { data: userProfiles }] = await Promise.all([
+    const [{ data: trainerProfiles }, { data: userProfiles }, { data: baseProfiles }] = await Promise.all([
       supabase
         .from('trainer_profiles')
         .select('id, full_name, avatar_url, user_id')
         .in('user_id', trainerIds),
       supabase
         .from('profiles')
-        .select('id, full_name, avatar_url')
+        .select('id, full_name, avatar_url, last_seen_at')
         .in('id', userIds),
+      supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, last_seen_at')
+        .in('id', profileIds),
     ])
 
     const enriched = conversations.map((conv) => ({
       ...conv,
-      trainer: trainerProfiles?.find((t) => t.user_id === conv.trainer_id) ?? null,
+      trainer: (() => {
+        const trainerProfile = trainerProfiles?.find((t) => t.user_id === conv.trainer_id) ?? null
+        const baseProfile = baseProfiles?.find((p) => p.id === conv.trainer_id) ?? null
+        if (!trainerProfile && !baseProfile) return null
+        return {
+          id: trainerProfile?.id ?? baseProfile?.id ?? conv.trainer_id,
+          user_id: conv.trainer_id,
+          full_name: trainerProfile?.full_name ?? baseProfile?.full_name ?? 'Trainer',
+          avatar_url: trainerProfile?.avatar_url ?? baseProfile?.avatar_url ?? null,
+          last_seen_at: baseProfile?.last_seen_at ?? null,
+        }
+      })(),
       user_profile: userProfiles?.find((u) => u.id === conv.user_id) ?? null,
     }))
 

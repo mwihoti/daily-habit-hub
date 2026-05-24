@@ -1,7 +1,11 @@
 import {
   AccountabilityInsight,
   AccountabilityWorkout,
+  GoalInsightInput,
+  TaskInsightInput,
   buildAccountabilityInsight,
+  buildGoalInsight,
+  buildTaskInsight,
   getWeeklyNarrative,
 } from "@/lib/accountability";
 
@@ -21,6 +25,8 @@ interface SummaryContext {
     accountability_preferred_prompt_tone?: string | null;
   };
   workouts: AccountabilityWorkout[];
+  goals: GoalInsightInput[];
+  tasks: TaskInsightInput[];
   insight: AccountabilityInsight;
 }
 
@@ -58,7 +64,13 @@ function buildRuleBasedSummary(context: SummaryContext): string {
       ? "Your streak is at risk if you skip today."
       : "Your streak is stable if you keep showing up.";
 
-  return `${opener} ${getWeeklyNarrative(context.insight)} ${focus} ${risk} ${context.insight.recommendedAction}`;
+  const goalInsight = buildGoalInsight(context.goals);
+  const taskInsight = buildTaskInsight(context.tasks);
+  const planningLine = goalInsight.activeGoals > 0 || taskInsight.pendingTasks > 0
+    ? `You have ${goalInsight.activeGoals} active goal${goalInsight.activeGoals === 1 ? "" : "s"} and ${taskInsight.pendingTasks} pending task${taskInsight.pendingTasks === 1 ? "" : "s"}.`
+    : "Your planning stack is clear enough to set the next target deliberately.";
+
+  return `${opener} ${getWeeklyNarrative(context.insight)} ${focus} ${risk} ${planningLine} ${context.insight.recommendedAction}`;
 }
 
 function getToneProfile(tone: string | null | undefined): ToneProfile {
@@ -99,6 +111,8 @@ function buildPrompt(context: SummaryContext): string {
     energy_level: workout.energy_level ?? null,
     effort_level: workout.effort_level ?? null,
   }));
+  const goalInsight = buildGoalInsight(context.goals);
+  const taskInsight = buildTaskInsight(context.tasks);
 
   return [
     "You are generating a short accountability summary for a fitness habit app user.",
@@ -134,6 +148,12 @@ function buildPrompt(context: SummaryContext): string {
       recommendedAction: context.insight.recommendedAction,
       recoveryPrompt: context.insight.recoveryPrompt,
     }),
+    "",
+    "Goal insight:",
+    JSON.stringify(goalInsight),
+    "",
+    "Task insight:",
+    JSON.stringify(taskInsight),
     "",
     "Recent workouts:",
     JSON.stringify(recentWorkouts),
@@ -233,9 +253,16 @@ function getProviderOrder(): AiProvider[] {
 export async function generateAccountabilitySummary(contextInput: {
   profile: SummaryContext["profile"];
   workouts: AccountabilityWorkout[];
+  goals?: GoalInsightInput[];
+  tasks?: TaskInsightInput[];
 }): Promise<AccountabilityAiSummary> {
   const insight = buildAccountabilityInsight(contextInput.workouts);
-  const context: SummaryContext = { ...contextInput, insight };
+  const context: SummaryContext = {
+    ...contextInput,
+    goals: contextInput.goals ?? [],
+    tasks: contextInput.tasks ?? [],
+    insight,
+  };
 
   if (getConfiguredProvider() === "off") {
     return {

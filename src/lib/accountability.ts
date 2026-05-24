@@ -30,6 +30,40 @@ export interface AccountabilityInsight {
   strongestDayLabel: string | null;
 }
 
+export interface GoalInsightInput {
+  title?: string | null;
+  target_date?: string | null;
+  status?: string | null;
+  progress?: number | null;
+}
+
+export interface TaskInsightInput {
+  title?: string | null;
+  due_date?: string | null;
+  reminder_at?: string | null;
+  is_completed?: boolean | null;
+}
+
+export interface GoalInsight {
+  totalGoals: number;
+  activeGoals: number;
+  completedGoals: number;
+  overdueGoals: number;
+  averageProgress: number;
+  nextGoalDeadline: string | null;
+  recommendedAction: string;
+}
+
+export interface TaskInsight {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  overdueTasks: number;
+  dueTodayTasks: number;
+  completionRate: number;
+  recommendedAction: string;
+}
+
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function buildAccountabilityInsight(
@@ -182,4 +216,74 @@ export function getNextCheckinPrompt(insight: AccountabilityInsight): string {
 
 export function formatInsightTimestamp(now = new Date()): string {
   return format(now, "EEE, MMM d");
+}
+
+export function buildGoalInsight(goals: GoalInsightInput[], now = new Date()): GoalInsight {
+  const totalGoals = goals.length;
+  const activeGoals = goals.filter((goal) => goal.status !== "completed").length;
+  const completedGoals = goals.filter((goal) => goal.status === "completed").length;
+  const overdueGoals = goals.filter((goal) => {
+    if (!goal.target_date || goal.status === "completed") return false;
+    return startOfDay(new Date(goal.target_date)) < startOfDay(now);
+  }).length;
+  const progressValues = goals
+    .map((goal) => goal.progress)
+    .filter((value): value is number => typeof value === "number");
+  const averageProgress = progressValues.length
+    ? Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length)
+    : 0;
+  const nextGoalDeadline = goals
+    .filter((goal) => goal.target_date && goal.status !== "completed")
+    .sort((a, b) => new Date(a.target_date as string).getTime() - new Date(b.target_date as string).getTime())[0]?.target_date ?? null;
+
+  const recommendedAction = overdueGoals > 0
+    ? "At least one goal is overdue. Narrow focus and move the most urgent one forward today."
+    : activeGoals === 0 && completedGoals > 0
+      ? "You closed your current goals. Set the next target while momentum is still high."
+      : activeGoals > 3
+        ? "You have multiple active goals. Pick one priority goal and reduce scattered effort."
+        : "Keep one active goal moving with a concrete next step this week.";
+
+  return {
+    totalGoals,
+    activeGoals,
+    completedGoals,
+    overdueGoals,
+    averageProgress,
+    nextGoalDeadline,
+    recommendedAction,
+  };
+}
+
+export function buildTaskInsight(tasks: TaskInsightInput[], now = new Date()): TaskInsight {
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((task) => task.is_completed).length;
+  const pendingTasks = totalTasks - completedTasks;
+  const overdueTasks = tasks.filter((task) => {
+    if (!task.due_date || task.is_completed) return false;
+    return new Date(task.due_date) < now;
+  }).length;
+  const dueTodayTasks = tasks.filter((task) => {
+    if (!task.due_date || task.is_completed) return false;
+    return isSameDay(new Date(task.due_date), now);
+  }).length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const recommendedAction = overdueTasks > 0
+    ? "Clear one overdue task first. It is the fastest way to reduce drag."
+    : dueTodayTasks > 0
+      ? "You have tasks due today. Finish the easiest one early to protect momentum."
+      : pendingTasks > 0
+        ? "Your task list is healthy. Knock out one pending task before adding another."
+        : "Your task list is clear. Add the next action that supports your current goal.";
+
+  return {
+    totalTasks,
+    completedTasks,
+    pendingTasks,
+    overdueTasks,
+    dueTodayTasks,
+    completionRate,
+    recommendedAction,
+  };
 }

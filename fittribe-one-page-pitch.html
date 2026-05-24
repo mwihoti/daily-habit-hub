@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FitTribe - One Page Pitch</title>
+    <style>
+      :root {
+        --bg: #f4efe7;
+        --panel: rgba(255, 255, 255, 0.74);
+        --text: #1c1b18;
+        --muted: #5d5a52;
+        --line: rgba(28, 27, 24, 0.12);
+        --fire: #ef5b2a;
+        --amber: #d79b18;
+        --green: #146c43;
+        --dark: #14231d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        background:
+          radial-gradient(circle at top left, rgba(239, 91, 42, 0.16), transparent 32%),
+          radial-gradient(circle at top right, rgba(215, 155, 24, 0.12), transparent 28%),
+          linear-gradient(135deg, #fcf8f2 0%, #f1ebe2 50%, #e9dfd1 100%);
+        color: var(--text);
+      }
+
+      .slide {
+        width: 1600px;
+        min-height: 900px;
+        margin: 0 auto;
+        padding: 52px 58px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(20, 35, 29, 0.07);
+        color: var(--dark);
+        font: 700 15px/1.1 Arial, Helvetica, sans-serif;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.6fr 0.9fr;
+        gap: 34px;
+        margin-top: 22px;
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        margin: 12px 0 14px;
+        font-size: 62px;
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+      }
+
+      .subhead {
+        max-width: 900px;
+        font: 500 26px/1.3 Arial, Helvetica, sans-serif;
+        color: var(--muted);
+      }
+
+      .hero-panel {
+        background: linear-gradient(165deg, rgba(20, 35, 29, 0.95), rgba(36, 54, 47, 0.93));
+        color: #fff9f1;
+        border-radius: 28px;
+        padding: 26px 28px;
+        box-shadow: 0 18px 50px rgba(20, 35, 29, 0.18);
+      }
+
+      .hero-panel h2 {
+        margin: 0 0 8px;
+        font-size: 24px;
+        line-height: 1.1;
+      }
+
+      .hero-panel p,
+      .hero-panel li {
+        font: 500 18px/1.45 Arial, Helvetica, sans-serif;
+        color: rgba(255, 249, 241, 0.84);
+      }
+
+      .hero-panel ul {
+        margin: 16px 0 0;
+        padding-left: 18px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 22px 22px 20px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 10px 30px rgba(35, 29, 20, 0.05);
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 23px;
+        line-height: 1.05;
+      }
+
+      .card p,
+      .card li {
+        margin: 0;
+        font: 500 17px/1.42 Arial, Helvetica, sans-serif;
+        color: var(--muted);
+      }
+
+      .card ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .highlight {
+        color: var(--fire);
+      }
+
+      .kpi {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .kpi div {
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 14px 16px;
+      }
+
+      .kpi strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .kpi span {
+        font: 600 13px/1.3 Arial, Helvetica, sans-serif;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .footer .left,
+      .footer .right {
+        font: 600 16px/1.4 Arial, Helvetica, sans-serif;
+        color: var(--muted);
+      }
+
+      .ask {
+        color: var(--green);
+        font-weight: 800;
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+
+        .slide {
+          width: 100%;
+          min-height: auto;
+          padding: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="slide">
+      <div class="badge">FitTribe | One-Page Pitch</div>
+
+      <section class="hero">
+        <div>
+          <h1>
+            Turn <span class="highlight">daily fitness check-ins</span><br />
+            into retention, identity, and revenue.
+          </h1>
+          <p class="subhead">
+            FitTribe is a Kenya-first fitness accountability platform where users log real progress,
+            build streaks, get smarter behavior-based coaching prompts, and earn verifiable rewards
+            without crypto friction.
+          </p>
+        </div>
+
+        <aside class="hero-panel">
+          <h2>What exists today</h2>
+          <ul>
+            <li>Live web app with check-ins, streaks, progress, community, and trainer marketplace</li>
+            <li>Gasless Avalanche reward layer with in-app wallet and soulbound achievement badges</li>
+            <li>New accountability intelligence: streak risk, dominant habit, weekly summaries, AI refresh</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h3>Problem</h3>
+          <p>
+            Fitness apps lose users because nothing meaningful happens after day one. In Kenya,
+            trainers also struggle with fragmented client acquisition and weak recurring engagement.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Solution</h3>
+          <p>
+            FitTribe makes consistency the product: fast check-ins, streak protection, community pressure,
+            trainer access, and rewards tied to real activity instead of generic motivation.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Why This Wins</h3>
+          <ul>
+            <li>Local accountability loop, not just tracking</li>
+            <li>Crypto hidden behind a usable product</li>
+            <li>Trainer marketplace plus premium retention layer</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>Business Model</h3>
+          <ul>
+            <li>Trainer subscriptions and lead fees</li>
+            <li>Premium accountability membership</li>
+            <li>Corporate wellness dashboards and challenges</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="kpi">
+        <div>
+          <strong>Primary wedge</strong>
+          <span>Daily habit retention</span>
+        </div>
+        <div>
+          <strong>Monetization first</strong>
+          <span>Premium + trainer revenue</span>
+        </div>
+        <div>
+          <strong>Moat</strong>
+          <span>Behavior data + on-chain proof</span>
+        </div>
+      </section>
+
+      <section class="grid" style="margin-top: 18px;">
+        <article class="card">
+          <h3>Current Focus</h3>
+          <p>
+            Build a stronger check-in loop with behavior intelligence, reminders, streak rescue,
+            and premium accountability before expanding into maps, gyms, or broader commerce.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Go-To-Market</h3>
+          <p>
+            Start with Nairobi trainers, gym communities, campus streak challenges, and social-led
+            acquisition. Convert retention into premium and trainer-side revenue.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Why Now</h3>
+          <p>
+            Mobile behavior, digital payments, and fitness community culture are already here.
+            FitTribe connects them into one product instead of asking users to adopt crypto first.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>The Ask</h3>
+          <p class="ask">
+            Funding to accelerate user growth, trainer onboarding, premium accountability, and mobile execution.
+          </p>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <div class="left">
+          Live app: <strong>daily-habit-hub.vercel.app</strong><br />
+          Builder: <strong>@mwihoti</strong>
+        </div>
+        <div class="right">
+          Pitch line: <strong>"Show up every day. Build a fitness record no one can fake."</strong>
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -1,6 +1,39 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+async function enrichMessagesWithSenders(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  messages: Array<{
+    id: string
+    conversation_id: string
+    sender_id: string
+    content: string
+    created_at: string
+    seen_at?: string | null
+  }>
+) {
+  if (messages.length === 0) return []
+
+  const senderIds = [...new Set(messages.map((message) => message.sender_id))]
+  const { data: senderProfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, avatar_url, last_seen_at')
+    .in('id', senderIds)
+
+  return messages.map((message) => ({
+    ...message,
+    sender: (() => {
+      const senderProfile = senderProfiles?.find((profile) => profile.id === message.sender_id)
+      if (!senderProfile) return null
+      return {
+        full_name: senderProfile.full_name ?? null,
+        avatar_url: senderProfile.avatar_url ?? null,
+        last_seen_at: senderProfile.last_seen_at ?? null,
+      }
+    })(),
+  }))
+}
+
 // GET /api/conversations/[id]/messages — fetch all messages in a conversation
 export async function GET(
   _request: Request,
@@ -29,16 +62,25 @@ export async function GET(
 
     const { data, error } = await supabase
       .from('messages')
-      .select(`
-        *,
-        sender:profiles!messages_sender_id_fkey(full_name, avatar_url)
-      `)
+      .select('id, conversation_id, sender_id, content, created_at, seen_at')
       .eq('conversation_id', id)
       .order('created_at', { ascending: true })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    await supabase
+      .from('profiles')
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq('id', user.id)
+
+    await supabase
+      .from('messages')
+      .update({ seen_at: new Date().toISOString() })
+      .eq('conversation_id', id)
+      .neq('sender_id', user.id)
+      .is('seen_at', null)
 
     // Reset unread count for this user
     const isTrainer = conv.trainer_id === user.id
@@ -47,7 +89,9 @@ export async function GET(
       .update(isTrainer ? { unread_trainer: 0 } : { unread_user: 0 })
       .eq('id', id)
 
-    return NextResponse.json({ messages: data })
+    const enrichedMessages = await enrichMessagesWithSenders(supabase, data ?? [])
+
+    return NextResponse.json({ messages: enrichedMessages })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? 'Server error' }, { status: 500 })
   }
@@ -89,7 +133,7 @@ export async function POST(
     const { data: message, error: msgError } = await supabase
       .from('messages')
       .insert({ conversation_id: id, sender_id: user.id, content: content.trim() })
-      .select()
+      .select('id, conversation_id, sender_id, content, created_at, seen_at')
       .single()
 
     if (msgError) {
@@ -98,6 +142,11 @@ export async function POST(
 
     // Update conversation last_message and increment unread for the other party
     const isTrainer = conv.trainer_id === user.id
+    await supabase
+      .from('profiles')
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq('id', user.id)
+
     await supabase
       .from('conversations')
       .update({
@@ -109,7 +158,9 @@ export async function POST(
       })
       .eq('id', id)
 
-    return NextResponse.json({ message }, { status: 201 })
+    const [enrichedMessage] = await enrichMessagesWithSenders(supabase, message ? [message] : [])
+
+    return NextResponse.json({ message: enrichedMessage ?? message }, { status: 201 })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? 'Server error' }, { status: 500 })
   }

@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { format, isPast, addMinutes, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
+import { buildTaskInsight } from "@/lib/accountability";
 import {
   Dialog,
   DialogContent,
@@ -177,6 +178,8 @@ export default function TasksPage() {
     );
   }
 
+  const taskInsight = buildTaskInsight(tasks);
+
   return (
     <Layout>
       <div className="container py-12 max-w-2xl">
@@ -255,6 +258,32 @@ export default function TasksPage() {
               </DialogContent>
             </Dialog>
           </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Pending tasks</p>
+              <p className="text-3xl font-bold mt-2">{taskInsight.pendingTasks}</p>
+              <p className="text-sm text-muted-foreground mt-1">Tasks still open</p>
+            </CardContent>
+          </Card>
+          <Card className={taskInsight.overdueTasks > 0 ? "border-red-500/20 bg-red-500/5" : ""}>
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Due pressure</p>
+              <p className="text-3xl font-bold mt-2">{taskInsight.overdueTasks}</p>
+              <p className="text-sm text-muted-foreground mt-1">Overdue tasks to clear</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Task signal</p>
+              <p className="text-sm font-semibold mt-2">{taskInsight.recommendedAction}</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Completion rate: {taskInsight.completionRate}%
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-3">
