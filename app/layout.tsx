@@ -13,7 +13,7 @@ import {
   webApplicationSchema,
 } from "@/components/JsonLd";
 import { PWAManager } from "./components/PWAManager";
-import { SITE_URL, SITE_NAME } from "@/lib/seo";
+import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -78,10 +78,10 @@ export const metadata: Metadata = {
     locale: "en_KE",
     images: [
       {
-        url: "/og-image.png",
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: "FitTribe Nairobi fitness community and personal trainers",
+        alt: "FitTribe Nairobi personal trainer marketplace",
       },
     ],
   },
@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     title: "FitTribe Nairobi | Personal Trainers & Workout Tracking",
     description:
       "Find personal trainers in Nairobi, join a fitness community, and track daily workouts on FitTribe.",
-    images: ["/og-image.png"],
+    images: [DEFAULT_OG_IMAGE],
     creator: "@FitTribeKE",
   },
   robots: {
