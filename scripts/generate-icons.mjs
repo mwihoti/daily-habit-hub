@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
 const outputDir = join(projectRoot, 'public', 'icons');
-const svgPath = join(projectRoot, 'public', 'fitness-workout-healthy-svgrepo-com.svg');
+const iconSourcePath = join(projectRoot, 'public', 'icons', 'fittribe-app-icon-source.png');
 
 if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
 
@@ -23,12 +23,12 @@ async function generateIcon(size) {
   const padding = Math.floor(size * 0.18);
   const iconSize = size - padding * 2;
 
-  const svgBuffer = await sharp(svgPath).resize(iconSize, iconSize).toBuffer();
+  const iconBuffer = await sharp(iconSourcePath).resize(iconSize, iconSize).toBuffer();
 
   await sharp({
     create: { width: size, height: size, channels: 4, background: BACKGROUND },
   })
-    .composite([{ input: svgBuffer, gravity: 'center' }])
+    .composite([{ input: iconBuffer, gravity: 'center' }])
     .png()
     .toFile(join(outputDir, `icon-${size}x${size}.png`));
 
