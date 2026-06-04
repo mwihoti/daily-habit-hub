@@ -1,0 +1,60 @@
+{
+  "packageId": "com.fittribe.app",
+  "host": "daily-habit-hub.vercel.app",
+  "name": "FitTribe",
+  "launcherName": "FitTribe",
+  "display": "standalone",
+  "themeColor": "#F97316",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#09090B",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://daily-habit-hub.vercel.app/icons/fittribe-app-icon-alt-512.png",
+  "maskableIconUrl": "https://daily-habit-hub.vercel.app/icons/fittribe-app-icon-alt-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "/home/mwihotidan/work/startups/daily-habit-hub/android.keystore",
+    "alias": "fittribe-upload"
+  },
+  "appVersionName": "2",
+  "appVersionCode": 2,
+  "shortcuts": [
+    {
+      "name": "Log Habit",
+      "shortName": "Check In",
+      "url": "https://daily-habit-hub.vercel.app/check-in",
+      "chosenIconUrl": "https://daily-habit-hub.vercel.app/icons/icon-96x96.png"
+    },
+    {
+      "name": "Dashboard",
+      "shortName": "Dashboard",
+      "url": "https://daily-habit-hub.vercel.app/dashboard",
+      "chosenIconUrl": "https://daily-habit-hub.vercel.app/icons/icon-96x96.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://daily-habit-hub.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://daily-habit-hub.vercel.app/",
+  "minSdkVersion": 21,
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "2"
+}

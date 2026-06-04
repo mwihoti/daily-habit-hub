@@ -24,6 +24,14 @@ dist-ssr
 out
 *.local
 
+# Android / Play Store signing and build output
+*.keystore
+android-twa/.gradle/
+android-twa/app-release-*.aab
+android-twa/app-release-*.apk
+android-twa/app/build/
+android-twa/build/
+
 # Claude Code
 .claude/
 CLAUDE.md
