@@ -36,6 +36,7 @@ Daily Habit Hub solves this with **skin-in-the-game accountability**: your consi
 | Feature | Description |
 |---------|-------------|
 | Community Feed | Public workout posts with likes and comments |
+| Graffiti Wall | Procedural profile skin that levels up with your check-ins — tag → throw-up → piece → burner → king → all-city |
 | Leaderboard | Top 50 users ranked by streak, updated every minute |
 | Trainer Marketplace | Browse certified coaches, view profiles, book sessions |
 | Real-time Messaging | Direct chat with trainers via Supabase Realtime |
@@ -169,7 +170,7 @@ Badges are **retroactively claimable** — users who built streaks before connec
 
 ### 🔄 Phase 3 — Growth (Q2–Q3 2026)
 - [ ] $HABIT token listing on DEX (Trader Joe / Pangolin)
-- [ ] Push notifications via service worker (workout reminders)
+- [x] Push notifications via service worker (task + streak reminders, hourly cron)
 - [ ] Mobile app (React Native / Expo)
 - [ ] Coach payment in $HABIT tokens
 - [ ] Nairobi gym partnerships and user onboarding
@@ -236,6 +237,13 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
 
 # IPFS (optional — Pinata)
 PINATA_JWT=your_pinata_jwt
+
+# Web Push reminders (generate keys: npx web-push generate-vapid-keys)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_SUBJECT=mailto:you@example.com
+PUSH_SEND_SECRET=random_secret_for_push_broadcasts
+CRON_SECRET=random_secret_for_vercel_cron
 ```
 
 ### 3. Database Migrations

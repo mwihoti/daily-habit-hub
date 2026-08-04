@@ -23,6 +23,7 @@ import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 
 import { format } from "date-fns";
 import { buildAccountabilityInsight, getReminderHourLabel } from "@/lib/accountability";
+import { GraffitiWall } from "@/components/GraffitiWall";
 
 export default function ProfilePage() {
   const supabase = createClient();
@@ -72,6 +73,19 @@ export default function ProfilePage() {
         .select('id, created_at, type, activity_title, duration_minutes, energy_level, effort_level')
         .eq('user_id', user?.id);
       return data || [];
+    }
+  });
+
+  // Likes received on this user's workouts — painted as stickers on the wall
+  const { data: likesReceived = 0 } = useQuery({
+    queryKey: ['likes-received', user?.id, workouts.length],
+    enabled: !!user?.id && workouts.length > 0,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('likes')
+        .select('id', { count: 'exact', head: true })
+        .in('workout_id', workouts.map((w: any) => w.id));
+      return count || 0;
     }
   });
 
@@ -167,7 +181,19 @@ export default function ProfilePage() {
     <Layout>
       <div className="container py-6 md:py-12 max-w-4xl">
         <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
-        
+
+        {user?.id && (
+          <GraffitiWall
+            className="mb-8"
+            userId={user.id}
+            name={displayName || username || user.email?.split("@")[0] || "Athlete"}
+            totalCheckins={workouts.length}
+            workoutTypes={workouts.map((w: any) => w.activity_title || w.type || "")}
+            stickers={likesReceived}
+            streak={profile?.streak || 0}
+          />
+        )}
+
         <div className="grid md:grid-cols-3 gap-8">
           {/* Sidebar */}
           <div className="space-y-6">

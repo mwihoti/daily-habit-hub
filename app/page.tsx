@@ -21,7 +21,7 @@ const features = [
   {
     icon: CheckCircle,
     title: "Daily Check-ins",
-    description: "One tap to log your workout. Every check-in earns 10 $HABIT tokens automatically.",
+    description: "One tap to log your workout. Every check-in mints 10 $HABIT reward tokens automatically.",
     emoji: "✅",
   },
   {
@@ -47,7 +47,7 @@ const features = [
 const web3Features = [
   {
     emoji: "🪙",
-    title: "Earn $HABIT Tokens",
+    title: "Collect $HABIT Tokens",
     description: "10 $HABIT minted to your wallet every check-in. 21 million token cap on Avalanche.",
   },
   {
@@ -302,28 +302,34 @@ export default function LandingPage() {
               {user ? (
                 <>You've done <span className="text-gradient">{workouts.length}</span> workouts. Keep it up!</>
               ) : (
-                <>Show up. Stay consistent. <span className="text-gradient">Earn crypto.</span></>
+                <>Show up. Stay consistent. <span className="text-gradient">Prove it on-chain.</span></>
               )}
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
               {user
-                ? 'Your journey is in progress. Check in today to keep your streak alive and earn $HABIT tokens!'
-                : 'The fitness app that rewards your consistency. Every workout earns $HABIT tokens and soulbound NFT badges on Avalanche — zero gas fees required.'}
+                ? 'Your journey is in progress. Check in today to keep your streak alive and mint your $HABIT reward tokens!'
+                : 'The fitness app that proves your consistency. Every workout mints $HABIT reward tokens and a permanent on-chain record on Avalanche — zero gas fees required.'}
             </p>
 
             {/* Token highlight pills */}
             {!user && (
-              <div className="flex flex-wrap justify-center gap-2 text-sm">
-                <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20">
-                  🪙 10 $HABIT per check-in
-                </span>
-                <span className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold border border-purple-500/20">
-                  🏅 Soulbound NFT milestones
-                </span>
-                <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 font-semibold border border-green-500/20">
-                  ⛽ Zero gas fees
-                </span>
+              <div className="space-y-3">
+                <div className="flex flex-wrap justify-center gap-2 text-sm">
+                  <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20">
+                    🪙 10 $HABIT per check-in
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold border border-purple-500/20">
+                    🏅 Soulbound NFT milestones
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 font-semibold border border-green-500/20">
+                    ⛽ Zero gas fees
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground max-w-xl mx-auto">
+                  $HABIT is FitTribe&apos;s reward token, minted for every activity you log — your on-chain
+                  record of consistency. It currently has no monetary value.
+                </p>
               </div>
             )}
 
@@ -337,7 +343,7 @@ export default function LandingPage() {
               ) : (
                 <Button variant="hero" size="xl" asChild>
                   <Link href="/register">
-                    Start Earning Free <ArrowRight className="w-5 h-5" />
+                    Start Your Streak — Free <ArrowRight className="w-5 h-5" />
                   </Link>
                 </Button>
               )}
@@ -373,7 +379,7 @@ export default function LandingPage() {
               <>
                 <StatCard label="Your Day Streak" value={(profile?.streak || 0).toString()} icon={Flame} trend="Keep it burning! 🔥" />
                 <StatCard label="Your Workouts"   value={workouts.length.toString()} icon={CheckCircle} trend="Great consistency!" />
-                <StatCard label="$HABIT Earned"   value={(workouts.length * 10).toString()} icon={Coins} trend="10 per check-in" />
+                <StatCard label="$HABIT Collected"   value={(workouts.length * 10).toString()} icon={Coins} trend="10 per check-in" />
               </>
             ) : (
               <>
@@ -394,7 +400,7 @@ export default function LandingPage() {
               Everything you need to <span className="text-gradient">stay consistent</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Simple tools that work. No gimmicks, just results — and crypto rewards.
+              Simple tools that work. No gimmicks, just results — and on-chain rewards.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -426,7 +432,7 @@ export default function LandingPage() {
               Your fitness. <span className="text-gradient">On the blockchain.</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Every check-in is recorded on Avalanche. Every milestone earns a soulbound NFT.
+              Every check-in is recorded on Avalanche. Every milestone unlocks a soulbound NFT.
               Your consistency is permanently and publicly provable.
             </p>
           </div>
@@ -495,12 +501,12 @@ export default function LandingPage() {
                       <p className="text-muted-foreground">
                         {user
                           ? `You've checked in ${weeklyWorkoutCount} out of 7 days this week. Don't break the chain!`
-                          : 'Every daily check-in earns 10 $HABIT tokens and brings you closer to the next NFT badge milestone.'}
+                          : 'Every daily check-in mints 10 $HABIT reward tokens and brings you closer to the next NFT badge milestone.'}
                       </p>
                     </div>
                     <Button variant="hero" asChild>
                       <Link href={user ? "/check-in" : "/register"}>
-                        {user ? 'Check In Today' : 'Start Earning'}
+                        {user ? 'Check In Today' : 'Start Your Streak'}
                         <Flame className="w-4 h-4" />
                       </Link>
                     </Button>
@@ -513,7 +519,7 @@ export default function LandingPage() {
                     {!user && (
                       <div className="flex justify-center gap-2 text-xs text-muted-foreground">
                         <span className="px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 font-medium">
-                          60 $HABIT earned this week
+                          60 $HABIT collected this week
                         </span>
                       </div>
                     )}
@@ -660,12 +666,12 @@ export default function LandingPage() {
             <CardContent className="p-8 md:p-12 text-center space-y-6">
               <div className="space-y-4">
                 <h2 className="text-3xl md:text-4xl font-bold">
-                  {user ? 'Keep your momentum going!' : 'Ready to get fit and earn crypto?'}
+                  {user ? 'Keep your momentum going!' : 'Ready to get fit and prove it on-chain?'}
                 </h2>
                 <p className="text-muted-foreground text-lg">
                   {user
                     ? 'Your next workout is waiting. Show up for yourself today.'
-                    : 'Start free. No MetaMask. No gas fees. Your consistency earns real tokens on Avalanche.'}
+                    : 'Start free. No MetaMask. No gas fees. Your consistency builds an on-chain record you own.'}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

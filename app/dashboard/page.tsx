@@ -109,12 +109,13 @@ export default function DashboardPage() {
   // Unified wallet — merges embedded (in-app) and external (MetaMask) state
   const { activeAddress, hasWallet } = useEmbeddedWallet(user?.id);
 
-  // Sync external wallet address to profile whenever it connects
+  // Sync the active wallet address (embedded or external) to the profile —
+  // /api/web3/record-habit only mints to the wallet registered there.
   useEffect(() => {
-    if (isConnected && address && user?.id) {
-      supabase.from("profiles").update({ wallet_address: address }).eq("id", user.id);
+    if (activeAddress && user?.id) {
+      supabase.from("profiles").update({ wallet_address: activeAddress }).eq("id", user.id);
     }
-  }, [isConnected, address, user?.id, supabase]);
+  }, [activeAddress, user?.id, supabase]);
 
   // Read $HABIT token balance (works for both embedded and external wallet)
   const { data: habitBalanceRaw } = useReadContract({

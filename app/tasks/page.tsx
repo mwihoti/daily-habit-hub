@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +11,8 @@ import { CheckCircle2, Plus, Trash2, Bell, BellOff, ListTodo, Calendar, Clock, A
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { format, isPast, addMinutes, isAfter } from "date-fns";
+import { format, isPast } from "date-fns";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { cn } from "@/lib/utils";
 import { buildTaskInsight } from "@/lib/accountability";
 import {
@@ -32,23 +33,14 @@ export default function TasksPage() {
   const [newTaskReminderTime, setNewTaskReminderTime] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Notifications Permission
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
+  // Web push subscription — reminders are sent server-side by
+  // /api/push/reminders, so they arrive even when the app is closed.
+  const { status: pushStatus, subscribe: subscribePush } = usePushNotifications();
 
-  useEffect(() => {
-    if ("Notification" in window) {
-      setNotificationPermission(Notification.permission);
-    }
-  }, []);
-
-  const requestNotificationPermission = async () => {
-    if ("Notification" in window) {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-      if (permission === "granted") {
-        toast.success("Notifications enabled! 🔔");
-      }
-    }
+  const enablePushReminders = async () => {
+    const ok = await subscribePush();
+    if (ok) toast.success("Reminders enabled! You'll get a push when tasks are due 🔔");
+    else toast.error("Could not enable notifications");
   };
 
   // Fetch current user
@@ -68,6 +60,7 @@ export default function TasksPage() {
       const { data } = await supabase
         .from('tasks')
         .select('*')
+        .eq('user_id', user?.id)
         .order('is_completed', { ascending: true })
         .order('due_date', { ascending: true });
       return data || [];
@@ -135,38 +128,6 @@ export default function TasksPage() {
     }
   });
 
-  // Simple Notification System (Browser-side for POC)
-  useEffect(() => {
-    const checkReminders = () => {
-      if (notificationPermission !== "granted") return;
-
-      const now = new Date();
-      tasks.forEach((task: any) => {
-        if (task.reminder_at && !task.is_completed) {
-          const reminderTime = new Date(task.reminder_at);
-          // If the reminder time is within the next 30 seconds and hasn't been triggered yet
-          // In a real app we'd need a more robust strategy (service workers or persistent state)
-          // For now, simple check based on current time
-          if (reminderTime > now && reminderTime <= addMinutes(now, 1)) {
-            // Check session storage to avoid multiple alerts for the same task in this session
-            const key = `notified_${task.id}`;
-            if (!sessionStorage.getItem(key)) {
-              new Notification(`FitTribe Task Reminder: ${task.title}`, {
-                body: "Time to complete your task!",
-                icon: "" // Placeholder
-              });
-              sessionStorage.setItem(key, "true");
-              toast.info(`Reminder: ${task.title} 🔔`);
-            }
-          }
-        }
-      });
-    };
-
-    const interval = setInterval(checkReminders, 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
-  }, [tasks, notificationPermission]);
-
   if (isLoading) {
     return (
       <Layout>
@@ -193,15 +154,26 @@ export default function TasksPage() {
           </div>
 
           <div className="flex gap-2">
-            {notificationPermission !== "granted" && (
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={requestNotificationPermission}
-                title="Enable Notifications"
+            {pushStatus === "default" && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={enablePushReminders}
+                title="Enable push reminders"
                 className="rounded-xl border-orange-500/20 text-orange-500 hover:bg-orange-500/10"
               >
                 <BellOff className="w-4 h-4" />
+              </Button>
+            )}
+            {pushStatus === "subscribed" && (
+              <Button
+                variant="outline"
+                size="icon"
+                disabled
+                title="Push reminders are on"
+                className="rounded-xl border-green-500/20 text-green-600"
+              >
+                <Bell className="w-4 h-4" />
               </Button>
             )}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

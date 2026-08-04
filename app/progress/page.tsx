@@ -22,7 +22,7 @@ import {
   getWeeklyNarrative,
 } from "@/lib/accountability";
 
-const FUJI_RPC = 'https://api.avax-test.network/ext/bc/C/rpc';
+const AVAX_RPC = 'https://api.avax.network/ext/bc/C/rpc';
 // keccak256("hasAchievement(address,uint8)").slice(0,4) = 0x45fd14b0
 const HAS_ACHIEVEMENT_SELECTOR = '45fd14b0';
 
@@ -77,7 +77,7 @@ export default function ProgressPage() {
           const typeHex = a.type.toString(16).padStart(64, '0');
           const data = HAS_ACHIEVEMENT_SELECTOR + addr + typeHex;
           try {
-            const res = await fetch(FUJI_RPC, {
+            const res = await fetch(AVAX_RPC, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: ACHIEVEMENT_NFT_ADDRESS, data }, 'latest'] }),
