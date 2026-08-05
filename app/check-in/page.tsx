@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { WalletConnectSection } from "@/components/WalletConnectSection";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
+import { compressImage } from "@/lib/images/compressImage";
 import {
   ACTIVITY_OPTIONS,
   ACTIVITY_GROUP_LABELS,
@@ -229,12 +230,13 @@ export default function CheckInPage() {
     mutationFn: async () => {
       if (!user) throw new Error("Not logged in");
 
-      // 1. Upload photo if present
+      // 1. Upload photo if present — downscaled client-side to save egress
       let photo_url: string | null = null;
       if (photo) {
-        const ext = photo.name.split(".").pop();
+        const upload = await compressImage(photo);
+        const ext = upload.name.split(".").pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("workout-photos").upload(path, photo);
+        const { error: upErr } = await supabase.storage.from("workout-photos").upload(path, upload);
         if (upErr) throw upErr;
         const { data: { publicUrl } } = supabase.storage.from("workout-photos").getPublicUrl(path);
         photo_url = publicUrl;
@@ -309,7 +311,9 @@ export default function CheckInPage() {
         })
           .then((r) => r.json())
           .then((data) => {
-            if (data.success) {
+            if (data.queued) {
+              setTimeout(() => toast.success("Recording on-chain — $HABIT arriving in your wallet shortly ⛓️", { duration: 4000 }), 2500);
+            } else if (data.success) {
               setTimeout(() => toast.success("$HABIT tokens minted to your wallet! ✨", { duration: 4000 }), 2500);
             } else if (!data.skipped) {
               setTimeout(() => toast.error("On-chain recording failed — will retry next check-in."), 2500);

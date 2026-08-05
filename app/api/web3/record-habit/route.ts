@@ -1,8 +1,14 @@
 /**
  * POST /api/web3/record-habit
  *
- * Server-side Approach 2: admin wallet calls adminRecordHabitForUser
- * on behalf of a user who has a connected wallet in their profile.
+ * Validates a check-in and queues it for on-chain recording. The admin wallet
+ * is a single EOA, so mints must be serialized — concurrent serverless
+ * invocations would collide on the nonce. Jobs land in mint_queue and the
+ * lease-guarded worker (/api/web3/process-mints) drains them; this route
+ * kicks the worker fire-and-forget so tokens still arrive within seconds.
+ *
+ * When SUPABASE_SERVICE_ROLE_KEY is not configured the queue is unavailable
+ * and the route falls back to the legacy inline mint.
  *
  * Required env vars (server-only — no NEXT_PUBLIC_ prefix):
  *   PRIVATE_ADMIN_KEY
@@ -11,20 +17,9 @@
  * Body: { targetWallet: string, habitType: string, metadataUri?: string }
  */
 import { NextResponse } from 'next/server'
-import { createPublicClient, createWalletClient, http, parseAbi } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
-import { avalanche } from 'viem/chains'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-
-// Minimal ABI slice — only what this route needs
-const REGISTRY_ABI = parseAbi([
-  'function adminRecordHabitForUser(address targetUser, string habitType, string metadataUri) external',
-  'function canRecordToday(address user) external view returns (bool)',
-])
-
-const chain = avalanche
-const rpcUrl = 'https://api.avax.network/ext/bc/C/rpc'
+import { mintHabitOnChain } from '@/lib/web3/adminMinter'
 
 export async function POST(request: Request) {
   try {
@@ -67,78 +62,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No check-in recorded today' }, { status: 403 })
     }
 
-    // Per-user daily limit via the service-role-only mint log. The on-chain
-    // canRecordToday check is per-wallet, and wallet_address is user-writable,
-    // so without this a user could rotate wallets to mint repeatedly.
     const adminClient = createAdminClient()
-    if (adminClient) {
-      const { count: mintsToday } = await adminClient
-        .from('onchain_mint_log')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gte('minted_at', utcDayStart.toISOString())
 
-      if (mintsToday) {
+    // Legacy path: no service role key means no queue — mint inline.
+    if (!adminClient) {
+      const result = await mintHabitOnChain(targetWallet, habitType, metadataUri)
+      if (result.skipped) return NextResponse.json({ skipped: true, reason: result.reason })
+      return NextResponse.json({ success: true, txHash: result.txHash, blockNumber: result.blockNumber })
+    }
+
+    // Enqueue. The unique (user_id, queued_day) index is the per-user daily
+    // limit — a duplicate insert means today's mint is already queued or done.
+    const { error: queueError } = await adminClient.from('mint_queue').insert({
+      user_id: user.id,
+      wallet: targetWallet,
+      habit_type: habitType,
+      metadata_uri: metadataUri,
+    })
+
+    if (queueError) {
+      if (queueError.code === '23505') {
         return NextResponse.json({ skipped: true, reason: 'Already recorded today' })
       }
+      console.error('[record-habit] enqueue failed:', queueError.message)
+      return NextResponse.json({ error: 'Could not queue on-chain recording' }, { status: 500 })
     }
 
-    const adminKeyRaw = process.env.PRIVATE_ADMIN_KEY
-    if (!adminKeyRaw) {
-      return NextResponse.json({ error: 'Admin key not configured' }, { status: 500 })
-    }
+    // Wake the worker without holding this request open. The daily sweeper
+    // cron catches anything this kick misses.
+    const workerUrl = new URL('/api/web3/process-mints', request.url)
+    fetch(workerUrl, {
+      method: 'POST',
+      headers: process.env.PUSH_SEND_SECRET ? { 'x-push-secret': process.env.PUSH_SEND_SECRET } : {},
+    }).catch(() => {})
 
-    const registryAddress = process.env.NEXT_PUBLIC_HABIT_REGISTRY_ADDRESS as `0x${string}`
-    if (!registryAddress || registryAddress === '0x0000000000000000000000000000000000000000') {
-      return NextResponse.json({ error: 'Contract not deployed yet' }, { status: 503 })
-    }
-
-    const adminKey = (adminKeyRaw.startsWith('0x') ? adminKeyRaw : `0x${adminKeyRaw}`) as `0x${string}`
-    const account = privateKeyToAccount(adminKey)
-    const transport = http(rpcUrl)
-
-    const publicClient = createPublicClient({ chain, transport })
-    const walletClient = createWalletClient({ account, chain, transport })
-
-    // Check rate limit
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const canRecord = await (publicClient as any).readContract({
-      address: registryAddress,
-      abi: REGISTRY_ABI,
-      functionName: 'canRecordToday',
-      args: [targetWallet as `0x${string}`],
-    }) as boolean
-
-    if (!canRecord) {
-      return NextResponse.json({ skipped: true, reason: 'Already recorded today on-chain' })
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const txHash = await (walletClient as any).writeContract({
-      address: registryAddress,
-      abi: REGISTRY_ABI,
-      functionName: 'adminRecordHabitForUser',
-      args: [targetWallet as `0x${string}`, habitType, metadataUri],
-      account,
-      chain,
-    }) as `0x${string}`
-
-    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash })
-
-    if (adminClient) {
-      await adminClient.from('onchain_mint_log').insert({
-        user_id: user.id,
-        wallet: targetWallet,
-        habit_type: habitType,
-        tx_hash: txHash,
-      })
-    }
-
-    return NextResponse.json({
-      success: true,
-      txHash,
-      blockNumber: receipt.blockNumber.toString(),
-    })
+    return NextResponse.json({ queued: true })
   } catch (err: any) {
     console.error('[record-habit]', err?.shortMessage ?? err?.message ?? err)
     return NextResponse.json({ error: err?.shortMessage ?? err?.message ?? 'Server error' }, { status: 500 })

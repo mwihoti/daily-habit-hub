@@ -34,17 +34,18 @@ export default function LeaderboardPage() {
     },
   });
 
-  // Top 50 by streak, tiebreak by total_workouts
+  // Top 50 by streak, tiebreak by total_workouts — served from the
+  // edge-cached API route so 50k polling clients share one query per minute
   const { data: leaders = [], isLoading } = useQuery({
     queryKey: ["leaderboard"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, username, avatar_url, streak, total_workouts")
-        .order("streak", { ascending: false })
-        .order("total_workouts", { ascending: false })
-        .limit(50);
-      return data ?? [];
+    queryFn: async (): Promise<Array<{
+      id: string; full_name: string | null; username: string | null;
+      avatar_url: string | null; streak: number; total_workouts: number;
+    }>> => {
+      const res = await fetch("/api/leaderboard");
+      if (!res.ok) throw new Error("Could not load leaderboard");
+      const { leaders } = await res.json();
+      return leaders ?? [];
     },
     refetchInterval: 60_000, // refresh every minute
   });

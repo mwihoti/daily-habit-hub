@@ -157,7 +157,10 @@ export default function DashboardPage() {
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.queued) {
+        toast.success("Queued for on-chain recording — tokens arriving shortly ⛓️");
+        setTimeout(() => refetchCanMint(), 15_000);
+      } else if (data.success) {
         toast.success("Proof of Progress minted on Avalanche ⛓️");
         refetchCanMint();
       } else if (data.skipped) {

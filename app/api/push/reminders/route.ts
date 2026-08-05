@@ -19,6 +19,12 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { initVapid, sendToSubscriptions, PushSubscriptionRow } from '@/lib/push/webPush'
 import { nairobiHour, isSameNairobiDay, nairobiDayStartUtc } from '@/lib/push/reminderWindows'
+import { mapWithConcurrency } from '@/lib/push/concurrency'
+
+export const maxDuration = 60
+
+const TASK_BATCH_SIZE = 200
+const SEND_CONCURRENCY = 10
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -39,20 +45,25 @@ export async function GET(request: Request) {
 
   const now = new Date()
   const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+  const deadline = Date.now() + 45_000 // headroom inside maxDuration
+  let taskReminders = 0
   let taskPushes = 0
   let streakPushes = 0
 
-  // ── 1. Task reminders ──────────────────────────────────────────────────────
-  const { data: dueTasks } = await supabase
-    .from('tasks')
-    .select('id, user_id, title')
-    .eq('is_completed', false)
-    .is('reminder_sent_at', null)
-    .lte('reminder_at', now.toISOString())
-    .gt('reminder_at', dayAgo.toISOString())
-    .limit(200)
+  // ── 1. Task reminders — drain in batches until empty or out of time ───────
+  while (Date.now() < deadline) {
+    const { data: dueTasks } = await supabase
+      .from('tasks')
+      .select('id, user_id, title')
+      .eq('is_completed', false)
+      .is('reminder_sent_at', null)
+      .lte('reminder_at', now.toISOString())
+      .gt('reminder_at', dayAgo.toISOString())
+      .limit(TASK_BATCH_SIZE)
 
-  if (dueTasks?.length) {
+    if (!dueTasks?.length) break
+    taskReminders += dueTasks.length
+
     const userIds = [...new Set(dueTasks.map((t) => t.user_id))]
     const { data: subs } = await supabase
       .from('push_subscriptions')
@@ -66,17 +77,17 @@ export async function GET(request: Request) {
       subsByUser.set(sub.user_id, list)
     }
 
-    for (const task of dueTasks) {
+    const sent = await mapWithConcurrency(dueTasks, SEND_CONCURRENCY, async (task) => {
       const userSubs = subsByUser.get(task.user_id)
-      if (userSubs?.length) {
-        taskPushes += await sendToSubscriptions(supabase, userSubs, {
-          title: `⏰ ${task.title}`,
-          body: 'Your FitTribe task is due — knock it out!',
-          url: '/tasks',
-          tag: `task-${task.id}`,
-        })
-      }
-    }
+      if (!userSubs?.length) return 0
+      return sendToSubscriptions(supabase, userSubs, {
+        title: `⏰ ${task.title}`,
+        body: 'Your FitTribe task is due — knock it out!',
+        url: '/tasks',
+        tag: `task-${task.id}`,
+      })
+    })
+    taskPushes += sent.reduce<number>((sum, n) => sum + (n ?? 0), 0)
 
     // Mark every scanned task as handled. Users without a push subscription
     // have no server-side channel, so re-scanning their tasks each run is
@@ -85,6 +96,8 @@ export async function GET(request: Request) {
       .from('tasks')
       .update({ reminder_sent_at: now.toISOString() })
       .in('id', dueTasks.map((t) => t.id))
+
+    if (dueTasks.length < TASK_BATCH_SIZE) break
   }
 
   // ── 2. Streak-risk reminders ───────────────────────────────────────────────
@@ -125,10 +138,9 @@ export async function GET(request: Request) {
         subsByUser.set(sub.user_id, list)
       }
 
-      const remindedIds: string[] = []
-      for (const p of toRemind) {
+      const outcomes = await mapWithConcurrency(toRemind, SEND_CONCURRENCY, async (p) => {
         const userSubs = subsByUser.get(p.id)
-        if (!userSubs?.length) continue
+        if (!userSubs?.length) return null
         const sent = await sendToSubscriptions(supabase, userSubs, {
           title: p.streak > 0 ? `🔥 Your ${p.streak}-day streak is on the line` : '💪 Time to show up',
           body: p.streak > 0
@@ -137,11 +149,11 @@ export async function GET(request: Request) {
           url: '/check-in',
           tag: 'streak-reminder',
         })
-        if (sent > 0) {
-          streakPushes += sent
-          remindedIds.push(p.id)
-        }
-      }
+        return sent > 0 ? { id: p.id, sent } : null
+      })
+
+      const remindedIds = outcomes.filter(Boolean).map((o) => o!.id)
+      streakPushes += outcomes.reduce<number>((sum, o) => sum + (o?.sent ?? 0), 0)
 
       if (remindedIds.length) {
         await supabase
@@ -153,7 +165,7 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
-    taskReminders: dueTasks?.length ?? 0,
+    taskReminders,
     taskPushes,
     streakPushes,
   })
