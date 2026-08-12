@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "FitTribe — Fitness & Personal Trainers in Nairobi";
+export const alt = "FitTribe — Streak Accountability for Any Goal";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -64,12 +64,12 @@ export default function OGImage() {
             lineHeight: 1.4,
           }}
         >
-          Nairobi's Fitness Community & Personal Trainer Marketplace
+          Chase your goal. Keep your streak. Prove you showed up.
         </p>
 
-        {/* Location pills */}
+        {/* Goal pills */}
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", padding: "0 60px" }}>
-          {["Kilimani", "Karen", "Ngong Road", "CBD", "Thika Road", "Roysambu", "Allsops"].map(
+          {["Fitness", "Study", "Building a business", "Your craft", "Any daily habit"].map(
             (area) => (
               <div
                 key={area}

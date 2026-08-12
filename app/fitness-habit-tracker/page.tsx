@@ -56,9 +56,9 @@ export default function FitnessHabitTrackerPage() {
           description: "Explore public rankings built around consistency.",
         },
         {
-          href: "/trainers",
-          title: "Coaching marketplace",
-          description: "Add trainer support once your habit is in motion.",
+          href: "/achievements",
+          title: "Milestone badges",
+          description: "Earn on-chain badges as your streak milestones stack up.",
         },
       ]}
     />

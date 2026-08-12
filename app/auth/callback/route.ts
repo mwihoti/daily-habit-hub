@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { FEATURE_TRAINERS } from '@/lib/featureFlags'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -21,7 +22,9 @@ export async function GET(request: Request) {
         const supabase2 = await createClient()
         const { data: { user } } = await supabase2.auth.getUser()
         const role = user?.user_metadata?.role
-        const redirectPath = role === 'trainer' ? '/trainer-setup' : safeNext
+        // Trainer onboarding only exists while the trainers flag is on;
+        // otherwise every account (including existing trainers) lands normally
+        const redirectPath = FEATURE_TRAINERS && role === 'trainer' ? '/trainer-setup' : safeNext
         return NextResponse.redirect(`${origin}${redirectPath}`)
       }
 

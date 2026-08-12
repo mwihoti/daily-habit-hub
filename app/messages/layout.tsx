@@ -3,7 +3,7 @@ import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Messages | FitTribe Nairobi",
-  description: "Private coach and community conversations inside FitTribe.",
+  description: "Private conversations inside FitTribe.",
   alternates: { canonical: absoluteUrl("/messages") },
   robots: { index: false, follow: false },
 };
