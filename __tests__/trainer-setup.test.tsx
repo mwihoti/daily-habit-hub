@@ -16,6 +16,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// The trainers surface is feature-flagged off in production but the code is
+// kept intact — force the flag on so these tests keep guarding it.
+vi.mock('@/lib/featureFlags', () => ({ FEATURE_TRAINERS: true }));
+
 import TrainerSetupPage from '../app/trainer-setup/page';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

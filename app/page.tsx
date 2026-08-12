@@ -1,717 +1,500 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Layout } from "@/components/Layout";
-import { JsonLd } from "@/components/JsonLd";
-import { StreakBadge, StatCard, WeekCalendar } from "@/components/StreakComponents";
-import {
-  ArrowRight, Users, CheckCircle, Trophy, Flame, Target, Heart,
-  Coins, Shield, Zap, ExternalLink, Globe,
-} from "lucide-react";
+/**
+ * FitTribe marketing landing — dark, goal-neutral, global.
+ * Design source: docs/landing mockup. Palette: bg #0a0a0b, cards #17171b,
+ * borders #26262c, headings #f5f5f4, body #a1a1aa, orange #f97316→#fb923c
+ * as a sharp accent only. Signed-in users are sent to /dashboard.
+ */
+
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { startOfWeek, isSameDay } from "date-fns";
-import { ACTIVITY_GROUP_LABELS, getActivityEmoji, getActivityOption } from "@/lib/activityTypes";
+import { ArrowRight, Check, Star } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { JsonLd } from "@/components/JsonLd";
 
-// ── Static content ─────────────────────────────────────────────────────────────
+// ── Copy ─────────────────────────────────────────────────────────────────────
 
-const features = [
+const GOAL_CHIPS = [
+  { emoji: "💪", label: "Fitness" },
+  { emoji: "📚", label: "Study" },
+  { emoji: "💼", label: "Building a business" },
+  { emoji: "🎨", label: "Your craft" },
+  { emoji: "🔁", label: "Any daily habit" },
+];
+
+const REASSURANCES = ["Free forever", "No wallet setup", "No gas fees", "30 seconds to start"];
+
+const HOW_IT_WORKS = [
   {
-    icon: CheckCircle,
-    title: "Daily Check-ins",
-    description: "One tap to log your workout. Every check-in mints 10 $HABIT reward tokens automatically.",
+    num: "01",
     emoji: "✅",
+    title: "Check in",
+    body: "One tap logs today. Under 30 seconds. Your tribe sees you showed up.",
   },
   {
-    icon: Users,
-    title: "Community Feed",
-    description: "See friends working out in real time. Stay accountable together.",
-    emoji: "👥",
-  },
-  {
-    icon: Flame,
-    title: "Streak Tracking",
-    description: "Build unstoppable momentum. NFT badges unlock at 7, 21, 30 and 49-day streaks.",
+    num: "02",
     emoji: "🔥",
+    title: "Build the streak",
+    body: "Every day you show up, your streak grows. Break it and you start over — that's the point.",
   },
   {
-    icon: Target,
-    title: "Find a Coach",
-    description: "Affordable online coaching from certified trainers. Message them directly.",
-    emoji: "🎯",
+    num: "03",
+    emoji: "🪙",
+    title: "Earn rewards",
+    body: "Collect $HABIT for consistency. Real, on-chain, yours — no gas fees, no wallet hassle.",
+  },
+  {
+    num: "04",
+    emoji: "🏅",
+    title: "Unlock badges",
+    body: "Hit 7, 21, 30 & 49 days to mint streak badges you own forever. Proof you actually did it.",
   },
 ];
 
-const web3Features = [
+const FEATURES = [
+  {
+    emoji: "👥",
+    title: "A tribe that notices",
+    body: "A live community feed where people cheer your streak and feel it when you go quiet. You're never grinding alone.",
+  },
+  {
+    emoji: "🏆",
+    title: "Leaderboards & challenges",
+    body: "Climb the rankings, join weekly challenges, and compete with friends. Consistency becomes a game you want to win.",
+  },
+  {
+    emoji: "📊",
+    title: "Smart insights",
+    body: "A consistency score that spots momentum or drift early, detects your patterns, and nudges you before you slip.",
+  },
   {
     emoji: "🪙",
-    title: "Collect $HABIT Tokens",
-    description: "10 $HABIT minted to your wallet every check-in. 21 million token cap on Avalanche.",
+    title: "Rewards for showing up",
+    body: "Earn $HABIT every check-in. Tangible proof that discipline pays — capped supply, fully on-chain.",
   },
   {
-    emoji: "🏅",
-    title: "Soulbound NFT Badges",
-    description: "Milestone badges (7d, 21d, 30d, 49d) are non-transferable — they prove your real effort.",
+    emoji: "🛡️",
+    title: "Proof you can't fake",
+    body: "Your streak is recorded on-chain. It's a track record you own and can show off — not a number in someone's database.",
   },
   {
-    emoji: "⛽",
-    title: "Zero Gas Fees",
-    description: "We cover all transaction costs via our admin wallet. You just check in — we handle the chain.",
-  },
-  {
-    emoji: "🔐",
-    title: "Self-Custodial Wallet",
-    description: "Create an in-app wallet in one click. No MetaMask needed. Export your key anytime.",
-  },
-  {
-    emoji: "☁️",
-    title: "Encrypted Cloud Backup",
-    description: "Your wallet key is PIN-encrypted and synced to the cloud. Restore it on any device.",
-  },
-  {
-    emoji: "🔍",
-    title: "Verified On-Chain",
-    description: "Every achievement is visible on Snowscan. Your consistency is permanently provable.",
+    emoji: "⚡",
+    title: "Zero crypto friction",
+    body: "A wallet is created for you in the background. No MetaMask, no seed phrases, no gas fees. It just works.",
   },
 ];
 
-const CONTRACT_ADDRESSES = {
-  HabitRegistry:   "0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597",
-  HabitToken:      "0xf392A21a7230a103271ecb88028aDE17B470A267",
-  AchievementNFT:  "0xc10e391172fE5E6723422F05197bBc95b35D9188",
-};
-const SNOWSCAN = "https://snowscan.xyz";
-
-const seoPages = [
-  {
-    href: "/about-fittribe",
-    title: "About FitTribe",
-    description: "Understand the platform, how it fits habit tracking with coaching and rewards, and what the public pages are meant to explain.",
-  },
-  {
-    href: "/fitness-habit-tracker",
-    title: "Fitness Habit Tracker",
-    description: "Understand how FitTribe helps you build a repeatable workout habit with streaks, check-ins, and accountability.",
-  },
-  {
-    href: "/crypto-fitness-app",
-    title: "Crypto Fitness App",
-    description: "See how FitTribe combines workout tracking with wallet-based rewards and zero-fee on-chain recording.",
-  },
-  {
-    href: "/blockchain-fitness-rewards",
-    title: "Blockchain Fitness Rewards",
-    description: "Explore how Avalanche-based rewards, proof of activity, and token incentives fit into the product.",
-  },
-  {
-    href: "/nft-fitness-badges",
-    title: "NFT Fitness Badges",
-    description: "Learn how milestone badges work, what soulbound means, and how achievements stay tied to your wallet.",
-  },
-];
-
-const faqs = [
-  {
-    question: "What is FitTribe?",
-    answer:
-      "FitTribe is a fitness habit tracker that combines daily workout check-ins, community accountability, trainer discovery, and on-chain rewards on Avalanche.",
-  },
-  {
-    question: "How does FitTribe work?",
-    answer:
-      "You log your workout with a daily check-in, build a streak, and if you have a wallet connected the app records your progress on-chain and rewards eligible activity with $HABIT tokens.",
-  },
-  {
-    question: "Is FitTribe free to use?",
-    answer:
-      "Yes. FitTribe is free to use, and the app is designed so users do not need to pay gas fees for routine on-chain fitness reward activity.",
-  },
-  {
-    question: "Do I need MetaMask to use FitTribe?",
-    answer:
-      "No. FitTribe supports an in-app wallet experience, so you can get started without installing MetaMask first.",
-  },
-  {
-    question: "What are the NFT fitness badges on FitTribe?",
-    answer:
-      "They are milestone-based, soulbound achievement badges that reflect your consistency and stay connected to your wallet as proof of progress.",
-  },
-  {
-    question: "Can I find a fitness coach on FitTribe?",
-    answer:
-      "Yes. FitTribe includes a trainer marketplace where you can browse coaches, compare profiles, and start a conversation directly in the app.",
-  },
+const TRUST_CHIPS = [
+  "🪙 10 $HABIT / check-in",
+  "🏅 Ownable streak NFTs",
+  "✓ No gas fees",
+  "✓ No MetaMask",
+  "✓ Self-custodial",
 ];
 
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqs.map((faq) => ({
+  mainEntity: [
+    {
+      question: "What is FitTribe?",
+      answer:
+        "FitTribe is a streak accountability app for any goal — fitness, study, building a business, or any daily habit. You check in daily, build a streak with a community that notices, and earn on-chain rewards for consistency.",
+    },
+    {
+      question: "How does FitTribe work?",
+      answer:
+        "Pick your goal and check in once a day. Your streak grows, your tribe sees it, and eligible check-ins are recorded on-chain and rewarded with $HABIT tokens and streak badges.",
+    },
+    {
+      question: "Is FitTribe free to use?",
+      answer:
+        "Yes. FitTribe is free, and it covers all blockchain fees — you never pay gas for your streak to be recorded on-chain.",
+    },
+    {
+      question: "Do I need MetaMask or crypto knowledge to use FitTribe?",
+      answer:
+        "No. A self-custodial wallet is created for you in the background. No MetaMask, no seed phrases — it feels like any other app.",
+    },
+    {
+      question: "What are streak badges?",
+      answer:
+        "Milestone-based, soulbound achievement badges minted at 7, 21, 30 and 49 days. They stay tied to your wallet as proof of consistency you own.",
+    },
+  ].map((faq) => ({
     "@type": "Question",
     name: faq.question,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: faq.answer,
-    },
+    acceptedAnswer: { "@type": "Answer", text: faq.answer },
   })),
 };
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Shared bits ──────────────────────────────────────────────────────────────
+
+const XHARE_URL =
+  "https://x.com/intent/post?text=" +
+  encodeURIComponent("Show up. Stay consistent. Prove it on-chain. 🔥 fittribe.club");
+const REDDIT_URL = "https://www.reddit.com/submit?url=https%3A%2F%2Fdaily-habit-hub.vercel.app";
+
+function Logo() {
+  return (
+    <Link href="/" className="flex items-center gap-2.5 shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#f97316] to-[#fb923c] flex items-center justify-center text-base">
+        🔥
+      </div>
+      <span className="font-display font-bold text-lg tracking-tight text-[#f5f5f4]">FitTribe</span>
+    </Link>
+  );
+}
+
+function PrimaryCta({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <Link
+      href="/register"
+      className={
+        "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#f97316] to-[#fb923c] " +
+        "px-6 py-3 text-sm font-bold text-[#0a0a0b] shadow-[0_0_24px_rgba(249,115,22,0.35)] " +
+        "hover:opacity-90 transition-opacity " +
+        className
+      }
+    >
+      {children}
+    </Link>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const supabase = createClient();
+  const router = useRouter();
 
   const { data: user } = useQuery({
-    queryKey: ['user'],
+    queryKey: ["user"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       return user;
     },
   });
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
-      return data;
-    },
-  });
+  // The marketing page is for visitors — members land on their dashboard
+  useEffect(() => {
+    if (user) router.replace("/dashboard");
+  }, [user, router]);
 
-  const { data: workouts = [] } = useQuery({
-    queryKey: ['workouts', user?.id],
-    enabled: !!user?.id,
+  // Live founding-member count
+  const { data: memberCount } = useQuery({
+    queryKey: ["platform-user-count"],
     queryFn: async () => {
-      const { data } = await supabase.from('workouts').select('*').eq('user_id', user?.id);
-      return data || [];
-    },
-  });
-
-  // Live platform stats (visible to non-logged-in users)
-  const { data: platformStats } = useQuery({
-    queryKey: ['platform-stats'],
-    enabled: !user,
-    queryFn: async () => {
-      const [usersRes, workoutsRes] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('workouts').select('id', { count: 'exact', head: true }),
-      ]);
-      return {
-        users: usersRes.count ?? 0,
-        checkIns: workoutsRes.count ?? 0,
-        tokensEarned: (workoutsRes.count ?? 0) * 10,
-      };
+      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+      return count ?? 0;
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const startOfThisWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const checkedDays = [0, 1, 2, 3, 4, 5, 6].map((i) => {
-    const d = new Date(startOfThisWeek);
-    d.setDate(d.getDate() + i);
-    return workouts.some((w: any) => isSameDay(new Date(w.created_at), d));
-  });
-  const weeklyWorkoutCount = workouts.filter((w: any) => new Date(w.created_at) >= startOfThisWeek).length;
-  const weeklyConsistencyRate = Math.round((weeklyWorkoutCount / 7) * 100);
-
-  const activityCounts = workouts.reduce((counts: Record<string, number>, workout: any) => {
-    const label = workout.activity_title?.trim() || workout.type || "custom";
-    counts[label] = (counts[label] ?? 0) + 1;
-    return counts;
-  }, {});
-
-  const topActivityEntry = (Object.entries(activityCounts) as Array<[string, number]>)
-    .sort((a, b) => b[1] - a[1])[0];
-  const topActivityType = workouts.find((workout: any) => {
-    const label = workout.activity_title?.trim() || workout.type || "custom";
-    return label === topActivityEntry?.[0];
-  })?.type;
-
-  const groupCounts = workouts.reduce((counts: Record<string, number>, workout: any) => {
-    const group = getActivityOption(workout.type)?.group ?? "build";
-    counts[group] = (counts[group] ?? 0) + 1;
-    return counts;
-  }, {});
-
-  const topGroupEntry = (Object.entries(groupCounts) as Array<[string, number]>)
-    .sort((a, b) => b[1] - a[1])[0];
-  const topGroupLabel = topGroupEntry
-    ? ACTIVITY_GROUP_LABELS[topGroupEntry[0] as keyof typeof ACTIVITY_GROUP_LABELS]
-    : null;
-
-  const consistencyMessage = weeklyWorkoutCount >= 5
-    ? "Strong rhythm. You're showing up most days this week."
-    : weeklyWorkoutCount >= 3
-      ? "Solid base. A couple more check-ins would lock the week in."
-      : "Your pattern is still forming. A few consecutive check-ins would change the trend fast.";
-
-  const intelligenceCards = user ? [
-    {
-      title: "Consistency Signal",
-      value: `${weeklyWorkoutCount}/7 days`,
-      detail: `${weeklyConsistencyRate}% weekly consistency`,
-      description: consistencyMessage,
-      emoji: "📈",
-    },
-    {
-      title: "Most Logged Activity",
-      value: topActivityEntry ? `${getActivityEmoji(topActivityType)} ${topActivityEntry[0]}` : "No pattern yet",
-      detail: topActivityEntry ? `${topActivityEntry[1]} check-ins recorded` : "Log a few workouts to unlock this signal",
-      description: topActivityEntry
-        ? "This is the habit you reinforce most often."
-        : "Your check-ins will surface your dominant habit automatically.",
-      emoji: "🧠",
-    },
-    {
-      title: "Current Focus",
-      value: topGroupLabel ?? "Still learning",
-      detail: topGroupEntry ? `${topGroupEntry[1]} check-ins in this category` : "Needs more history",
-      description: topGroupEntry
-        ? "Your recent check-ins suggest where your effort is concentrated."
-        : "Once you build history, the app can summarize where your energy goes.",
-      emoji: "🎯",
-    },
-  ] : [];
+  const joined = memberCount ?? null;
+  const spotsLeft = joined === null ? null : Math.max(0, 100 - joined);
+  const pct = joined === null ? 0 : Math.min(100, joined);
 
   return (
-    <Layout>
-      {!user && <JsonLd schema={faqSchema} />}
+    <div className="min-h-screen bg-[#0a0a0b] text-[#a1a1aa] [&_*]:scroll-mt-24">
+      <JsonLd schema={faqSchema} />
+
+      {/* ── Nav ── */}
+      <header className="sticky top-0 z-50 border-b border-[#26262c] bg-[#0a0a0b]/90 backdrop-blur-xl">
+        <div className="container flex h-14 items-center justify-between gap-4">
+          <Logo />
+          <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
+            <a href="#how-it-works" className="px-3 py-2 rounded-full hover:text-[#f5f5f4] transition-colors">How it works</a>
+            <a href="#features" className="px-3 py-2 rounded-full hover:text-[#f5f5f4] transition-colors">Features</a>
+            <a href="#rewards" className="px-3 py-2 rounded-full hover:text-[#f5f5f4] transition-colors">Rewards</a>
+            <Link href="/login" className="ml-1 px-4 py-1.5 rounded-full border border-[#26262c] text-[#f5f5f4] hover:border-[#3f3f46] transition-colors">
+              Open app
+            </Link>
+          </nav>
+          <Link
+            href="/register"
+            className="rounded-full bg-gradient-to-r from-[#f97316] to-[#fb923c] px-4 py-1.5 text-sm font-bold text-[#0a0a0b] hover:opacity-90 transition-opacity"
+          >
+            Start free
+          </Link>
+        </div>
+      </header>
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-hero opacity-5 pointer-events-none" />
-        <div className="container py-12 md:py-24">
-          <div className="max-w-3xl mx-auto text-center space-y-6 animate-slide-up">
-
-            {/* Avalanche badge */}
-            <div className="flex flex-wrap justify-center gap-3">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 font-semibold text-xs">
-                <span>🔺</span> Powered by Avalanche
-              </div>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary font-medium text-xs">
-                <span>🇰🇪</span>
-                {user
-                  ? `Welcome back, ${profile?.full_name?.split(' ')[0] || 'Warrior'}`
-                  : 'Built for Kenya, made for everyone'}
-              </div>
+        <div className="pointer-events-none absolute -top-32 right-0 h-[480px] w-[480px] rounded-full bg-[#f97316]/10 blur-[120px]" />
+        <div className="container grid items-center gap-12 py-14 md:py-20 lg:grid-cols-2">
+          {/* Left */}
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#f97316]/40 bg-[#f97316]/10 px-3.5 py-1.5 text-xs font-semibold text-[#fb923c]">
+              🔥 Founding-member access — first 100 spots
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
-              {user ? (
-                <>You've done <span className="text-gradient">{workouts.length}</span> workouts. Keep it up!</>
-              ) : (
-                <>Show up. Stay consistent. <span className="text-gradient">Prove it on-chain.</span></>
-              )}
+            <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-[#f5f5f4] sm:text-5xl md:text-6xl">
+              Chase your goal.
+              <br />
+              Keep your streak.
+              <br />
+              <span className="text-[#f97316]">Prove you showed up.</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              {user
-                ? 'Your journey is in progress. Check in today to keep your streak alive and mint your $HABIT reward tokens!'
-                : 'The fitness app that proves your consistency. Every workout mints $HABIT reward tokens and a permanent on-chain record on Avalanche — zero gas fees required.'}
+            <p className="max-w-xl text-base md:text-lg leading-relaxed">
+              FitTribe keeps ambitious people consistent on the goals that actually matter.
+              Pick your goal, show up every day, and hold the streak with a tribe that
+              won&apos;t let you quit — and earn rewards for proving you did the work.
             </p>
 
-            {/* Token highlight pills */}
-            {!user && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap justify-center gap-2 text-sm">
-                  <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20">
-                    🪙 10 $HABIT per check-in
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold border border-purple-500/20">
-                    🏅 Soulbound NFT milestones
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 font-semibold border border-green-500/20">
-                    ⛽ Zero gas fees
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground max-w-xl mx-auto">
-                  $HABIT is FitTribe&apos;s reward token, minted for every activity you log — your on-chain
-                  record of consistency. It currently has no monetary value.
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-              {user ? (
-                <Button variant="hero" size="xl" asChild>
-                  <Link href="/dashboard">
-                    Go to Dashboard <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="hero" size="xl" asChild>
-                  <Link href="/register">
-                    Start Your Streak — Free <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </Button>
-              )}
-              <Button variant="outline" size="xl" asChild>
-                <Link href="/community">
-                  <Users className="w-5 h-5" /> View Community
-                </Link>
-              </Button>
-            </div>
-
-            {!user && (
-              <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle className="w-4 h-4 text-primary" /> Free forever
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-primary" /> Self-custodial wallet
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-primary" /> No MetaMask needed
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Live Stats ── */}
-      <section className="py-8 border-y bg-muted/20">
-        <div className="container">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-            {user ? (
-              <>
-                <StatCard label="Your Day Streak" value={(profile?.streak || 0).toString()} icon={Flame} trend="Keep it burning! 🔥" />
-                <StatCard label="Your Workouts"   value={workouts.length.toString()} icon={CheckCircle} trend="Great consistency!" />
-                <StatCard label="$HABIT Collected"   value={(workouts.length * 10).toString()} icon={Coins} trend="10 per check-in" />
-              </>
-            ) : (
-              <>
-                <StatCard label="Registered users"    value={platformStats ? platformStats.users.toLocaleString() : "—"}       icon={Users}        trend="Growing daily" />
-                <StatCard label="Total check-ins"     value={platformStats ? platformStats.checkIns.toLocaleString() : "—"}    icon={CheckCircle}  trend="Live count" />
-                <StatCard label="$HABIT tokens minted" value={platformStats ? platformStats.tokensEarned.toLocaleString() : "—"} icon={Coins}        trend="10 per check-in" />
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── App Features ── */}
-      <section className="py-16 md:py-24">
-        <div className="container">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Everything you need to <span className="text-gradient">stay consistent</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Simple tools that work. No gimmicks, just results — and on-chain rewards.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((f) => (
-              <Card key={f.title} className="card-hover group">
-                <CardContent className="p-6 space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                    {f.emoji}
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-lg">{f.title}</h3>
-                    <p className="text-muted-foreground text-sm">{f.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Web3 / Avalanche Section ── */}
-      <section className="py-16 md:py-24 bg-muted/20">
-        <div className="container">
-          <div className="text-center space-y-4 mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 font-semibold text-sm mx-auto">
-              🔺 Built on Avalanche
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Your fitness. <span className="text-gradient">On the blockchain.</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Every check-in is recorded on Avalanche. Every milestone unlocks a soulbound NFT.
-              Your consistency is permanently and publicly provable.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
-            {web3Features.map((f) => (
-              <Card key={f.title} className="card-hover border-primary/10">
-                <CardContent className="p-6 flex gap-4">
-                  <div className="text-3xl shrink-0">{f.emoji}</div>
-                  <div>
-                    <h3 className="font-semibold mb-1">{f.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Deployed contract addresses */}
-          <Card className="max-w-3xl mx-auto border-primary/20">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Globe className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-                  Live Contracts — Avalanche C-Chain Mainnet
-                </h3>
-              </div>
-              <div className="space-y-3">
-                {Object.entries(CONTRACT_ADDRESSES).map(([name, addr]) => (
-                  <div key={name} className="flex items-center justify-between gap-4 py-2 border-b border-border/50 last:border-0">
-                    <span className="text-sm font-semibold">{name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-muted-foreground hidden sm:block">
-                        {addr.slice(0, 10)}...{addr.slice(-8)}
-                      </span>
-                      <a
-                        href={`${SNOWSCAN}/address/${addr}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
-                      >
-                        Snowscan <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* ── Streak Demo ── */}
-      <section className="py-16 md:py-24">
-        <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <Card className="overflow-hidden">
-              <CardContent className="p-8 md:p-12">
-                <div className="grid md:grid-cols-2 gap-8 items-center">
-                  <div className="space-y-6">
-                    <StreakBadge streak={user ? (profile?.streak || 0) : 15} size="lg" />
-                    <div>
-                      <h3 className="text-2xl md:text-3xl font-bold mb-2">
-                        {user ? 'Your Weekly Activity' : 'Build your streak'}
-                      </h3>
-                      <p className="text-muted-foreground">
-                        {user
-                          ? `You've checked in ${weeklyWorkoutCount} out of 7 days this week. Don't break the chain!`
-                          : 'Every daily check-in mints 10 $HABIT reward tokens and brings you closer to the next NFT badge milestone.'}
-                      </p>
-                    </div>
-                    <Button variant="hero" asChild>
-                      <Link href={user ? "/check-in" : "/register"}>
-                        {user ? 'Check In Today' : 'Start Your Streak'}
-                        <Flame className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                  <div className="space-y-4">
-                    <WeekCalendar checkedDays={user ? checkedDays : [true, true, true, false, true, true, true]} />
-                    <p className="text-sm text-muted-foreground text-center">
-                      {user ? `${weeklyWorkoutCount} out of 7 days this week 🎯` : '6 out of 7 days this week 🎯'}
-                    </p>
-                    {!user && (
-                      <div className="flex justify-center gap-2 text-xs text-muted-foreground">
-                        <span className="px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 font-medium">
-                          60 $HABIT collected this week
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {!user && (
-        <>
-          <section className="py-16 md:py-24 bg-muted/20">
-            <div className="container">
-              <div className="max-w-4xl mx-auto text-center space-y-4 mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold">
-                  More than a habit tracking app
-                </h2>
-                <p className="text-muted-foreground text-lg">
-                  FitTribe sits at the overlap of habit tracking, crypto fitness rewards,
-                  trainer discovery, and community accountability. That combination is the
-                  core reason people search for terms like fitness habit tracker, crypto
-                  fitness app, workout streak tracker, and accountability fitness app.
-                </p>
-              </div>
-              <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-                {seoPages.map((page) => (
-                  <Card key={page.href} className="card-hover h-full">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">{page.title}</h3>
-                        <p className="text-sm text-muted-foreground">{page.description}</p>
-                      </div>
-                      <Button variant="outline" asChild className="w-full">
-                        <Link href={page.href}>
-                          Explore <ArrowRight className="w-4 h-4" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="py-16 md:py-24">
-            <div className="container">
-              <div className="max-w-4xl mx-auto space-y-4 mb-12 text-center">
-                <h2 className="text-3xl md:text-4xl font-bold">
-                  Frequently asked questions about FitTribe
-                </h2>
-                <p className="text-muted-foreground text-lg">
-                  Answers to common questions about wallet setup, on-chain rewards, daily
-                  workout tracking, and how the product fits into a long-term consistency routine.
-                </p>
-              </div>
-              <div className="max-w-4xl mx-auto grid gap-4">
-                {faqs.map((faq) => (
-                  <Card key={faq.question}>
-                    <CardContent className="p-6 space-y-2">
-                      <h3 className="text-lg font-semibold">{faq.question}</h3>
-                      <p className="text-muted-foreground">{faq.answer}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-
-      {/* ── Check-in Intelligence ── */}
-      <section className="py-16 md:py-24 bg-muted/20">
-        <div className="container">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              {user ? "Intelligence from your check-ins" : "Built for check-in intelligence"}
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-              {user
-                ? "This layer uses your real activity history to surface patterns you can act on, instead of showing generic motivation."
-                : "Instead of fake testimonials, the product should learn from real user check-ins: consistency trends, dominant habits, recovery balance, and coaching prompts based on actual behavior."}
-            </p>
-          </div>
-
-          {user ? (
-            <div className="grid md:grid-cols-3 gap-6">
-              {intelligenceCards.map((card) => (
-                <Card key={card.title} className="card-hover">
-                  <CardContent className="p-6 space-y-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
-                      {card.emoji}
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                      <h3 className="text-xl font-bold">{card.value}</h3>
-                      <p className="text-sm text-primary font-medium">{card.detail}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{card.description}</p>
-                  </CardContent>
-                </Card>
+            <div className="flex flex-wrap gap-2">
+              {GOAL_CHIPS.map((chip) => (
+                <span
+                  key={chip.label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#26262c] bg-[#17171b] px-3 py-1.5 text-xs font-semibold text-[#d4d4d8]"
+                >
+                  <span>{chip.emoji}</span> {chip.label}
+                </span>
               ))}
             </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="card-hover">
-                <CardContent className="p-6 space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">📈</div>
-                  <h3 className="text-xl font-bold">Consistency scoring</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Detect whether a user is building momentum, drifting, or at risk of breaking a streak.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="card-hover">
-                <CardContent className="p-6 space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">🧠</div>
-                  <h3 className="text-xl font-bold">Habit pattern detection</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Learn which activity types users repeat most and where they need support, recovery, or variety.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="card-hover">
-                <CardContent className="p-6 space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">💬</div>
-                  <h3 className="text-xl font-bold">Next-best prompts</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Trigger coach-like nudges such as “log recovery tomorrow” or “you usually train best midweek.”
-                  </p>
-                </CardContent>
-              </Card>
+
+            <div className="flex flex-col gap-3 pt-1 sm:flex-row">
+              <PrimaryCta>
+                Start your streak — free <ArrowRight className="h-4 w-4" />
+              </PrimaryCta>
+              <a
+                href="#how-it-works"
+                className="inline-flex items-center justify-center rounded-full border border-[#26262c] bg-[#17171b] px-6 py-3 text-sm font-bold text-[#f5f5f4] hover:border-[#3f3f46] transition-colors"
+              >
+                See how it works
+              </a>
             </div>
-          )}
+
+            <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1 text-xs font-medium">
+              {REASSURANCES.map((r) => (
+                <span key={r} className="inline-flex items-center gap-1.5">
+                  <Check className="h-3.5 w-3.5 text-emerald-500" /> {r}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — phone mockup (illustrative numbers) */}
+          <div className="relative mx-auto w-full max-w-[340px]">
+            <div className="pointer-events-none absolute inset-0 -z-10 translate-y-8 rounded-full bg-[#f97316]/15 blur-[90px]" />
+            <div className="rounded-[2.5rem] border border-[#26262c] bg-[#101013] p-3 shadow-2xl">
+              <div className="space-y-4 rounded-[2rem] border border-[#26262c] bg-[#0d0d0f] p-5">
+                {/* header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#f97316] to-[#fb923c] text-sm font-bold text-[#0a0a0b]">
+                      D
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#f5f5f4]">Daniel</p>
+                      <p className="text-[10px] text-[#71717a]">Level 4 · Consistent</p>
+                    </div>
+                  </div>
+                  <span className="text-lg">🏆</span>
+                </div>
+
+                {/* streak card */}
+                <div className="rounded-2xl border border-[#f97316]/30 bg-gradient-to-b from-[#1c1410] to-[#17171b] p-5 text-center">
+                  <p className="text-[10px] font-bold tracking-[0.15em] text-[#fb923c]">
+                    ● LAUNCH MY STARTUP
+                  </p>
+                  <p className="mt-2 text-4xl">🔥</p>
+                  <p className="font-display text-5xl font-extrabold text-[#f5f5f4]">21</p>
+                  <p className="mt-1 text-[10px] font-semibold tracking-[0.2em] text-[#71717a]">DAY STREAK</p>
+                </div>
+
+                <div className="rounded-xl bg-gradient-to-r from-[#f97316] to-[#fb923c] py-2.5 text-center text-sm font-bold text-[#0a0a0b]">
+                  ✓ Check in for today
+                </div>
+
+                {/* tiles */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-[#26262c] bg-[#17171b] p-3 text-center">
+                    <p className="text-lg font-extrabold text-[#f5f5f4]">+10</p>
+                    <p className="text-[9px] font-semibold tracking-wider text-[#71717a]">$HABIT EARNED</p>
+                  </div>
+                  <div className="rounded-xl border border-[#26262c] bg-[#17171b] p-3 text-center">
+                    <p className="text-lg font-extrabold text-[#f5f5f4]">#8</p>
+                    <p className="text-[9px] font-semibold tracking-wider text-[#71717a]">LEADERBOARD</p>
+                  </div>
+                </div>
+
+                {/* badges */}
+                <div>
+                  <p className="mb-2 text-[9px] font-semibold tracking-[0.2em] text-[#71717a]">STREAK BADGES</p>
+                  <div className="flex gap-2">
+                    {["🔥", "🏅", "🥇", "💎"].map((b, i) => (
+                      <div
+                        key={b}
+                        className={
+                          "flex h-9 w-9 items-center justify-center rounded-lg border text-base " +
+                          (i < 2
+                            ? "border-[#f97316]/40 bg-[#f97316]/10"
+                            : "border-[#26262c] bg-[#17171b] opacity-40")
+                        }
+                      >
+                        {b}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Founding members ── */}
+      <section className="border-y border-[#26262c] bg-[#101013]">
+        <div className="container max-w-3xl py-10 text-center">
+          <p className="text-xs font-bold tracking-[0.25em] text-[#f97316]">FOUNDING MEMBERS</p>
+          <h2 className="mt-2 font-display text-xl font-bold text-[#f5f5f4] md:text-2xl">
+            Be one of the first 100 to build on FitTribe
+          </h2>
+          <div className="mx-auto mt-5 max-w-xl">
+            <div className="h-2 overflow-hidden rounded-full bg-[#26262c]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#f97316] to-[#fb923c] transition-all duration-700"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="mt-2 flex justify-between text-xs">
+              <span className="font-bold text-[#f5f5f4]">{joined === null ? "—" : `${joined} joined`}</span>
+              <span>{spotsLeft === null ? "" : `${spotsLeft} spots left`}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section id="how-it-works" className="container py-16 md:py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs font-bold tracking-[0.25em] text-[#f97316]">HOW IT WORKS</p>
+          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-[#f5f5f4] md:text-4xl">
+            Four taps to a goal that sticks
+          </h2>
+          <p className="mt-4 leading-relaxed">
+            Whatever you&apos;re working toward — a fitter body, a business, a degree, a new skill
+            — the loop is the same. Just show up. FitTribe makes it rewarding and impossible to fake.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {HOW_IT_WORKS.map((step) => (
+            <div key={step.num} className="relative rounded-2xl border border-[#26262c] bg-[#17171b] p-6">
+              <span className="absolute right-5 top-5 text-xs font-bold text-[#3f3f46]">{step.num}</span>
+              <span className="text-2xl">{step.emoji}</span>
+              <h3 className="mt-3 font-display text-base font-bold text-[#f5f5f4]">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed">{step.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Features ── */}
+      <section id="features" className="border-y border-[#26262c] bg-[#101013]">
+        <div className="container py-16 md:py-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-bold tracking-[0.25em] text-[#f97316]">WHY IT WORKS</p>
+            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-[#f5f5f4] md:text-4xl">
+              Accountability beats willpower
+            </h2>
+            <p className="mt-4 leading-relaxed">
+              Every other habit app leaves you alone with a checkbox. FitTribe puts a tribe,
+              a scoreboard, and real stakes behind every day you show up.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="rounded-2xl border border-[#26262c] bg-[#17171b] p-6">
+                <span className="text-2xl">{f.emoji}</span>
+                <h3 className="mt-3 font-display text-base font-bold text-[#f5f5f4]">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Rewards (kept low on the page by design) ── */}
+      <section id="rewards" className="container py-16 md:py-24">
+        <div className="mx-auto max-w-4xl rounded-3xl border border-[#26262c] bg-[#101013] px-6 py-12 text-center md:px-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#26262c] bg-[#17171b] px-3.5 py-1.5 text-xs font-semibold text-[#d4d4d8]">
+            🔺 Powered by Avalanche
+          </div>
+          <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-[#f5f5f4] md:text-4xl">
+            Your consistency, finally worth something
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl leading-relaxed">
+            Most habit apps give you a green checkmark and nothing else. FitTribe turns
+            every day you show up into rewards you actually own — $HABIT tokens and
+            streak badges recorded on-chain. We handle all the crypto behind the scenes,
+            so it feels like any other app.
+          </p>
+          <div className="mt-7 flex flex-wrap justify-center gap-2">
+            {TRUST_CHIPS.map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full border border-[#26262c] bg-[#17171b] px-3.5 py-1.5 text-xs font-semibold text-[#d4d4d8]"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+          <p className="mx-auto mt-6 max-w-xl text-xs text-[#71717a]">
+            $HABIT is FitTribe&apos;s reward token, minted for every check-in — your on-chain
+            record of consistency. It currently has no monetary value.
+          </p>
         </div>
       </section>
 
       {/* ── Final CTA ── */}
-      <section className="py-16 md:py-24 relative overflow-hidden">
-        <div className="absolute inset-0 gradient-energy opacity-5 pointer-events-none" />
-        <div className="container relative">
-          <Card className="max-w-3xl mx-auto overflow-hidden shadow-glow border-primary/20">
-            <CardContent className="p-8 md:p-12 text-center space-y-6">
-              <div className="space-y-4">
-                <h2 className="text-3xl md:text-4xl font-bold">
-                  {user ? 'Keep your momentum going!' : 'Ready to get fit and prove it on-chain?'}
-                </h2>
-                <p className="text-muted-foreground text-lg">
-                  {user
-                    ? 'Your next workout is waiting. Show up for yourself today.'
-                    : 'Start free. No MetaMask. No gas fees. Your consistency builds an on-chain record you own.'}
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {user ? (
-                  <Button variant="hero" size="xl" asChild>
-                    <Link href="/check-in">
-                      Log Today's Workout <CheckCircle className="w-5 h-5" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button variant="hero" size="xl" asChild>
-                    <Link href="/register">
-                      Get Started Free <ArrowRight className="w-5 h-5" />
-                    </Link>
-                  </Button>
-                )}
-                <Button variant="outline" size="xl" asChild>
-                  <Link href={user ? '/achievements' : '/trainers'}>
-                    <Trophy className="w-5 h-5" />
-                    {user ? 'View Achievements' : 'Find a Trainer'}
-                  </Link>
-                </Button>
-              </div>
-              {!user && (
-                <div className="flex flex-wrap items-center justify-center gap-4 pt-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <Heart className="w-4 h-4 fill-primary text-primary" /> No credit card
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-primary" /> Wallet created in 1 click
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Shield className="w-4 h-4 text-primary" /> Your keys, your tokens
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      <section className="container pb-20 pt-4 text-center md:pb-28">
+        <p className="text-xs font-bold tracking-[0.25em] text-[#f97316]">START TODAY</p>
+        <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-[#f5f5f4] md:text-4xl">
+          Your streak starts with one tap
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl leading-relaxed">
+          Free forever. Nothing to install to try it. Show up today — and let the tribe
+          carry you the rest of the way.
+        </p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <PrimaryCta>
+            Start your streak — free <ArrowRight className="h-4 w-4" />
+          </PrimaryCta>
+          <a
+            href={XHARE_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#26262c] bg-[#17171b] px-6 py-3 text-sm font-bold text-[#f5f5f4] hover:border-[#3f3f46] transition-colors"
+          >
+            <Star className="h-4 w-4 text-[#f97316]" /> Star on X
+          </a>
         </div>
+        <p className="mt-6 text-xs text-[#71717a]">
+          fittribe.club · Show up. Stay consistent. Prove it on-chain.
+        </p>
       </section>
-    </Layout>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-[#26262c]">
+        <div className="container flex flex-col items-center justify-between gap-4 py-8 text-xs md:flex-row">
+          <Logo />
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-medium">
+            <a href="#how-it-works" className="hover:text-[#f5f5f4] transition-colors">How it works</a>
+            <a href="#features" className="hover:text-[#f5f5f4] transition-colors">Features</a>
+            <a href="#rewards" className="hover:text-[#f5f5f4] transition-colors">Rewards</a>
+            <a href={XHARE_URL} target="_blank" rel="noreferrer" className="hover:text-[#f5f5f4] transition-colors">X / Twitter</a>
+            <a href={REDDIT_URL} target="_blank" rel="noreferrer" className="hover:text-[#f5f5f4] transition-colors">Reddit</a>
+          </nav>
+          <p className="text-[#71717a]">© 2026 FitTribe · fittribe.club</p>
+        </div>
+      </footer>
+    </div>
   );
 }

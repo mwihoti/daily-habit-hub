@@ -1,5 +1,8 @@
 'use client';
 
+import { notFound } from "next/navigation";
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Layout } from "@/components/Layout";
@@ -60,6 +63,9 @@ function TrainerAvatar({ url, name }: { url: string | null; name: string }) {
 }
 
 export default function TrainersPage() {
+  // Trainers surface is feature-flagged off — see lib/featureFlags
+  if (!FEATURE_TRAINERS) notFound();
+
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [trainers, setTrainers] = useState<TrainerProfile[]>([]);

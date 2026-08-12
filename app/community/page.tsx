@@ -177,12 +177,12 @@ export default function CommunityPage() {
             </Card>
             <Card>
               <CardContent className="p-5 space-y-2">
-                <h3 className="font-semibold">Find coaching support</h3>
+                <h3 className="font-semibold">Climb the leaderboard</h3>
                 <p className="text-sm text-muted-foreground">
-                  Move from self-guided consistency into structured coaching when you need extra support.
+                  See where your streak ranks and let a little friendly competition keep you showing up.
                 </p>
-                <Link href="/trainers" className="text-sm text-primary hover:underline">
-                  Browse trainers
+                <Link href="/leaderboard" className="text-sm text-primary hover:underline">
+                  View leaderboard
                 </Link>
               </CardContent>
             </Card>

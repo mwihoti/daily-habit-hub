@@ -737,7 +737,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-xl border bg-muted/30 p-4">
-                  <p className="text-sm font-semibold">Today&apos;s coach-style prompt</p>
+                  <p className="text-sm font-semibold">Today&apos;s accountability prompt</p>
                   <p className="text-sm text-muted-foreground mt-1">{accountabilityInsight.recommendedAction}</p>
                   <p className="text-xs text-muted-foreground mt-2">
                     Refreshed {formatInsightTimestamp()}

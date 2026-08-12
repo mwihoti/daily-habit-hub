@@ -543,7 +543,7 @@ export default function CheckInPage() {
                 </div>
 
                 <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                  <p className="font-semibold">Coach-style nudge</p>
+                  <p className="font-semibold">Accountability nudge</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {selectedType
                       ? `Logging ${selectedActivityLabel} today protects momentum better than waiting for a perfect session.`

@@ -75,8 +75,8 @@ describe('Root layout metadata', () => {
     expect(titleString(rootMetadata)).toContain('FitTribe');
   });
 
-  it('description mentions Nairobi', () => {
-    expect(descriptionString(rootMetadata)).toContain('Nairobi');
+  it('description leads with the goal-neutral positioning', () => {
+    expect(descriptionString(rootMetadata)).toContain('any goal');
   });
 
   it('description is between 120–160 characters', () => {
@@ -85,10 +85,10 @@ describe('Root layout metadata', () => {
     expect(desc.length).toBeLessThanOrEqual(160);
   });
 
-  it('keywords include all target Nairobi areas', () => {
+  it('keywords cover the global habit/streak positioning', () => {
     const kw = keywordsArray(rootMetadata).join(' ');
-    for (const area of NAIROBI_AREAS) {
-      expect(kw, `Missing keyword for area: ${area}`).toContain(area);
+    for (const term of ['habit tracker', 'streak', 'accountability', 'goal tracker']) {
+      expect(kw, `Missing keyword: ${term}`).toContain(term);
     }
   });
 
@@ -106,9 +106,9 @@ describe('Root layout metadata', () => {
     expect(images.length).toBeGreaterThan(0);
   });
 
-  it('openGraph locale is en_KE', () => {
+  it('openGraph locale is en_US', () => {
     const og = rootMetadata.openGraph as Record<string, unknown>;
-    expect(og.locale).toBe('en_KE');
+    expect(og.locale).toBe('en_US');
   });
 
   it('has Twitter card metadata', () => {

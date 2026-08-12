@@ -177,12 +177,12 @@ export default async function SharedAchievementPage({ params }: Props) {
           </Card>
           <Card>
             <CardContent className="p-5 space-y-2">
-              <h3 className="font-semibold">Browse coaches</h3>
+              <h3 className="font-semibold">Join the community</h3>
               <p className="text-sm text-muted-foreground">
-                Add coaching and accountability support when you want more structure.
+                Check in alongside people chasing their own goals — accountability works better together.
               </p>
-              <Link href="/trainers" className="text-sm text-primary hover:underline">
-                View trainer marketplace
+              <Link href="/community" className="text-sm text-primary hover:underline">
+                See the community feed
               </Link>
             </CardContent>
           </Card>

@@ -14,12 +14,13 @@ import { createClient } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
 
 const mainNavItems = [
   { href: "/",             icon: Home,          label: "Home"         },
   { href: "/community",    icon: Users,         label: "Community"    },
   { href: "/check-in",     icon: CheckCircle,   label: "Check-in"     },
-  { href: "/trainers",     icon: Dumbbell,      label: "Coaches"      },
+  ...(FEATURE_TRAINERS ? [{ href: "/trainers", icon: Dumbbell, label: "Coaches" }] : []),
   { href: "/dashboard",    icon: BarChart3,     label: "Dashboard"    },
   { href: "/progress",     icon: TrendingUp,    label: "Progress"     },
   { href: "/achievements", icon: Trophy,        label: "Achievements" },
@@ -38,14 +39,14 @@ const mobileNavItems = [
 
 // Items shown in the "More" bottom sheet
 const moreNavItems = [
-  { href: "/messages",     icon: MessageCircle, label: "Messages"     },
+  ...(FEATURE_TRAINERS ? [{ href: "/messages", icon: MessageCircle, label: "Messages" }] : []),
   { href: "/achievements", icon: Trophy,        label: "Achievements" },
   { href: "/leaderboard",  icon: Medal,         label: "Leaderboard"  },
   { href: "/goals",        icon: Target,        label: "Goals"        },
   { href: "/profile",      icon: User,          label: "Profile"      },
   { href: "/progress",     icon: TrendingUp,    label: "Progress"     },
   { href: "/tasks",        icon: ListTodo,      label: "Tasks"        },
-  { href: "/trainers",     icon: Dumbbell,      label: "Coaches"      },
+  ...(FEATURE_TRAINERS ? [{ href: "/trainers", icon: Dumbbell, label: "Coaches" }] : []),
 ];
 
 export function MobileNav() {
@@ -219,22 +220,24 @@ export function DesktopNav() {
 
         {/* Right — messages + user */}
         <div className="flex items-center gap-1 shrink-0">
-          <Link
-            href="/messages"
-            className={cn(
-              "relative p-2.5 rounded-xl transition-colors",
-              pathname === "/messages"
-                ? "text-white gradient-hero"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            )}
-          >
-            <MessageCircle className="w-5 h-5" />
-            {unreadMessages > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-destructive text-white text-[9px] flex items-center justify-center font-bold">
-                {unreadMessages > 9 ? "9+" : unreadMessages}
-              </span>
-            )}
-          </Link>
+          {FEATURE_TRAINERS && (
+            <Link
+              href="/messages"
+              className={cn(
+                "relative p-2.5 rounded-xl transition-colors",
+                pathname === "/messages"
+                  ? "text-white gradient-hero"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <MessageCircle className="w-5 h-5" />
+              {unreadMessages > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-destructive text-white text-[9px] flex items-center justify-center font-bold">
+                  {unreadMessages > 9 ? "9+" : unreadMessages}
+                </span>
+              )}
+            </Link>
+          )}
 
           {user ? (
             <>

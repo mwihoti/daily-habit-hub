@@ -1,5 +1,8 @@
 'use client';
 
+import { notFound } from "next/navigation";
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -62,6 +65,9 @@ function TrainerAvatar({ url, name, size = "lg" }: { url: string | null; name: s
 }
 
 export default function TrainerProfilePage() {
+  // Trainers surface is feature-flagged off — see lib/featureFlags
+  if (!FEATURE_TRAINERS) notFound();
+
   const params = useParams();
   const router = useRouter();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;

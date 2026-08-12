@@ -1,5 +1,8 @@
 'use client';
 
+import { notFound } from "next/navigation";
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
+
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Layout } from "@/components/Layout";
@@ -64,6 +67,9 @@ const STEPS = [
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function TrainerSetupPage() {
+  // Trainers surface is feature-flagged off — see lib/featureFlags
+  if (!FEATURE_TRAINERS) notFound();
+
   const router = useRouter();
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);

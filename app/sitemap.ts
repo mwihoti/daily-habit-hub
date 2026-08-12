@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { absoluteUrl } from "@/lib/seo";
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes
@@ -11,12 +12,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 1.0,
     },
-    {
-      url: absoluteUrl("/trainers"),
-      lastModified: new Date(),
-      changeFrequency: "hourly",
-      priority: 0.9,
-    },
+    ...(FEATURE_TRAINERS
+      ? ([{
+          url: absoluteUrl("/trainers"),
+          lastModified: new Date(),
+          changeFrequency: "hourly",
+          priority: 0.9,
+        }] as MetadataRoute.Sitemap)
+      : []),
     {
       url: absoluteUrl("/community"),
       lastModified: new Date(),
@@ -73,8 +76,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic trainer profile routes
+  // Dynamic trainer profile routes (hidden while trainers are flagged off)
   let trainerRoutes: MetadataRoute.Sitemap = [];
+  if (!FEATURE_TRAINERS) return staticRoutes;
   try {
     const supabase = await createClient();
     const { data: trainers } = await supabase
