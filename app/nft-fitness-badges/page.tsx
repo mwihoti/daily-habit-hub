@@ -40,7 +40,7 @@ export default function NftFitnessBadgesPage() {
         {
           title: "How badges fit the wider FitTribe model",
           body: [
-            "On FitTribe, badges sit inside a larger system that includes habit tracking, trainer discovery, and blockchain fitness rewards. They are not the entire product; they are one reinforcing part of a consistency-focused loop.",
+            "On FitTribe, badges sit inside a larger system that includes habit tracking, community accountability, and blockchain fitness rewards. They are not the entire product; they are one reinforcing part of a consistency-focused loop.",
           ],
         },
       ]}

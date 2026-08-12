@@ -7,9 +7,9 @@ import { buildPublicMetadata } from "@/lib/seo";
 import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = buildPublicMetadata({
-  title: "About FitTribe | Fitness Habit Tracking, Coaches, and Web3 Rewards",
+  title: "About FitTribe | Habit Tracking, Community, and Web3 Rewards",
   description:
-    "Learn what FitTribe is, how the platform combines workout habit tracking with coaches and blockchain rewards, and why it is built around consistency first.",
+    "Learn what FitTribe is, how the platform combines habit tracking with community accountability and blockchain rewards, and why it is built around consistency first.",
   keywords: [
     "about FitTribe",
     "fitness habit tracker company",
@@ -27,9 +27,9 @@ const principles = [
       "FitTribe is designed around a simple question: can you show up today? The product starts with check-ins, streaks, and habit-building before asking users to care about any advanced feature.",
   },
   {
-    title: "Coaching and community in the same product",
+    title: "Community accountability built in",
     body:
-      "The platform is not only a tracker. It also gives members a community feed, rankings, and a coach marketplace so accountability can come from both peers and professionals.",
+      "The platform is not only a tracker. It also gives members a community feed and rankings, so accountability comes from people who notice when you show up — and when you stop.",
   },
   {
     title: "Rewards that are meant to reinforce behavior",
@@ -51,9 +51,9 @@ export default function AboutFitTribePage() {
               A fitness habit tracker built around consistency, accountability, and proof of progress
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl">
-              FitTribe combines daily workout tracking, coach discovery, community accountability,
+              FitTribe combines daily habit tracking, community accountability,
               and wallet-based rewards into one product. The aim is not to overwhelm people with
-              features. It is to make regular training easier to sustain.
+              features. It is to make showing up easier to sustain.
             </p>
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function AboutFitTribePage() {
               <p className="text-muted-foreground">
                 FitTribe now has a set of public pages that explain the main parts of the product:
                 habit tracking, crypto fitness, blockchain fitness rewards, NFT fitness badges,
-                the coach marketplace, and the community. These pages exist to make the platform
+                and the community. These pages exist to make the platform
                 easier to understand before someone signs in.
               </p>
               <div className="grid md:grid-cols-2 gap-3">
@@ -90,9 +90,6 @@ export default function AboutFitTribePage() {
                 <Link href="/nft-fitness-badges" className="text-primary hover:underline">
                   NFT fitness badges
                 </Link>
-                <Link href="/trainers" className="text-primary hover:underline">
-                  Trainer marketplace
-                </Link>
                 <Link href="/community" className="text-primary hover:underline">
                   Community feed
                 </Link>
@@ -104,13 +101,13 @@ export default function AboutFitTribePage() {
         <div className="max-w-5xl mx-auto mt-12 grid md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-5 space-y-3">
-              <h3 className="font-semibold">Explore coaches</h3>
+              <h3 className="font-semibold">Climb the leaderboard</h3>
               <p className="text-sm text-muted-foreground">
-                Browse public trainer profiles with specialties, availability, and pricing.
+                See how your streak stacks up against the rest of the community.
               </p>
               <Button variant="outline" asChild className="w-full">
-                <Link href="/trainers">
-                  Browse trainers <ArrowRight className="w-4 h-4" />
+                <Link href="/leaderboard">
+                  View leaderboard <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
             </CardContent>

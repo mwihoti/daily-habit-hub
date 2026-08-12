@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { getOAuthRedirectTo } from "@/lib/utils";
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -168,8 +169,9 @@ export default function RegisterPage() {
               <p className="text-muted-foreground">Start your consistency journey today</p>
             </div>
 
-            {/* FIX 2: Role Selection — added cursor-pointer and z-10 to ensure
-                clicks register correctly regardless of parent styling */}
+            {/* Role selection — hidden while trainers are flagged off; every
+                signup defaults to a standard user (role state starts "user") */}
+            {FEATURE_TRAINERS && (
             <div className="grid grid-cols-2 gap-2 mb-6">
               <button
                 type="button"
@@ -202,6 +204,7 @@ export default function RegisterPage() {
                 <span className="font-medium">I&apos;m a trainer</span>
               </button>
             </div>
+            )}
 
             {/* Google Sign Up */}
             <Button

@@ -40,7 +40,7 @@ export default function CryptoFitnessAppPage() {
         {
           title: "How the product connects the pieces",
           body: [
-            "Workout tracking, an in-app wallet flow, a coach marketplace, and community accountability all sit in one place. The result is a product that can be understood as a crypto fitness app, but still works as a practical daily tracker.",
+            "Workout tracking, an in-app wallet flow, and community accountability all sit in one place. The result is a product that can be understood as a crypto fitness app, but still works as a practical daily tracker.",
           ],
         },
       ]}

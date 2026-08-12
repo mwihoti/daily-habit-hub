@@ -156,7 +156,7 @@ export default function OnboardingPage() {
             <div className="text-center mb-8">
               <div className="text-5xl mb-4">💪</div>
               <h1 className="text-3xl font-display font-bold mb-2">How do you prefer to work out?</h1>
-              <p className="text-muted-foreground">We'll suggest coaches and content that fits.</p>
+              <p className="text-muted-foreground">We'll tailor your experience to fit.</p>
             </div>
             <div className="grid grid-cols-2 gap-3 mb-8">
               {workouts.map((w) => (

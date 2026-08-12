@@ -1,3 +1,5 @@
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
+
 export type ActivityGroup = "move" | "recover" | "build";
 
 export interface ActivityOption {
@@ -19,7 +21,11 @@ export const ACTIVITY_OPTIONS: ActivityOption[] = [
   { id: "meal_prep", label: "Meal Prep", emoji: "🥗", group: "build", description: "Nutrition win for the day" },
   { id: "hydration", label: "Hydration Goal", emoji: "💧", group: "build", description: "Hit your hydration target" },
   { id: "sleep", label: "Sleep Target", emoji: "😴", group: "recover", description: "Recovered with good sleep" },
-  { id: "coach_task", label: "Coach Task", emoji: "✅", group: "build", description: "Completed a coach-assigned task" },
+  // Hidden from the picker while trainers are flagged off; historical
+  // check-ins with this type still render via getActivityOption fallbacks
+  ...(FEATURE_TRAINERS
+    ? [{ id: "coach_task", label: "Coach Task", emoji: "✅", group: "build" as ActivityGroup, description: "Completed a coach-assigned task" }]
+    : []),
   { id: "personal_project", label: "Personal Project", emoji: "💻", group: "build", description: "Made progress on a personal project or deep-work block" },
   { id: "custom", label: "Custom Win", emoji: "✨", group: "build", description: "Log any progress that matters" },
 ];

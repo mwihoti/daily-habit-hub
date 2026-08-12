@@ -1,6 +1,6 @@
 'use client';
 
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { FEATURE_TRAINERS } from "@/lib/featureFlags";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -597,7 +597,7 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   // Trainers surface is feature-flagged off — see lib/featureFlags
-  if (!FEATURE_TRAINERS) notFound();
+  if (!FEATURE_TRAINERS) redirect("/dashboard");
 
   return (
     <Suspense fallback={

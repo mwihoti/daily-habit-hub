@@ -1,6 +1,6 @@
 'use client';
 
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { FEATURE_TRAINERS } from "@/lib/featureFlags";
 
 import { useEffect, useState } from "react";
@@ -66,7 +66,7 @@ function TrainerAvatar({ url, name, size = "lg" }: { url: string | null; name: s
 
 export default function TrainerProfilePage() {
   // Trainers surface is feature-flagged off — see lib/featureFlags
-  if (!FEATURE_TRAINERS) notFound();
+  if (!FEATURE_TRAINERS) redirect("/dashboard");
 
   const params = useParams();
   const router = useRouter();
