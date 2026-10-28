@@ -15,6 +15,7 @@ import { format, isPast } from "date-fns";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { cn } from "@/lib/utils";
 import { buildTaskInsight } from "@/lib/accountability";
+import { AppLoading, EmptyState, PageHeader } from "@/components/PageChrome";
 import {
   Dialog,
   DialogContent,
@@ -131,9 +132,8 @@ export default function TasksPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-24 flex items-center justify-center text-muted-foreground animate-pulse">
-          <ListTodo className="w-8 h-8 mr-2" />
-          Loading tasks...
+        <div className="container">
+          <AppLoading label="Loading tasks" />
         </div>
       </Layout>
     );
@@ -144,23 +144,19 @@ export default function TasksPage() {
   return (
     <Layout>
       <div className="container py-12 max-w-2xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-8 h-8 text-primary" />
-              Task Tracker
-            </h1>
-            <p className="text-muted-foreground">Keep your day organized.</p>
-          </div>
-
-          <div className="flex gap-2">
+        <PageHeader
+          eyebrow="Tasks"
+          title="Today's tasks"
+          description="Small actions that protect the streak."
+        />
+        <div className="-mt-4 mb-8 flex justify-end gap-2">
             {pushStatus === "default" && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={enablePushReminders}
                 title="Enable push reminders"
-                className="rounded-xl border-orange-500/20 text-orange-500 hover:bg-orange-500/10"
+                className="border-primary/30 text-primary hover:bg-primary/10"
               >
                 <BellOff className="w-4 h-4" />
               </Button>
@@ -171,7 +167,7 @@ export default function TasksPage() {
                 size="icon"
                 disabled
                 title="Push reminders are on"
-                className="rounded-xl border-green-500/20 text-green-600"
+                className="border-emerald-500/30 text-emerald-400"
               >
                 <Bell className="w-4 h-4" />
               </Button>
@@ -229,7 +225,6 @@ export default function TasksPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-4 mb-8">
@@ -260,12 +255,11 @@ export default function TasksPage() {
 
         <div className="grid gap-3">
           {tasks.length === 0 ? (
-            <Card className="border-dashed border-2 py-12 text-center text-muted-foreground">
-              <CardContent>
-                <ListTodo className="w-12 h-12 mx-auto mb-4 opacity-10" />
-                <p>No tasks yet. Your day is clear!</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={<ListTodo className="h-8 w-8" />}
+              title="Nothing on the list"
+              body="Add one task you can finish today."
+            />
           ) : (
             tasks.map((task: any) => (
               <div

@@ -87,7 +87,7 @@ export default async function SharedAchievementPage({ params }: Props) {
           <Badge className="bg-primary/15 text-primary border-0 rounded-full px-4 py-1">
             Public Achievement Share
           </Badge>
-          <h1 className="text-4xl font-extrabold">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight">
             {name} unlocked the {share.meta.title}
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

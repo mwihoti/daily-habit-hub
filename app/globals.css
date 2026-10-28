@@ -4,139 +4,101 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Dark Athlete Theme ───────────────────────────────────────────────────── */
+/* ── FitTribe — dark-first, orange as accent only ───────────────────────────
+   Matches the landing palette: bg #0a0a0b, cards #17171b, borders #26262c,
+   headings #f5f5f4, body #a1a1aa, accent #f97316 → #fb923c.
+   :root is dark so the app is dark even before the .dark class. .dark repeats
+   the same values for Tailwind dark: variants and next-themes.
+*/
 @layer base {
-  :root {
-    /* Backgrounds */
-    --background:  30 15% 97%;
-    --foreground:  220 20% 12%;
-
-    --card:        0 0% 100%;
-    --card-foreground: 220 20% 12%;
-
-    --popover:     0 0% 100%;
-    --popover-foreground: 220 20% 12%;
-
-    /* Primary — Electric Orange (energy, action) */
-    --primary:     22 95% 53%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary — Deep Amber (warmth, streak fire) */
-    --secondary:   35 98% 52%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted:       30 15% 92%;
-    --muted-foreground: 220 10% 48%;
-
-    /* Accent — Electric Blue (Web3, chain elements) */
-    --accent:      215 90% 55%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 30 12% 88%;
-    --input:  30 12% 88%;
-    --ring:   22 95% 53%;
-
-    --radius: 0.875rem;
-
-    /* Semantic tokens */
-    --success:  142 71% 45%;
-    --warning:  45 93% 55%;
-    --streak:   35 98% 52%;     /* fire amber */
-    --chain:    215 90% 55%;    /* avax blue */
-
-    /* Gradients */
-    --gradient-hero:    linear-gradient(135deg, hsl(22 95% 53%) 0%, hsl(35 98% 52%) 100%);
-    --gradient-energy:  linear-gradient(135deg, hsl(35 98% 52%) 0%, hsl(22 95% 53%) 100%);
-    --gradient-dark:    linear-gradient(135deg, hsl(220 20% 10%) 0%, hsl(220 20% 6%) 100%);
-    --gradient-chain:   linear-gradient(135deg, hsl(215 90% 55%) 0%, hsl(240 80% 60%) 100%);
-    --gradient-card:    linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(30 15% 97%) 100%);
-
-    /* Shadows */
-    --shadow-sm:   0 2px 8px -2px hsl(22 95% 53% / 0.08);
-    --shadow-md:   0 8px 24px -4px hsl(22 95% 53% / 0.15);
-    --shadow-lg:   0 16px 48px -8px hsl(22 95% 53% / 0.20);
-    --shadow-glow: 0 0 32px hsl(22 95% 53% / 0.35);
-    --shadow-fire: 0 0 48px hsl(35 98% 52% / 0.4), 0 0 16px hsl(22 95% 53% / 0.3);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 22 95% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 15% 94%;
-    --sidebar-accent-foreground: 220 20% 12%;
-    --sidebar-border: 30 12% 90%;
-    --sidebar-ring: 22 95% 53%;
-  }
-
-  /* ── Dark Mode: Near-Black Athlete ──────────────────────────────────────── */
+  :root,
   .dark {
-    --background:  220 15% 7%;
-    --foreground:  30 20% 94%;
+    --background:  240 6% 4%;
+    --foreground:  60 9% 96%;
 
-    --card:        220 15% 11%;
-    --card-foreground: 30 20% 94%;
+    --card:        240 8% 10%;
+    --card-foreground: 60 9% 96%;
 
-    --popover:     220 15% 11%;
-    --popover-foreground: 30 20% 94%;
+    --popover:     240 8% 10%;
+    --popover-foreground: 60 9% 96%;
 
-    --primary:     22 95% 58%;
-    --primary-foreground: 220 15% 7%;
+    /* Primary — sharp orange, dark text for contrast on the fill */
+    --primary:     25 95% 53%;
+    --primary-foreground: 240 6% 4%;
 
-    --secondary:   35 98% 55%;
-    --secondary-foreground: 220 15% 7%;
+    --secondary:   27 96% 61%;
+    --secondary-foreground: 240 6% 4%;
 
-    --muted:       220 12% 18%;
-    --muted-foreground: 30 10% 58%;
+    --muted:       240 6% 14%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent:      215 90% 60%;
-    --accent-foreground: 220 15% 7%;
+    /* Accent — cool chain blue, used sparingly for wallet/chain chrome */
+    --accent:      215 80% 62%;
+    --accent-foreground: 240 6% 4%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 12% 20%;
-    --input:  220 12% 20%;
-    --ring:   22 95% 58%;
+    --border: 240 7% 16%;
+    --input:  240 7% 18%;
+    --ring:   25 95% 53%;
 
-    --success: 142 71% 50%;
-    --streak:  35 98% 55%;
-    --chain:   215 90% 60%;
+    --radius: 1rem;
 
-    --gradient-hero:   linear-gradient(135deg, hsl(22 95% 58%) 0%, hsl(35 98% 55%) 100%);
-    --gradient-energy: linear-gradient(135deg, hsl(35 98% 55%) 0%, hsl(22 95% 58%) 100%);
+    --success: 152 60% 45%;
+    --warning: 38 92% 55%;
+    --streak:  27 96% 61%;
+    --chain:   215 80% 62%;
 
-    --shadow-sm:   0 2px 8px -2px hsl(0 0% 0% / 0.4);
-    --shadow-md:   0 8px 24px -4px hsl(0 0% 0% / 0.5);
-    --shadow-lg:   0 16px 48px -8px hsl(0 0% 0% / 0.6);
-    --shadow-glow: 0 0 32px hsl(22 95% 58% / 0.4);
-    --shadow-fire: 0 0 48px hsl(35 98% 55% / 0.5), 0 0 16px hsl(22 95% 58% / 0.35);
+    --gradient-hero:   linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(27 96% 61%) 100%);
+    --gradient-energy: linear-gradient(160deg, hsl(24 40% 12%) 0%, hsl(240 8% 10%) 70%);
+    --gradient-dark:   linear-gradient(180deg, hsl(240 6% 6%) 0%, hsl(240 6% 4%) 100%);
+    --gradient-chain:  linear-gradient(135deg, hsl(215 70% 48%) 0%, hsl(230 60% 55%) 100%);
+    --gradient-card:   linear-gradient(180deg, hsl(240 8% 12%) 0%, hsl(240 8% 10%) 100%);
 
-    --sidebar-background: 220 15% 9%;
-    --sidebar-foreground: 30 20% 94%;
-    --sidebar-primary: 22 95% 58%;
-    --sidebar-primary-foreground: 220 15% 7%;
-    --sidebar-accent: 220 12% 16%;
-    --sidebar-accent-foreground: 30 20% 94%;
-    --sidebar-border: 220 12% 18%;
-    --sidebar-ring: 22 95% 58%;
+    --shadow-sm:   0 1px 0 hsl(0 0% 100% / 0.04), 0 8px 24px -12px hsl(0 0% 0% / 0.6);
+    --shadow-md:   0 16px 40px -20px hsl(0 0% 0% / 0.7);
+    --shadow-lg:   0 24px 60px -24px hsl(0 0% 0% / 0.75);
+    --shadow-glow: 0 0 28px hsl(25 95% 53% / 0.35);
+    --shadow-fire: 0 0 40px hsl(25 95% 53% / 0.28);
+
+    --sidebar-background: 240 6% 5%;
+    --sidebar-foreground: 60 9% 96%;
+    --sidebar-primary: 25 95% 53%;
+    --sidebar-primary-foreground: 240 6% 4%;
+    --sidebar-accent: 240 6% 14%;
+    --sidebar-accent-foreground: 60 9% 96%;
+    --sidebar-border: 240 7% 16%;
+    --sidebar-ring: 25 95% 53%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
 
+  html {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Nunito', var(--font-body), sans-serif;
+    background-image:
+      radial-gradient(900px 420px at 100% -10%, hsl(25 95% 53% / 0.08), transparent 55%),
+      radial-gradient(700px 380px at -10% 20%, hsl(215 80% 62% / 0.05), transparent 50%);
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Space Grotesk', var(--font-display), sans-serif;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    color: hsl(var(--foreground));
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.35);
+    color: hsl(var(--foreground));
   }
 }
 
@@ -158,12 +120,25 @@
     background-clip: text;
   }
 
+  .field {
+    @apply w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors;
+  }
+  .field:focus {
+    outline: none;
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.25);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+  }
+
   /* Glass morphism — dark card with blur */
   .glass {
-    background: hsl(220 15% 11% / 0.7);
+    background: hsl(240 8% 10% / 0.72);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(220 12% 20% / 0.6);
+    border: 1px solid hsl(240 7% 16% / 0.8);
   }
 
   .glass-light {
@@ -247,4 +222,13 @@
 
 .animate-count-up {
   animation: count-up 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -4,56 +4,83 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home, Users, CheckCircle, BarChart3, MessageCircle,
-  User, LogOut, Target, ListTodo, TrendingUp, Dumbbell, Menu,
-  Trophy, Medal,
+  User, LogOut, Target, ListTodo, TrendingUp, Dumbbell,
+  Trophy, Medal, MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FEATURE_TRAINERS } from "@/lib/featureFlags";
 
-const mainNavItems = [
-  { href: "/",             icon: Home,          label: "Home"         },
-  { href: "/community",    icon: Users,         label: "Community"    },
-  { href: "/check-in",     icon: CheckCircle,   label: "Check-in"     },
-  ...(FEATURE_TRAINERS ? [{ href: "/trainers", icon: Dumbbell, label: "Coaches" }] : []),
-  { href: "/dashboard",    icon: BarChart3,     label: "Dashboard"    },
-  { href: "/progress",     icon: TrendingUp,    label: "Progress"     },
-  { href: "/achievements", icon: Trophy,        label: "Achievements" },
-  { href: "/leaderboard",  icon: Medal,         label: "Leaderboard"  },
-  { href: "/tasks",        icon: ListTodo,      label: "Tasks"        },
-  { href: "/goals",        icon: Target,        label: "Goals"        },
+type NavItem = { href: string; icon: typeof Home; label: string };
+
+const primaryItems: NavItem[] = [
+  { href: "/", icon: Home, label: "Home" },
+  { href: "/community", icon: Users, label: "Community" },
+  { href: "/dashboard", icon: BarChart3, label: "Dashboard" },
 ];
 
-// 4 primary items always visible in the mobile bottom bar
-const mobileNavItems = [
-  { href: "/",          icon: Home,         label: "Home"      },
-  { href: "/check-in",  icon: CheckCircle,  label: "Check-in"  },
-  { href: "/community", icon: Users,        label: "Community" },
-  { href: "/dashboard", icon: BarChart3,    label: "Dashboard" },
+const moreItems: NavItem[] = [
+  { href: "/progress", icon: TrendingUp, label: "Progress" },
+  { href: "/achievements", icon: Trophy, label: "Achievements" },
+  { href: "/leaderboard", icon: Medal, label: "Leaderboard" },
+  { href: "/goals", icon: Target, label: "Goals" },
+  { href: "/tasks", icon: ListTodo, label: "Tasks" },
+  { href: "/profile", icon: User, label: "Profile" },
+  ...(FEATURE_TRAINERS
+    ? [
+        { href: "/messages", icon: MessageCircle, label: "Messages" },
+        { href: "/trainers", icon: Dumbbell, label: "Coaches" },
+      ]
+    : []),
 ];
 
-// Items shown in the "More" bottom sheet
-const moreNavItems = [
-  ...(FEATURE_TRAINERS ? [{ href: "/messages", icon: MessageCircle, label: "Messages" }] : []),
-  { href: "/achievements", icon: Trophy,        label: "Achievements" },
-  { href: "/leaderboard",  icon: Medal,         label: "Leaderboard"  },
-  { href: "/goals",        icon: Target,        label: "Goals"        },
-  { href: "/profile",      icon: User,          label: "Profile"      },
-  { href: "/progress",     icon: TrendingUp,    label: "Progress"     },
-  { href: "/tasks",        icon: ListTodo,      label: "Tasks"        },
-  ...(FEATURE_TRAINERS ? [{ href: "/trainers", icon: Dumbbell, label: "Coaches" }] : []),
-];
+function isActivePath(pathname: string, href: string) {
+  return pathname === href || (href !== "/" && pathname.startsWith(href));
+}
+
+function NavGlyph({
+  item,
+  active,
+  compact = false,
+}: {
+  item: NavItem;
+  active: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-2 rounded-full font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        compact
+          ? "min-h-11 min-w-[64px] flex-col gap-0.5 px-2 py-1.5 text-[10px]"
+          : "px-3 py-2 text-sm",
+        active ? "text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <item.icon className={compact ? "h-5 w-5" : "h-4 w-4"} aria-hidden />
+      <span>{item.label}</span>
+    </Link>
+  );
+}
 
 export function MobileNav() {
   const pathname = usePathname();
   const supabase = createClient();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string } | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -72,86 +99,102 @@ export function MobileNav() {
     toast.success("See you tomorrow 💪");
   };
 
-  const moreIsActive = moreNavItems.some(
-    (item) => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-  );
+  const checkInActive = isActivePath(pathname, "/check-in");
+  const moreIsActive = moreItems.some((item) => isActivePath(pathname, item.href));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border md:hidden">
-      <div className="flex items-center justify-around py-1 px-1 safe-area-bottom">
-        {mobileNavItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl transition-all duration-200 min-w-[56px]",
-                isActive
-                  ? "text-white gradient-hero shadow-glow scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              )}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[9px] font-semibold tracking-wide">{item.label}</span>
-            </Link>
-          );
-        })}
+    <nav
+      aria-label="Primary"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl md:hidden"
+    >
+      <div className="safe-area-bottom grid grid-cols-5 items-end px-1 pt-1">
+        {primaryItems.slice(0, 2).map((item) => (
+          <NavGlyph key={item.href} item={item} active={isActivePath(pathname, item.href)} compact />
+        ))}
 
-        {/* More — opens bottom sheet with remaining nav items */}
+        <Link
+          href="/check-in"
+          aria-current={checkInActive ? "page" : undefined}
+          aria-label="Check in"
+          className="flex -mt-5 flex-col items-center gap-1 focus-visible:outline-none"
+        >
+          <span
+            className={cn(
+              "flex h-14 w-14 items-center justify-center rounded-full gradient-hero text-primary-foreground shadow-glow ring-4 ring-background",
+              checkInActive && "ring-primary/40",
+            )}
+          >
+            <CheckCircle className="h-6 w-6" aria-hidden />
+          </span>
+          <span className={cn("text-[10px] font-bold", checkInActive ? "text-primary" : "text-foreground")}>
+            Check-in
+          </span>
+        </Link>
+
+        <NavGlyph
+          item={primaryItems[2]}
+          active={isActivePath(pathname, primaryItems[2].href)}
+          compact
+        />
+
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <button
+              type="button"
+              aria-label="More destinations"
               className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl transition-all duration-200 min-w-[56px]",
-                open || moreIsActive
-                  ? "text-white gradient-hero shadow-glow scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                "flex min-h-11 min-w-[64px] flex-col items-center gap-0.5 rounded-full px-2 py-1.5 text-[10px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                open || moreIsActive ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Menu className="w-5 h-5" />
-              <span className="text-[9px] font-semibold tracking-wide">More</span>
+              <MoreHorizontal className="h-5 w-5" aria-hidden />
+              <span>More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh]">
-            <div className="grid grid-cols-3 gap-3 pt-4 pb-2">
-              {moreNavItems.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          <SheetContent side="bottom" className="rounded-t-3xl border-border bg-card pb-8">
+            <SheetHeader className="text-left">
+              <SheetTitle className="font-display text-base">More</SheetTitle>
+              <SheetDescription className="sr-only">Other FitTribe pages</SheetDescription>
+            </SheetHeader>
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              {moreItems.map((item) => {
+                const active = isActivePath(pathname, item.href);
                 return (
                   <SheetClose asChild key={item.href}>
                     <Link
                       href={item.href}
+                      aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-2xl transition-all",
-                        isActive
-                          ? "text-white gradient-hero shadow-glow"
-                          : "bg-muted text-foreground hover:bg-muted/80"
+                        "flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-2xl border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        active
+                          ? "border-primary/40 bg-primary/10 text-primary"
+                          : "border-border bg-background text-foreground hover:bg-muted",
                       )}
                     >
-                      <item.icon className="w-6 h-6" />
-                      <span className="text-xs font-semibold">{item.label}</span>
+                      <item.icon className="h-5 w-5" aria-hidden />
+                      {item.label}
                     </Link>
                   </SheetClose>
                 );
               })}
             </div>
-            <div className="border-t border-border pt-3 mt-1">
+            <div className="mt-4 border-t border-border pt-3">
               {user ? (
                 <Button
                   variant="ghost"
-                  className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 h-12 rounded-xl"
+                  className="h-12 w-full justify-start gap-3 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
                   onClick={handleLogout}
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="h-5 w-5" />
                   Log Out
                 </Button>
               ) : (
                 <SheetClose asChild>
                   <Link
                     href="/login"
-                    className="flex items-center justify-center gap-2 h-12 rounded-xl gradient-hero text-white font-semibold"
+                    className="flex h-12 items-center justify-center rounded-full gradient-hero text-sm font-bold text-primary-foreground"
                   >
-                    Sign In
+                    Sign in
                   </Link>
                 </SheetClose>
               )}
@@ -165,8 +208,7 @@ export function MobileNav() {
 
 export function DesktopNav() {
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
-  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [user, setUser] = useState<{ id: string } | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
@@ -185,90 +227,98 @@ export function DesktopNav() {
     toast.success("See you tomorrow 💪");
   };
 
+  const moreActive = moreItems.some((item) => isActivePath(pathname, item.href));
+  const checkInActive = isActivePath(pathname, "/check-in");
+
   return (
-    <header className="hidden md:block sticky top-0 z-50 bg-card/90 backdrop-blur-xl border-b border-border shadow-sm">
-      <div className="container flex items-center justify-between h-16 gap-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <div className="w-9 h-9 rounded-xl gradient-hero flex items-center justify-center shadow-glow">
-            <span className="text-lg">💪</span>
-          </div>
-          <span className="font-display font-bold text-xl tracking-tight">FitTribe</span>
+    <header className="sticky top-0 z-50 hidden border-b border-border bg-background/85 backdrop-blur-xl md:block">
+      <div className="container flex h-16 items-center justify-between gap-4">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl gradient-hero text-base shadow-glow">
+            🔥
+          </span>
+          <span className="font-display text-lg font-bold tracking-tight">FitTribe</span>
         </Link>
 
-        {/* Nav Links */}
-        <nav className="flex items-center gap-0.5 overflow-x-auto">
-          {mainNavItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap",
-                  isActive
-                    ? "text-white gradient-hero shadow-glow"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <nav aria-label="Primary" className="flex items-center gap-0.5">
+          {primaryItems.map((item) => (
+            <NavGlyph key={item.href} item={item} active={isActivePath(pathname, item.href)} />
+          ))}
+          <Link
+            href="/check-in"
+            aria-current={checkInActive ? "page" : undefined}
+            className={cn(
+              "ml-1 inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              checkInActive
+                ? "gradient-hero text-primary-foreground shadow-glow"
+                : "border border-primary/40 bg-primary/10 text-primary hover:bg-primary/15",
+            )}
+          >
+            <CheckCircle className="h-4 w-4" aria-hidden />
+            Check in
+          </Link>
 
-        {/* Right — messages + user */}
-        <div className="flex items-center gap-1 shrink-0">
-          {FEATURE_TRAINERS && (
-            <Link
-              href="/messages"
+          <DropdownMenu>
+            <DropdownMenuTrigger
               className={cn(
-                "relative p-2.5 rounded-xl transition-colors",
-                pathname === "/messages"
-                  ? "text-white gradient-hero"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                "ml-1 inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                moreActive ? "text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <MessageCircle className="w-5 h-5" />
-              {unreadMessages > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-destructive text-white text-[9px] flex items-center justify-center font-bold">
-                  {unreadMessages > 9 ? "9+" : unreadMessages}
-                </span>
-              )}
-            </Link>
-          )}
+              More
+              <MoreHorizontal className="h-4 w-4" aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 rounded-2xl border-border bg-card p-1.5">
+              {moreItems.map((item) => (
+                <DropdownMenuItem key={item.href} asChild>
+                  <Link
+                    href={item.href}
+                    aria-current={isActivePath(pathname, item.href) ? "page" : undefined}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded-xl",
+                      isActivePath(pathname, item.href) && "text-primary",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" aria-hidden />
+                    {item.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </nav>
 
+        <div className="flex shrink-0 items-center gap-1">
           {user ? (
             <>
               <Link
                 href="/profile"
+                aria-current={pathname === "/profile" ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200",
-                  pathname === "/profile"
-                    ? "text-white gradient-hero"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  "inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  pathname === "/profile" ? "text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
-                <User className="w-4 h-4" />
-                <span>Profile</span>
+                <User className="h-4 w-4" aria-hidden />
+                Profile
               </Link>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleLogout}
-                className="text-muted-foreground hover:text-destructive rounded-xl"
-                title="Logout"
+                className="rounded-full text-muted-foreground hover:text-destructive"
+                title="Log out"
+                aria-label="Log out"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="h-4 w-4" />
               </Button>
             </>
           ) : (
             <Link
               href="/login"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold gradient-hero text-white shadow-glow hover:opacity-90 transition-opacity"
+              className="inline-flex items-center rounded-full gradient-hero px-4 py-2 text-sm font-bold text-primary-foreground shadow-glow hover:opacity-90"
             >
-              Sign In
+              Sign in
             </Link>
           )}
         </div>

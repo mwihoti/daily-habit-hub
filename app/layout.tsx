@@ -139,7 +139,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-KE" className={`${spaceGrotesk.variable} ${nunito.variable}`}>
+    <html lang="en-KE" className={`${spaceGrotesk.variable} ${nunito.variable} dark`}>
       <body className="font-body">
         <JsonLd schema={organizationSchema} />
         <JsonLd schema={websiteSchema} />

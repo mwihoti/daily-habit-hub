@@ -15,6 +15,7 @@ import { format, subMonths, eachMonthOfInterval, isSameMonth, startOfWeek, isSam
 import { useState, useEffect } from "react";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 import { ACHIEVEMENT_NFT_ADDRESS, ACHIEVEMENTS } from "@/lib/web3/habitRegistry";
+import { PageHeader } from "@/components/PageChrome";
 import {
   buildAccountabilityInsight,
   getNextCheckinPrompt,
@@ -157,12 +158,11 @@ export default function ProgressPage() {
     <Layout>
       <div className="container py-6 md:py-12">
         {/* Header */}
-        <div className="mb-8 animate-slide-up">
-          <h1 className="text-3xl font-display font-bold mb-2">Your Progress 📈</h1>
-          <p className="text-muted-foreground">
-            Celebrating consistency over perfection. Every workout counts!
-          </p>
-        </div>
+        <PageHeader
+          eyebrow="Progress"
+          title="Your progress"
+          description="Consistency over perfect weeks. Every check-in counts."
+        />
 
         {/* Key Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

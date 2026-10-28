@@ -361,7 +361,8 @@ function MessagesContent() {
           {/* Conversations List */}
           <Card className={cn("flex flex-col", selectedConvId && "hidden md:flex")}>
             <div className="p-4 border-b border-border">
-              <h2 className="font-bold text-lg mb-3">Messages</h2>
+              <h1 className="mb-1 font-display text-lg font-bold">Messages</h1>
+              <p className="mb-3 text-xs text-muted-foreground">Conversations stay between you and the other person.</p>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -408,7 +409,7 @@ function MessagesContent() {
                     key={conv.id}
                     onClick={() => setSelectedConvId(conv.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 p-4 hover:bg-muted transition-colors text-left",
+                      "flex min-h-[72px] w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       selectedConvId === conv.id && "bg-muted"
                     )}
                   >

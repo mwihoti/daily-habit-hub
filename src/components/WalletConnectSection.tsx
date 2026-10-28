@@ -73,7 +73,7 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
       const address = createEmbeddedWallet(userId)
       if (!address) throw new Error('Failed to generate wallet')
       await supabase.from('profiles').update({ wallet_address: address }).eq('id', userId)
-      toast.success('Wallet created — your $HABIT tokens will be minted here!')
+      toast.success('Rewards wallet ready. Check-ins can now earn $HABIT.')
     } catch (err: any) {
       toast.error(err?.message || 'Failed to create wallet')
     } finally {
@@ -138,8 +138,8 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
     return (
       <div className="space-y-3 w-full">
         <ConnectButton />
-        <p className="text-[10px] text-center text-muted-foreground">
-          External wallet connected. Tokens are minted to this address.
+        <p className="text-[11px] text-center text-muted-foreground">
+          You&apos;re using your own wallet. Rewards land here, and FitTribe covers the network fee.
         </p>
       </div>
     )
@@ -155,9 +155,9 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
         <div className="space-y-3 w-full">
           <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-center space-y-2">
             <div className="text-2xl">☁️</div>
-            <p className="text-sm font-semibold">Wallet backup found</p>
+            <p className="text-sm font-semibold">Saved wallet found</p>
             <p className="text-xs text-muted-foreground">
-              You have a cloud backup from another device. Enter your PIN to restore it here.
+              You already saved a backup from another device. Enter your PIN to bring those rewards here.
             </p>
             <Button variant="hero" className="w-full mt-2" onClick={() => setPinDialogMode('restore')}>
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -176,7 +176,7 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
           </Button>
 
           <div className="flex justify-center">
-            <ConnectButton label="Connect External Wallet" />
+            <ConnectButton label="Use a wallet I already have" />
           </div>
         </div>
 
@@ -200,7 +200,7 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                  In-App Wallet
+                  Your rewards wallet
                 </p>
                 {backupStatus === 'backed-up' && (
                   <span className="flex items-center gap-1 text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -247,8 +247,8 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
                 <CloudUpload className="w-4 h-4 text-amber-500" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Back up your wallet</p>
-                <p className="text-[10px] text-muted-foreground">Protect against losing your wallet if you clear browser data.</p>
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Save a backup</p>
+                <p className="text-[10px] text-muted-foreground">A short PIN lets you restore rewards if you switch phones or clear this browser.</p>
               </div>
             </button>
           )}
@@ -258,7 +258,7 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
             <div className="flex items-center gap-2 px-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                Cloud backup active — you can restore this wallet on any device.
+                Backup saved. You can restore these rewards on another device with your PIN.
               </p>
             </div>
           )}
@@ -268,7 +268,7 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
             <div className="flex items-start gap-2 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
               <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0 mt-0.5" />
               <p className="text-[10px] text-yellow-600 dark:text-yellow-400 leading-relaxed">
-                Stored in this browser only. Back up or export your key to avoid losing access.
+                This wallet lives in this browser until you save a backup. Without one, clearing site data can lock you out of past rewards.
               </p>
             </div>
           )}
@@ -279,7 +279,7 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
             <div className="h-px flex-1 bg-border" />
           </div>
           <div className="flex justify-center">
-            <ConnectButton label="Use External Wallet Instead" />
+            <ConnectButton label="Use a wallet I already have" />
           </div>
         </div>
 
@@ -304,7 +304,9 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
   // ── State A: no wallet ───────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-3 w-full">
-      {/* Feature highlights */}
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        Rewards need a wallet, which is just an account we can create for you. No seed phrase, no extra app, no fee.
+      </p>
       <div className="grid grid-cols-3 gap-2 text-center">
         {[
           { emoji: '🪙', label: '10 $HABIT\nper check-in' },
@@ -327,22 +329,22 @@ export function WalletConnectSection({ userId }: WalletConnectSectionProps) {
         {isCreating ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          'Create In-App Wallet (no MetaMask needed)'
+          'Create my rewards wallet'
         )}
       </Button>
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted-foreground">or connect your own</span>
+        <span className="text-xs text-muted-foreground">or use a wallet you already have</span>
         <div className="h-px flex-1 bg-border" />
       </div>
 
       <div className="flex justify-center">
-        <ConnectButton label="Connect External Wallet" />
+        <ConnectButton label="Use a wallet I already have" />
       </div>
 
       <p className="text-[10px] text-center text-muted-foreground px-2">
-        Your wallet address receives $HABIT tokens and NFTs — you never pay gas fees.
+        A wallet is the account that holds your rewards. We can make one for you — nothing to install, and you never pay a network fee. $HABIT is a consistency record, not cash.
       </p>
     </div>
   )

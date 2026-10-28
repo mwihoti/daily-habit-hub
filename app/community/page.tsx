@@ -13,6 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import Link from "next/link";
 import { ACTIVITY_OPTIONS, getActivityEmoji, getActivityLabel } from "@/lib/activityTypes";
+import { AppLoading, EmptyState, PageHeader } from "@/components/PageChrome";
 
 const filters = [
   { label: "All", value: "all" },
@@ -88,10 +89,11 @@ export default function CommunityPage() {
   return (
     <Layout>
       <div className="container py-6 md:py-12 max-w-2xl">
-        <div className="mb-8 animate-slide-up">
-          <h1 className="text-3xl font-bold mb-2">Community 👥</h1>
-          <p className="text-muted-foreground">See who's showing up today. You're not alone!</p>
-        </div>
+        <PageHeader
+          eyebrow="Tribe"
+          title="Community"
+          description="See who showed up today. Consistency is easier when someone notices."
+        />
 
         {/* Filters */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
@@ -111,10 +113,7 @@ export default function CommunityPage() {
         {/* Feed */}
         <div className="space-y-6">
           {isLoading ? (
-            <div className="flex flex-col items-center py-20 gap-4">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              <p className="text-muted-foreground">Loading community feed...</p>
-            </div>
+            <AppLoading label="Loading the feed" />
           ) : posts.length > 0 ? (
             posts.map((post: any, index: number) => (
               <CommunityPost 
@@ -129,9 +128,15 @@ export default function CommunityPage() {
               />
             ))
           ) : (
-            <Card className="p-10 text-center">
-              <p className="text-muted-foreground">No public activities yet. Be the first to share! 🚀</p>
-            </Card>
+            <EmptyState
+              title="No public check-ins yet"
+              body="Be the first to share. Private check-ins stay off this feed."
+              action={
+                <Button asChild>
+                  <Link href="/check-in">Check in</Link>
+                </Button>
+              }
+            />
           )}
         </div>
 

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { downloadBadge } from "@/lib/web3/badgeGenerator";
 import { ACHIEVEMENT_NFT_ADDRESS } from "@/lib/web3/habitRegistry";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
+import { PageHeader } from "@/components/PageChrome";
 import { ACHIEVEMENT_META, type MilestoneId, type AchievementMeta } from "@/lib/achievementMeta";
 
 const FUJI_SNOWSCAN = 'https://snowscan.xyz';
@@ -232,14 +233,13 @@ export default function AchievementsPage() {
       <div className="container py-12 max-w-4xl">
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <Badge className="mb-4 bg-primary/20 text-primary border-0 rounded-full py-1 px-4 text-sm font-semibold">
-            Digital Asset Vault
-          </Badge>
-          <h1 className="text-4xl font-extrabold mb-3">Your NFT Achievements</h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Soulbound badges that prove your consistency — permanently recorded on Avalanche.
-          </p>
+        <div className="mb-10 flex flex-col items-center">
+          <PageHeader
+            align="center"
+            eyebrow="Badges"
+            title="Proof you showed up"
+            description="Badges are trophies tied to your account. They can't be sold or sent — they're a public record of streaks like 7, 21, 30, and 49 days. You don't need to understand crypto to earn one."
+          />
 
           {/* Stats bar */}
           {!isLoading && (
@@ -271,7 +271,7 @@ export default function AchievementsPage() {
                 className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                View my NFTs on Snowscan
+                View badges on Snowscan
               </a>
               <span className="text-muted-foreground text-xs">·</span>
               <a

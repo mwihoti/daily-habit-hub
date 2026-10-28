@@ -85,32 +85,34 @@ function CelebrationScreen({
   }, [onContinue]);
 
   return (
-    <div className="fixed inset-0 z-50 gradient-hero flex flex-col items-center justify-center p-6 text-white">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-6 text-foreground">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(25_95%_53%/0.18),transparent_55%)]" />
       <Confetti />
       <div className="relative text-center animate-scale-in">
-        <div className="text-8xl mb-4 animate-bounce-soft">🔥</div>
-        <h1 className="font-display font-bold mb-3" style={{ fontSize: "clamp(2.5rem, 8vw, 4rem)" }}>
-          {streak} Day{streak !== 1 ? "s" : ""}!
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Streak updated</p>
+        <div className="mb-2 text-7xl">🔥</div>
+        <h1 className="mb-3 font-display font-extrabold" style={{ fontSize: "clamp(2.75rem, 8vw, 4.5rem)" }}>
+          {streak} day{streak !== 1 ? "s" : ""}
         </h1>
-        <p className="text-white/90 text-xl font-semibold mb-2">
+        <p className="mb-2 text-lg font-semibold text-foreground">
           {streak === 1
-            ? "Day 1 complete. The journey starts now."
+            ? "Day 1 is done. Come back tomorrow."
             : streak < 7
-            ? "You showed up. That's everything."
+            ? "You showed up. That's the whole game."
             : streak < 30
-            ? "You're building something real. 🚀"
-            : "You are elite. Absolute consistency."}
+            ? "The streak is getting hard to ignore."
+            : "This is a record you can prove."}
         </p>
-        <p className="text-white/70 text-sm mb-6">Check-in recorded ✓</p>
+        <p className="mb-6 text-sm text-muted-foreground">Today is saved. Rewards follow the check-in.</p>
 
         {/* NFT earned banner */}
         {earnedNft && (
-          <div className="mb-8 mx-auto max-w-xs bg-white/15 border border-white/30 rounded-2xl p-4 flex items-center gap-3">
+          <div className="mx-auto mb-8 flex max-w-xs items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4">
             <span className="text-4xl">{earnedNft.emoji}</span>
             <div className="text-left">
-              <p className="font-display font-bold text-sm text-yellow-300">NFT Unlocked!</p>
-              <p className="font-bold text-white">{earnedNft.name}</p>
-              <p className="text-xs text-white/70">{earnedNft.description}</p>
+              <p className="font-display text-sm font-bold text-primary">Badge unlocked</p>
+              <p className="font-bold text-foreground">{earnedNft.name}</p>
+              <p className="text-xs text-muted-foreground">{earnedNft.description}</p>
             </div>
           </div>
         )}
@@ -119,7 +121,7 @@ function CelebrationScreen({
           <Button
             size="lg"
             variant="outline"
-            className="bg-white/15 border-white/30 text-white hover:bg-white/25 gap-2"
+            className="gap-2"
             onClick={async () => {
               const typeLabel = workoutType
                 ? getActivityLabel(workoutType)
@@ -146,7 +148,7 @@ function CelebrationScreen({
           </Button>
           <Button
             size="lg"
-            className="bg-white text-orange-600 hover:bg-white/90 font-bold gap-2"
+            className="gap-2 font-bold"
             onClick={onContinue}
           >
             Continue <ArrowRight className="w-5 h-5" />
@@ -389,7 +391,7 @@ export default function CheckInPage() {
   if (!user) {
     return (
       <Layout>
-        <div className="container py-12 max-w-md mx-auto">
+        <div className="container mx-auto flex min-h-[70vh] max-w-md items-center py-12">
           <Card className="border-2 border-primary/20 shadow-xl overflow-hidden animate-slide-up">
             <div className="h-2 gradient-hero" />
             <CardContent className="p-8 text-center space-y-6">
@@ -415,19 +417,19 @@ export default function CheckInPage() {
 
   return (
     <Layout>
-      <div className="container py-6 md:py-12 max-w-2xl">
+      <div className="container max-w-2xl pt-6 pb-36 md:py-12">
         {/* Header */}
-        <div className="text-center mb-8 animate-slide-up">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full gradient-hero mb-4 shadow-fire">
-            <span className="text-4xl">{hasCheckedInToday ? "🎉" : "💪"}</span>
-          </div>
-          <h1 className="text-3xl font-display font-bold mb-2">
-            {hasCheckedInToday ? "You showed up!" : "What progress did you make today?"}
+        <div className="mb-8 animate-slide-up">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
+            {hasCheckedInToday ? "Done for today" : "Today's check-in"}
+          </p>
+          <h1 className="mb-2 font-display text-3xl font-extrabold md:text-4xl">
+            {hasCheckedInToday ? "You showed up." : "Log today in one pass."}
           </h1>
           <p className="text-muted-foreground">
             {hasCheckedInToday
-              ? "Keep the streak alive tomorrow."
-              : "Log the win, keep the streak moving, and earn your $HABIT."}
+              ? "The streak is safe until tomorrow."
+              : "Pick what you did, add proof if you want, then tap check in. About 30 seconds."}
           </p>
         </div>
 
@@ -464,14 +466,14 @@ export default function CheckInPage() {
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl gradient-chain flex items-center justify-center shrink-0">
-                <Coins className="w-5 h-5 text-white" />
+                <Coins className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <p className="font-display font-bold">Earn on Avalanche</p>
+                <p className="font-display font-bold">Rewards for showing up</p>
                 <p className="text-xs text-muted-foreground">
                   {hasWallet
-                    ? "Wallet ready — earn 10 $HABIT per check-in (gasless)"
-                    : "Get a wallet to earn $HABIT tokens + NFT badges"}
+                    ? "Wallet ready. Each check-in can add 10 $HABIT. We pay the network fee."
+                    : "Optional. A wallet is the account that holds $HABIT and badges. You can skip it and still check in."}
                 </p>
               </div>
             </div>
@@ -500,8 +502,8 @@ export default function CheckInPage() {
                           className={cn(
                             "flex flex-col items-start gap-1.5 p-4 rounded-2xl border-2 text-left transition-all duration-200",
                             selectedType === type.id
-                              ? "border-primary bg-primary/10 shadow-glow scale-[1.02]"
-                              : "border-border hover:border-primary/30 hover:bg-muted"
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/40 hover:bg-muted"
                           )}
                         >
                           <span className="text-2xl">{type.emoji}</span>
@@ -521,7 +523,7 @@ export default function CheckInPage() {
                       value={customTitle}
                       onChange={(e) => setCustomTitle(e.target.value)}
                       placeholder="Example: Extra steps, meal prep, stretch block..."
-                      className="w-full p-3 rounded-xl border-2 border-border bg-background focus:border-primary focus:outline-none transition-colors"
+                      className="field"
                       maxLength={60}
                     />
                   </div>
@@ -567,7 +569,7 @@ export default function CheckInPage() {
                     value={todayWin}
                     onChange={(e) => setTodayWin(e.target.value)}
                     placeholder="What mattered most today?"
-                    className="w-full p-3 rounded-xl border-2 border-border bg-background focus:border-primary focus:outline-none transition-colors"
+                    className="field"
                     maxLength={80}
                   />
                 </div>
@@ -609,7 +611,7 @@ export default function CheckInPage() {
                         if (e.target.value) setDuration(null);
                       }}
                       placeholder={isProjectCheckIn ? "Custom minutes, e.g. 75" : "Optional custom minutes"}
-                      className="w-full p-3 rounded-xl border-2 border-border bg-background focus:border-primary focus:outline-none transition-colors"
+                      className="field"
                     />
                   </div>
                   <div className="space-y-2">
@@ -658,7 +660,7 @@ export default function CheckInPage() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Add context, what felt good, what was hard, or what you want to remember. 💬"
-                  className="w-full p-4 rounded-xl border-2 border-border bg-background resize-none h-24 focus:border-primary focus:outline-none transition-colors"
+                  className="field h-24 resize-none"
                   maxLength={200}
                 />
                 <div>
@@ -716,32 +718,39 @@ export default function CheckInPage() {
 
 
             {/* Check-in CTA */}
-            <Button
-              variant="hero"
-              size="lg"
-              className="w-full text-lg h-14 shadow-glow"
-              onClick={() => checkInMutation.mutate()}
-              disabled={checkInMutation.isPending || !selectedType || (selectedType === "custom" && !customTitle.trim())}
-            >
-              {checkInMutation.isPending ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle className="w-6 h-6" />
-                  Check In Now
-                </>
-              )}
-            </Button>
+            <div className="fixed inset-x-0 bottom-[4.75rem] z-40 px-4 md:static md:inset-auto md:z-auto md:px-0">
+              <div className="mx-auto max-w-2xl rounded-3xl border border-border bg-card/95 p-3 shadow-lg backdrop-blur md:max-w-none md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+                <Button
+                  variant="hero"
+                  size="lg"
+                  className="h-14 w-full text-lg"
+                  onClick={() => checkInMutation.mutate()}
+                  disabled={checkInMutation.isPending || !selectedType || (selectedType === "custom" && !customTitle.trim())}
+                >
+                  {checkInMutation.isPending ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  ) : (
+                    <>
+                      <CheckCircle className="h-6 w-6" />
+                      Check in for today
+                    </>
+                  )}
+                </Button>
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  {selectedType ? "Ready. This saves today and keeps the streak." : "Choose an activity above to enable check-in."}
+                </p>
+              </div>
+            </div>
           </>
         ) : (
           /* Already checked in today */
-          <Card className="gradient-hero text-white animate-fade-in mb-8">
-            <CardContent className="p-8 text-center space-y-4">
-              <div className="text-6xl animate-bounce-soft">🔥</div>
-              <h2 className="text-2xl font-display font-bold">{profile?.streak || 0} Day Streak!</h2>
-              <p className="text-white/80">You've already checked in today. Come back tomorrow!</p>
-              <Button variant="outline" className="bg-white/15 border-white/30 text-white hover:bg-white/25" asChild>
-                <Link href="/dashboard">Go to Dashboard</Link>
+          <Card className="mb-8 border-primary/30 bg-primary/5 animate-fade-in">
+            <CardContent className="space-y-4 p-8 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Streak safe</p>
+              <h2 className="font-display text-4xl font-extrabold">{profile?.streak || 0}</h2>
+              <p className="text-muted-foreground">You already checked in today. Come back tomorrow to keep it.</p>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard">Back to dashboard</Link>
               </Button>
             </CardContent>
           </Card>
@@ -781,9 +790,10 @@ export default function CheckInPage() {
                 </Card>
               ))
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Flame className="w-10 h-10 mx-auto mb-2 opacity-20" />
-                <p>No recent check-ins. Be the first today!</p>
+              <div className="rounded-2xl border border-dashed border-border px-6 py-10 text-center">
+                <Flame className="mx-auto mb-2 h-8 w-8 text-muted-foreground" aria-hidden />
+                <p className="font-display font-bold">No recent check-ins</p>
+                <p className="mt-1 text-sm text-muted-foreground">Yours can be the first one the tribe sees.</p>
               </div>
             )}
           </div>
