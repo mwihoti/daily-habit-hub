@@ -33,14 +33,17 @@ export function SeoLandingPage({
   return (
     <Layout>
       <div className="container py-10 md:py-16">
-        <div className="max-w-4xl mx-auto space-y-6 mb-12">
-          <div className="inline-flex rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-            {eyebrow}
-          </div>
+        <div className="mx-auto mb-12 max-w-4xl space-y-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">{eyebrow}</p>
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">{title}</h1>
-            <p className="text-lg text-muted-foreground max-w-3xl">{description}</p>
+            <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{title}</h1>
+            <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground">{description}</p>
           </div>
+          <Button variant="hero" asChild>
+            <Link href="/register">
+              Start your streak <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
 
         <div className="max-w-4xl mx-auto grid gap-6">

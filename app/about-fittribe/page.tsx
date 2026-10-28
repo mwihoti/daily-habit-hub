@@ -43,11 +43,11 @@ export default function AboutFitTribePage() {
     <Layout>
       <div className="container py-10 md:py-16">
         <div className="max-w-4xl mx-auto space-y-6 mb-12">
-          <div className="inline-flex rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
             About FitTribe
-          </div>
+          </p>
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
+            <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">
               A fitness habit tracker built around consistency, accountability, and proof of progress
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl">

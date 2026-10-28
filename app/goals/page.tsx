@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { buildGoalInsight } from "@/lib/accountability";
+import { AppLoading, EmptyState, PageHeader } from "@/components/PageChrome";
 import {
   Dialog,
   DialogContent,
@@ -112,8 +113,8 @@ export default function GoalsPage() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-24 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="container">
+          <AppLoading label="Loading goals" />
         </div>
       </Layout>
     );
@@ -124,18 +125,16 @@ export default function GoalsPage() {
   return (
     <Layout>
       <div className="container py-12 max-w-4xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <TargetIcon className="w-8 h-8 text-primary" />
-              Goal Tracker
-            </h1>
-            <p className="text-muted-foreground">What do you want to achieve?</p>
-          </div>
-
+        <PageHeader
+          eyebrow="Goals"
+          title="Goal tracker"
+          description="Name the outcome, then let daily check-ins move it."
+          action={null}
+        />
+        <div className="-mt-4 mb-8 flex justify-end">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="rounded-xl shadow-glow">
+              <Button size="lg" className="w-full sm:w-auto">
                 <Plus className="w-4 h-4" />
                 New Goal
               </Button>
@@ -219,12 +218,11 @@ export default function GoalsPage() {
 
         <div className="grid gap-6">
           {goals.length === 0 ? (
-            <Card className="border-dashed border-2 py-12 text-center text-muted-foreground">
-              <CardContent>
-                <Target className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p>No goals set yet. Start by creating one!</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={<Target className="h-8 w-8" />}
+              title="No goals yet"
+              body="Add one outcome you're willing to show up for."
+            />
           ) : (
             goals.map((goal: any) => (
               <Card key={goal.id} className="card-hover">

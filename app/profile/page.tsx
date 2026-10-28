@@ -20,6 +20,7 @@ import {
   Mail as MailIcon, AtSign as AtSignIcon, Coins, Key, Sparkles, BellRing
 } from "lucide-react";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
+import { AppLoading, PageHeader } from "@/components/PageChrome";
 
 import { format } from "date-fns";
 import { buildAccountabilityInsight, getReminderHourLabel } from "@/lib/accountability";
@@ -170,8 +171,8 @@ export default function ProfilePage() {
   if (userLoading || profileLoading) {
     return (
       <Layout>
-        <div className="container py-20 flex justify-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="container">
+          <AppLoading label="Loading profile" />
         </div>
       </Layout>
     );
@@ -180,7 +181,11 @@ export default function ProfilePage() {
   return (
     <Layout>
       <div className="container py-6 md:py-12 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+        <PageHeader
+          eyebrow="Profile"
+          title="Your profile"
+          description="The graffiti wall is generated from your check-ins. Same stats always paint the same wall."
+        />
 
         {user?.id && (
           <GraffitiWall
@@ -202,7 +207,7 @@ export default function ProfilePage() {
                 <div className="relative inline-block mb-4">
                   <Avatar className="w-24 h-24 border-4 border-primary/20">
                     <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback className="text-2xl gradient-hero text-white">
+                    <AvatarFallback className="bg-primary text-2xl text-primary-foreground">
                       {displayName?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -341,14 +346,14 @@ export default function ProfilePage() {
             </Card>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Card className="overflow-hidden border-orange-100 dark:border-orange-950">
+              <Card className="overflow-hidden border-primary/30">
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <FlameIcon className="w-6 h-6" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground font-medium">Daily Streak</p>
-                    <p className="text-2xl font-bold text-orange-600">{profile?.streak || 0} Days</p>
+                    <p className="text-2xl font-bold text-primary">{profile?.streak || 0} days</p>
                   </div>
                 </CardContent>
               </Card>
@@ -446,10 +451,10 @@ export default function ProfilePage() {
                 <div className="flex justify-between items-center py-2 border-b border-border/50">
                   <span className="text-muted-foreground flex items-center gap-2">
                     <Coins className="w-4 h-4 text-blue-500" />
-                    Avalanche Wallet
+                    Rewards wallet
                     {walletType === 'embedded' && (
                       <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
-                        In-App
+                        Created for you
                       </span>
                     )}
                   </span>

@@ -31,6 +31,7 @@ import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 import { WalletConnectSection } from "@/components/WalletConnectSection";
 import { getActivityEmoji, getActivityLabel } from "@/lib/activityTypes";
 import { NotificationButton } from "../components/NotificationButton";
+import { PageHeader, EmptyState } from "@/components/PageChrome";
 import {
   buildAccountabilityInsight,
   formatInsightTimestamp,
@@ -352,20 +353,19 @@ export default function DashboardPage() {
     <Layout>
       <div className="container py-6 md:py-12">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 animate-slide-up">
-          <div>
-            <h1 className="text-3xl font-display font-bold mb-1">
-              Hey {profile?.full_name?.split(' ')[0] || 'there'}! 👋
-            </h1>
-            <p className="text-muted-foreground">Keep showing up. You're doing amazing!</p>
-          </div>
-          <Button variant="hero" asChild>
-            <Link href="/check-in">
-              <Plus className="w-5 h-5" />
-              Check In
-            </Link>
-          </Button>
-        </div>
+        <PageHeader
+          eyebrow="Dashboard"
+          title={<>Hey {profile?.full_name?.split(" ")[0] || "there"}</>}
+          description={todayWorkout ? "Today is already logged. Protect the streak tomorrow." : "One check-in keeps the streak alive."}
+          action={
+            <Button variant="hero" asChild>
+              <Link href="/check-in">
+                <Plus className="w-5 h-5" />
+                {todayWorkout ? "View check-in" : "Check in"}
+              </Link>
+            </Button>
+          }
+        />
 
         <Card className={`mb-6 border ${streakRiskTone.className}`}>
           <CardContent className="p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -683,7 +683,7 @@ export default function DashboardPage() {
                                 variant="ghost"
                                 size="icon"
                                 title={isConnected ? "Mint Proof of Progress on-chain" : "Connect wallet to mint $HABIT"}
-                                className="w-8 h-8 rounded-full bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white transition-all"
+                                className="h-11 w-11 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
                                 disabled={isMinting}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -711,7 +711,7 @@ export default function DashboardPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="w-8 h-8 rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                              className="h-11 w-11 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenPhotoDialog(activity);
@@ -724,7 +724,7 @@ export default function DashboardPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-center text-muted-foreground py-4">No recent activity</p>
+                    <EmptyState title="No check-ins yet" body="Your first one starts the streak." />
                   )}
                 </div>
               </CardContent>
@@ -763,7 +763,7 @@ export default function DashboardPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Coins className="w-5 h-5 text-orange-500" />
-                  Earn on Avalanche
+                  Rewards
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -771,8 +771,8 @@ export default function DashboardPage() {
                   <>
                     <p className="text-sm text-muted-foreground">
                       {workouts.length > 0
-                        ? `You have ${workouts.length} workout${workouts.length !== 1 ? "s" : ""} — get a wallet to earn $HABIT tokens & NFT badges.`
-                        : "Get a wallet to earn $HABIT tokens and NFT badges for every check-in."}
+                        ? `You have ${workouts.length} check-in${workouts.length !== 1 ? "s" : ""}. Add a rewards wallet if you want $HABIT and badges — checking in works either way.`
+                        : "Checking in works without a wallet. Add one only if you want $HABIT and badges saved to an account you control."}
                     </p>
                     <WalletConnectSection userId={user?.id} />
                   </>
@@ -786,7 +786,7 @@ export default function DashboardPage() {
                     {todayWorkout && canMintOnChain && (
                       <div className="p-3 rounded-xl border border-orange-500/20 bg-orange-500/5 space-y-2">
                         <p className="text-xs text-muted-foreground">
-                          Today&apos;s check-in isn&apos;t on-chain yet — mint to earn 10 $HABIT.
+                          Today is saved in the app, but not on the public record yet. Recording it adds 10 $HABIT. FitTribe pays the fee.
                         </p>
                         <Button
                           variant="hero"
@@ -800,7 +800,7 @@ export default function DashboardPage() {
                           ) : (
                             <>
                               <Coins className="w-4 h-4" />
-                              Mint $HABIT
+                              Record today&apos;s reward
                             </>
                           )}
                         </Button>
@@ -809,13 +809,13 @@ export default function DashboardPage() {
 
                     {todayWorkout && canMintOnChain === false && (
                       <p className="text-xs text-center text-muted-foreground py-1">
-                        Today&apos;s check-in is on-chain ✓
+                        Today is on your public record.
                       </p>
                     )}
 
                     {!todayWorkout && (
                       <p className="text-xs text-center text-muted-foreground py-1">
-                        Check in today to earn 10 $HABIT.
+                        Check in today to earn 10 $HABIT — a record of showing up, not cash.
                       </p>
                     )}
                   </div>

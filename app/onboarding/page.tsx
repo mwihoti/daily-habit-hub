@@ -128,8 +128,9 @@ export default function OnboardingPage() {
                   className={cn(
                     "p-5 rounded-2xl border-2 text-left transition-all duration-200",
                     selectedGoal === g.id
-                      ? "border-primary bg-primary/10 shadow-glow scale-[1.02]"
-                      : "border-border hover:border-primary/40 hover:bg-muted"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/40 hover:bg-muted",
+                    "min-h-[112px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   )}
                 >
                   <span className="text-3xl block mb-2">{g.emoji}</span>
@@ -166,8 +167,9 @@ export default function OnboardingPage() {
                   className={cn(
                     "p-5 rounded-2xl border-2 text-left transition-all duration-200",
                     selectedWorkout === w.id
-                      ? "border-primary bg-primary/10 shadow-glow scale-[1.02]"
-                      : "border-border hover:border-primary/40 hover:bg-muted"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/40 hover:bg-muted",
+                    "min-h-[112px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   )}
                 >
                   <span className="text-3xl block mb-2">{w.emoji}</span>
@@ -198,12 +200,12 @@ export default function OnboardingPage() {
           <div>
             <div className="text-center mb-8">
               <div className="text-5xl mb-4">⛓️</div>
-              <h1 className="text-3xl font-display font-bold mb-2">Earn rewards on Avalanche</h1>
+              <h1 className="text-3xl font-display font-bold mb-2">Want rewards with your streak?</h1>
               <p className="text-muted-foreground mb-1">
-                Set up a wallet to earn <strong>$HABIT tokens</strong> and mint
-                achievement NFTs every time you check in.
+                A wallet is just the account that holds <strong>$HABIT</strong> and badges.
+                We can create one for you — no extra app, and you never pay a fee.
               </p>
-              <p className="text-sm text-muted-foreground">Totally optional — you can do this later.</p>
+              <p className="text-sm text-muted-foreground">Optional. You can check in without it and add it later.</p>
             </div>
 
             <Card className="mb-6 border-2 border-accent/30 bg-accent/5">

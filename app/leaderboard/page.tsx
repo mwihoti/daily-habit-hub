@@ -8,6 +8,7 @@ import { Flame, Trophy, Medal, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { AppLoading, EmptyState, PageHeader } from "@/components/PageChrome";
 
 const MEDAL_COLORS = [
   "text-yellow-500 bg-yellow-500/10 border-yellow-500/30",
@@ -58,13 +59,12 @@ export default function LeaderboardPage() {
     <Layout>
       <div className="container py-6 md:py-12 max-w-2xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🏆</div>
-          <h1 className="text-3xl font-extrabold mb-2">Leaderboard</h1>
-          <p className="text-muted-foreground">
-            Top streaks in the FitTribe community. Updated every minute.
-          </p>
-        </div>
+        <PageHeader
+          align="center"
+          eyebrow="Rankings"
+          title="Leaderboard"
+          description="Longest active streaks in the tribe. Refreshes about once a minute."
+        />
 
         {/* My rank card — only if signed in and ranked */}
         {me && myRank > 0 && (
@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
               </div>
               <Avatar className="w-10 h-10 border-2 border-primary/30">
                 <AvatarImage src={me.avatar_url ?? undefined} />
-                <AvatarFallback className="text-sm gradient-hero text-white">
+                <AvatarFallback className="bg-primary text-sm text-primary-foreground">
                   {(me.full_name || me.username || "?").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -117,7 +117,7 @@ export default function LeaderboardPage() {
             <div className="flex flex-col items-center pt-6">
               <Avatar className="w-14 h-14 border-4 border-slate-400/40 mb-2">
                 <AvatarImage src={leaders[1]?.avatar_url ?? undefined} />
-                <AvatarFallback className="bg-slate-400/20 text-slate-600">
+                <AvatarFallback className="bg-muted text-foreground">
                   {(leaders[1]?.full_name || leaders[1]?.username || "?")
                     .charAt(0)
                     .toUpperCase()}
@@ -125,7 +125,7 @@ export default function LeaderboardPage() {
               </Avatar>
               <span className="text-xl mb-1">🥈</span>
               <p className="text-xs font-bold text-center truncate w-full px-1">
-                {/*   {leaders[1]?.full_name || leaders[1]?.username || "—"} */}
+                {leaders[1]?.full_name || leaders[1]?.username || "—"}
               </p>
               <p className="text-xs text-orange-500 font-bold flex items-center gap-0.5">
                 <Flame className="w-3 h-3" />
@@ -142,10 +142,8 @@ export default function LeaderboardPage() {
                   style={{ width: 72, height: 72 }}
                 >
                   <AvatarImage src={leaders[0]?.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-lg bg-yellow-500/20 text-yellow-700">
-                    {/* {(leaders[0]?.full_name || leaders[0]?.username || "?")
-                      .charAt(0)
-                      .toUpperCase()} */}
+                  <AvatarFallback className="bg-primary/15 text-lg text-primary">
+                    {(leaders[0]?.full_name || leaders[0]?.username || "?").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl">
@@ -154,7 +152,7 @@ export default function LeaderboardPage() {
               </div>
               <span className="text-xl mb-1">🥇</span>
               <p className="text-xs font-bold text-center truncate w-full px-1">
-                {/* {leaders[0]?.full_name || leaders[0]?.username || "—"} */}
+                {leaders[0]?.full_name || leaders[0]?.username || "—"}
               </p>
               <p className="text-xs text-orange-500 font-bold flex items-center gap-0.5">
                 <Flame className="w-3 h-3" />
@@ -167,7 +165,7 @@ export default function LeaderboardPage() {
             <div className="flex flex-col items-center pt-10">
               <Avatar className="w-14 h-14 border-4 border-amber-700/40 mb-2">
                 <AvatarImage src={leaders[2]?.avatar_url ?? undefined} />
-                <AvatarFallback className="bg-amber-700/20 text-amber-800">
+                <AvatarFallback className="bg-amber-500/15 text-amber-200">
                   {(leaders[2]?.full_name || leaders[2]?.username || "?")
                     .charAt(0)
                     .toUpperCase()}
@@ -175,7 +173,7 @@ export default function LeaderboardPage() {
               </Avatar>
               <span className="text-xl mb-1">🥉</span>
               <p className="text-xs font-bold text-center truncate w-full px-1">
-                {/* {leaders[2]?.full_name || leaders[2]?.username || "—"} */}
+                {leaders[2]?.full_name || leaders[2]?.username || "—"}
               </p>
               <p className="text-xs text-orange-500 font-bold flex items-center gap-0.5">
                 <Flame className="w-3 h-3" />
@@ -196,13 +194,11 @@ export default function LeaderboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
+              <AppLoading label="Loading rankings" />
             ) : leaders.length === 0 ? (
-              <p className="text-center text-muted-foreground py-12 text-sm">
-                No check-ins yet — be the first on the board!
-              </p>
+              <div className="p-4">
+                <EmptyState title="No streaks yet" body="Be the first name on the board with today's check-in." />
+              </div>
             ) : (
               <ul className="divide-y divide-border">
                 {leaders.map((leader, i) => {
@@ -230,7 +226,7 @@ export default function LeaderboardPage() {
 
                       <Avatar className="w-9 h-9 shrink-0">
                         <AvatarImage src={leader.avatar_url ?? undefined} />
-                        <AvatarFallback className="text-xs gradient-hero text-white">
+                        <AvatarFallback className="bg-primary text-xs text-primary-foreground">
                           {(leader.full_name || leader.username || "?")
                             .charAt(0)
                             .toUpperCase()}

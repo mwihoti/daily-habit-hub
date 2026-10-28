@@ -1,4 +1,4 @@
-import { Flame, Trophy, Zap } from "lucide-react";
+import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── StreakBadge ──────────────────────────────────────────────────────────────
@@ -34,75 +34,70 @@ export function StreakHero({ streak, totalWorkouts = 0, hasCheckedInToday = fals
 
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-3xl p-8 text-white animate-slide-up",
-      isLegendary
-        ? "gradient-energy fire-ring"
-        : isOnFire
-        ? "gradient-hero shadow-fire"
-        : "gradient-hero shadow-glow"
+      "relative overflow-hidden rounded-3xl border p-6 md:p-8 animate-slide-up",
+      isLegendary || isOnFire
+        ? "border-primary/40 bg-gradient-to-b from-primary/15 to-card shadow-fire"
+        : "border-border bg-card"
     )}>
-      {/* Background flame decoration */}
-      <div className="absolute inset-0 flex items-center justify-end pointer-events-none pr-6 opacity-10">
-        <Flame className="w-48 h-48" />
+      <div className="absolute -right-6 -top-8 pointer-events-none text-primary/10">
+        <Flame className="h-40 w-40" />
       </div>
 
-      <div className="relative flex items-center justify-between">
+      <div className="relative flex items-end justify-between gap-4">
         <div>
-          <p className="text-white/70 text-sm font-semibold tracking-widest uppercase mb-1">
-            {hasCheckedInToday ? "Today's done ✓" : "Current Streak"}
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
+            {hasCheckedInToday ? "Today is locked in" : "Current streak"}
           </p>
-          <div className="flex items-end gap-3 mb-3">
-            <span className="font-display font-bold leading-none" style={{ fontSize: "clamp(3.5rem, 8vw, 5rem)" }}>
+          <div className="flex items-end gap-3">
+            <span className="font-display font-extrabold leading-none text-foreground" style={{ fontSize: "clamp(3.5rem, 8vw, 5rem)" }}>
               {streak}
             </span>
-            <div className="mb-2">
-              <Flame className="w-10 h-10 text-white/90 animate-bounce-soft" />
-            </div>
+            <Flame className="mb-2 h-8 w-8 text-primary" aria-hidden />
           </div>
-          <p className="text-white/80 font-semibold text-lg">
+          <p className="mt-2 text-sm font-medium text-muted-foreground md:text-base">
             {streak === 0
-              ? "Start your streak today"
+              ? "Check in once today to start."
               : streak === 1
-              ? "Day 1 — let's gooo!"
+              ? "Day 1. Come back tomorrow."
               : isLegendary
-              ? `${streak} days — you're legendary 🏆`
+              ? `${streak} days. This is a record you own.`
               : isOnFire
-              ? `${streak} days — you're on fire! 🔥`
-              : `${streak} days and counting 💪`}
+              ? `${streak} days. The streak is doing the work.`
+              : `${streak} days and counting.`}
           </p>
         </div>
 
         {totalWorkouts > 0 && (
-          <div className="text-center bg-white/15 rounded-2xl px-5 py-4 backdrop-blur-sm shrink-0">
-            <p className="font-display font-bold text-3xl">{totalWorkouts}</p>
-            <p className="text-white/80 text-xs font-semibold uppercase tracking-wider mt-0.5">Total</p>
+          <div className="shrink-0 rounded-2xl border border-border bg-background px-4 py-3 text-center">
+            <p className="font-display text-2xl font-bold text-foreground">{totalWorkouts}</p>
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Total</p>
           </div>
         )}
       </div>
 
-      {/* Milestone indicators */}
-      {streak > 0 && (
-        <div className="relative mt-5 flex gap-2 flex-wrap">
-          {[
-            { at: 7,  label: "7 days",  icon: "🔥" },
-            { at: 30, label: "30 days", icon: "💎" },
-            { at: 100,label: "100",     icon: "🏆" },
-          ].map(({ at, label, icon }) => (
+      <div className="relative mt-5 flex flex-wrap gap-2">
+        {[
+          { at: 7, label: "7 days" },
+          { at: 30, label: "30 days" },
+          { at: 100, label: "100 days" },
+        ].map(({ at, label }) => {
+          const reached = streak >= at;
+          return (
             <span
               key={at}
               className={cn(
-                "flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all",
-                streak >= at
-                  ? "bg-white text-orange-600"
-                  : "bg-white/20 text-white/60"
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold",
+                reached
+                  ? "border-primary/40 bg-primary/15 text-primary"
+                  : "border-border bg-background text-muted-foreground"
               )}
             >
-              <span>{icon}</span>
-              <span>{label}</span>
+              <span className={cn("h-1.5 w-1.5 rounded-full", reached ? "bg-primary" : "bg-muted-foreground/40")} />
+              {label}
             </span>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -119,33 +114,30 @@ interface StatCardProps {
 export function StatCard({ icon: Icon, value, label, variant = "default", trend }: StatCardProps) {
   const variants = {
     default: "bg-card border-border",
-    primary: "bg-primary/10 border-primary/20",
-    streak:  "gradient-energy border-transparent text-secondary-foreground",
-    chain:   "gradient-chain border-transparent text-white",
+    primary: "bg-primary/10 border-primary/25",
+    streak:  "bg-card border-primary/30",
+    chain:   "bg-card border-accent/30",
   };
 
-  const isColored = variant === "streak" || variant === "chain";
+  const iconTone = variant === "chain" ? "text-accent" : variant === "default" ? "text-foreground" : "text-primary";
 
   return (
     <div className={cn(
-      "flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 hover:shadow-medium",
+      "flex items-center gap-3 rounded-2xl border p-4",
       variants[variant]
     )}>
-      <div className={cn(
-        "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
-        isColored ? "bg-white/20" : "bg-muted"
-      )}>
-        <Icon className={cn("w-6 h-6", isColored ? "text-white" : "text-foreground")} />
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-background">
+        <Icon className={cn("h-5 w-5", iconTone)} aria-hidden />
       </div>
       <div>
-        <p className={cn("text-2xl font-display font-bold", isColored ? "text-white" : "text-foreground")}>
+        <p className="font-display text-2xl font-bold text-foreground">
           {value}
         </p>
-        <p className={cn("text-sm", isColored ? "text-white/80" : "text-muted-foreground")}>
+        <p className="text-sm text-muted-foreground">
           {label}
         </p>
         {trend && (
-          <p className={cn("text-[10px] mt-0.5 font-semibold", isColored ? "text-white/60" : "text-primary")}>
+          <p className="mt-0.5 text-[10px] font-semibold text-primary">
             {trend}
           </p>
         )}
@@ -170,7 +162,7 @@ export function WeekCalendar({ checkedDays }: WeekCalendarProps) {
           <div className={cn(
             "w-full aspect-square rounded-xl flex items-center justify-center text-base transition-all duration-300",
             checkedDays?.[index]
-              ? "gradient-hero shadow-glow text-white scale-105"
+              ? "bg-primary text-primary-foreground shadow-glow"
               : "bg-muted text-muted-foreground"
           )}>
             {checkedDays?.[index] ? <Flame className="w-4 h-4" /> : ""}
@@ -257,8 +249,8 @@ export function WorkoutHeatmap({ workoutDates, weeksBack = 16 }: WorkoutHeatmapP
                   cell.future
                     ? "bg-muted/40"
                     : cell.worked
-                    ? "gradient-hero shadow-glow hover:scale-125 cursor-default"
-                    : "bg-muted hover:bg-muted-foreground/30"
+                    ? "bg-primary"
+                    : "bg-muted"
                 )}
                 style={{ width: "12px", height: "12px" }}
               />
@@ -273,7 +265,7 @@ export function WorkoutHeatmap({ workoutDates, weeksBack = 16 }: WorkoutHeatmapP
         {[false, true].map((v, i) => (
           <div
             key={i}
-            className={cn("rounded-sm w-3 h-3", v ? "gradient-hero" : "bg-muted")}
+            className={cn("h-3 w-3 rounded-sm", v ? "bg-primary" : "bg-muted")}
           />
         ))}
         <span className="text-[10px] text-muted-foreground">More</span>

@@ -150,23 +150,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8 animate-slide-up">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center">
-              <span className="text-2xl">💪</span>
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-primary/10 blur-[110px]" />
+      <div className="relative w-full max-w-md">
+        <div className="mb-8 text-center animate-slide-up">
+          <Link href="/" className="inline-flex items-center gap-2.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl gradient-hero text-lg shadow-glow">
+              🔥
             </div>
-            <span className="font-bold text-2xl">FitTribe</span>
+            <span className="font-display text-2xl font-bold">FitTribe</span>
           </Link>
         </div>
 
-        <Card className="animate-fade-in">
-          <CardContent className="p-8">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold mb-2">Join FitTribe</h1>
-              <p className="text-muted-foreground">Start your consistency journey today</p>
+        <Card className="animate-fade-in border-border">
+          <CardContent className="p-6 sm:p-8">
+            <div className="mb-6 text-center">
+              <h1 className="mb-2 font-display text-2xl font-extrabold">Start your streak</h1>
+              <p className="text-sm text-muted-foreground">Free. About 30 seconds. No wallet required to begin.</p>
             </div>
 
             {/* Role selection — hidden while trainers are flagged off; every
