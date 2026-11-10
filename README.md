@@ -10,7 +10,7 @@ Daily Habit Hub is a Web3 fitness accountability app where every workout earns *
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![License: Private](https://img.shields.io/badge/License-Private-red.svg)](https://github.com/mwihoti/daily-habit-hub)
 
-**Live App:** https://daily-habit-hub.vercel.app/
+**Live App:** https://fittribe.club/
 
 ---
 
@@ -343,5 +343,5 @@ Private — Daily Habit Hub © 2025. All rights reserved.
 ## 📬 Contact
 
 - **GitHub**: [github.com/mwihoti/daily-habit-hub](https://github.com/mwihoti/daily-habit-hub)
-- **Live App**: [daily-habit-hub.vercel.app](https://daily-habit-hub.vercel.app)
-- **Contracts (Fuji)**: See [Smart Contracts](#smart-contracts-fuji-testnet) section above
+- **Live App**: [fittribe.club](https://fittribe.club)
+- **Contracts (Avalanche mainnet)**: See [Smart Contracts](#smart-contracts-avalanche-c-chain-mainnet) section above
