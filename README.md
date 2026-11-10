@@ -1,82 +1,208 @@
-# 🔥 Daily Habit Hub
+# 🔥 FitTribe
 
-**Build exercise habits. Earn crypto. Prove your consistency on-chain.**
+**Chase your goal. Keep your streak. Prove you showed up.**
 
-Daily Habit Hub is a Web3 fitness accountability app where every workout earns **$HABIT tokens** and soulbound **NFT achievement badges** on Avalanche. Users track streaks, connect with certified coaches, and build an on-chain fitness record — with zero gas fees and no MetaMask required.
+FitTribe is a streak accountability app. Pick a goal, check in once a day, and keep the streak alive alongside a community that can see whether you showed up. It works for fitness, study, building a business, or any daily habit.
 
 [![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Avalanche](https://img.shields.io/badge/Avalanche-E84142?style=for-the-badge&logo=avalanche&logoColor=white)](https://www.avax.network/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![License: Private](https://img.shields.io/badge/License-Private-red.svg)](https://github.com/mwihoti/daily-habit-hub)
 
-**Live App:** https://fittribe.club/
+**Live app:** https://fittribe.club
 
----
-
-## 🌍 The Problem
-
-Fitness apps have a retention problem. Most people quit within 30 days because there's no real cost to stopping and no tangible reward for continuing. Traditional social features (likes, streaks) aren't enough — they're forgettable.
-
-Daily Habit Hub solves this with **skin-in-the-game accountability**: your consistency is recorded on-chain and rewarded with tokens you actually own.
+> This repository is named `daily-habit-hub`, the project's original name. The product is FitTribe.
 
 ---
 
-## ✨ Core Features
+## What it does
 
-### 💪 Fitness Tracking
-| Feature | Description |
-|---------|-------------|
-| Daily Check-in | One-tap workout logging with photo upload and IPFS pinning |
-| Streak Tracking | Daily streak counter with visual badges and week calendar |
-| Progress Analytics | Monthly workout heatmap, trend metrics, on-chain record count |
-| Goals & Tasks | Set fitness goals and daily tasks with due-date reminders |
+1. **Pick your goal** — fitness, study, a business, your craft, or any daily habit.
+2. **Check in once a day** — one tap, with an optional note and photo. It takes about 30 seconds.
+3. **Keep the streak** — your streak, week calendar and heatmap update, and the community feed and leaderboard show who is still going.
+4. **Earn proof** — milestone badges at 1, 7, 21, 30 and 49 days, with an optional on-chain record of your consistency.
 
-### 👥 Social & Coaching
-| Feature | Description |
-|---------|-------------|
-| Community Feed | Public workout posts with likes and comments |
-| Graffiti Wall | Procedural profile skin that levels up with your check-ins — tag → throw-up → piece → burner → king → all-city |
-| Leaderboard | Top 50 users ranked by streak, updated every minute |
-| Trainer Marketplace | Browse certified coaches, view profiles, book sessions |
-| Real-time Messaging | Direct chat with trainers via Supabase Realtime |
-
-### ⛓️ Web3 (Avalanche)
-| Feature | Description |
-|---------|-------------|
-| $HABIT Token Rewards | 10 $HABIT minted per check-in, zero gas cost to user |
-| Soulbound NFT Badges | Non-transferable achievement NFTs at 7, 30, 100 on-chain check-ins |
-| In-App Wallet | Generate a self-custodial wallet in one click (no MetaMask) |
-| Cloud Key Backup | PIN-encrypted private key synced to Supabase (AES-GCM 256-bit) |
-| Cross-device Restore | Restore wallet from encrypted backup on any device |
-| Snowscan Verification | Every achievement and transaction visible on Avalanche mainnet explorer |
-| Milestone Claiming | Retroactive claim for users who reached milestones before wallet setup |
+Free to use. No wallet setup and no gas fees for users.
 
 ---
 
-## 🔺 Avalanche Integration
+## Features
 
-### Why Avalanche?
-- **Sub-second finality** — check-in transactions confirm instantly
-- **Low fees** — admin wallet gas costs are negligible (< $0.001 per tx)
-- **EVM-compatible** — full Solidity + wagmi/viem tooling support
-- **Growing ecosystem** — strong DeFi + gaming + health track communities
+### Streaks and tracking
 
-### Smart Contracts (Avalanche C-Chain Mainnet)
+| Feature | Description |
+|---------|-------------|
+| Daily check-in | One-tap logging across Move, Recover and Build activities (gym, run, walk, mobility, sleep, meal prep, personal project, custom win), with optional photo |
+| Streak tracking | Daily streak counter, week calendar and milestone badges |
+| Progress | Monthly heatmap and trend metrics |
+| Goals and tasks | Set goals and daily tasks with due-date reminders |
+| Accountability summaries | Weekly summary of your consistency, rule-based by default with optional AI wording (Gemini or OpenRouter) |
+
+### Community
+
+| Feature | Description |
+|---------|-------------|
+| Community feed | Public check-ins with likes and comments |
+| Leaderboard | Top 50 users ranked by streak |
+| Graffiti wall | A procedural profile skin that levels up with your check-ins: tag → throw-up → piece → burner → king → all-city |
+| Shareable achievements | Public achievement pages with generated preview images |
+
+### Reminders and install
+
+| Feature | Description |
+|---------|-------------|
+| Push notifications | Task and streak-risk reminders delivered through the service worker, even when the app is closed |
+| Installable | Progressive web app with a manifest and service worker |
+| Android | Trusted Web Activity wrapper in `android-twa/` |
+
+### On-chain record (optional, Avalanche)
+
+| Feature | Description |
+|---------|-------------|
+| $HABIT | 10 $HABIT minted per eligible check-in by a server wallet, so users pay no gas |
+| Achievement badges | Soulbound (non-transferable) NFTs at 7, 30 and 100 on-chain check-ins |
+| In-app wallet | Self-custodial wallet generated in one click; MetaMask not required |
+| Encrypted backup | PIN-encrypted key backup (AES-GCM 256-bit) with cross-device restore |
+| Verification | Every record is visible on the Avalanche explorer |
+
+$HABIT is a record of consistency. **It currently has no monetary value.**
+
+### Coaching (built, currently switched off)
+
+A trainer marketplace with coach profiles and real-time messaging is fully built but hidden while the product focuses on streak accountability. Set `NEXT_PUBLIC_FEATURE_TRAINERS=true` to bring back the routes, navigation and sitemap entries.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Database and auth | Supabase (PostgreSQL, row-level security, Realtime); email/password and Google sign-in |
+| Styling | Tailwind CSS v3, shadcn/ui (Radix UI) |
+| State | TanStack Query v5 |
+| Push | Web Push (VAPID) with a service worker |
+| Smart contracts | Solidity 0.8.20, Hardhat, OpenZeppelin |
+| Web3 client | wagmi v2, RainbowKit v2, viem |
+| Storage | Supabase Storage (photos), Pinata IPFS (metadata, optional) |
+| Testing | Vitest and Testing Library |
+| Deployment | Vercel (app), Avalanche C-Chain mainnet (contracts) |
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20.9 or later
+- npm
+- A Supabase project
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/mwihoti/daily-habit-hub.git
+cd daily-habit-hub
+npm install
+```
+
+### 2. Environment variables
+
+Copy `.env.example` to `.env` and fill it in. `.env.example` is the full reference; the main groups are:
+
+| Variables | Needed for |
+|-----------|------------|
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Required. Database and auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Cron reminders and the mint log |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URL for metadata, sitemap and share links (defaults to `https://fittribe.club`) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Push notifications. Generate keys with `npx web-push generate-vapid-keys` |
+| `CRON_SECRET`, `PUSH_SEND_SECRET` | Protecting the cron and broadcast endpoints |
+| `NEXT_PUBLIC_HABIT_REGISTRY_ADDRESS`, `NEXT_PUBLIC_HABIT_TOKEN_ADDRESS`, `NEXT_PUBLIC_ACHIEVEMENT_NFT_ADDRESS` | On-chain record (addresses below) |
+| `PRIVATE_ADMIN_KEY` | Server-only. The wallet that pays gas and mints |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Connecting external wallets |
+| `PINATA_API_KEY`, `PINATA_SECRET_KEY` | Optional. IPFS pinning for check-in metadata |
+| `ACCOUNTABILITY_AI_PROVIDER`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY` | Optional. AI-worded accountability summaries |
+| `NEXT_PUBLIC_FEATURE_TRAINERS` | Optional. Set to `true` to enable coaching |
+
+Never commit `.env`. Keep `PRIVATE_ADMIN_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in your host's secret store.
+
+### 3. Database
+
+```bash
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase db push
+```
+
+Or run the SQL files in `supabase/migrations/` in order from the Supabase SQL editor.
+
+### 4. Run
+
+```bash
+npm run dev        # http://localhost:3000
+npm run test:run   # test suite
+npm run build      # production build
+```
+
+---
+
+## Project structure
+
+```
+app/                  Next.js routes, API routes, metadata (sitemap, robots, OG images)
+src/components/       Shared UI components
+src/lib/              Streak, accountability, push, SEO, Supabase and web3 helpers
+supabase/migrations/  Database schema and functions
+contracts/            HabitRegistry, HabitToken, AchievementNFT
+scripts/              Contract deployment and icon generation
+android-twa/          Android Trusted Web Activity wrapper
+__tests__/            Vitest suites
+```
+
+---
+
+## Scheduled jobs
+
+Defined in `vercel.json`:
+
+| Path | Schedule (UTC) | Purpose |
+|------|----------------|---------|
+| `/api/push/reminders` | Daily at 16:00 | Task and streak-risk reminders |
+| `/api/web3/process-mints` | Daily at 17:30 | Processes the mint queue and retries failures |
+
+---
+
+## Database
+
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User profile, streak state, wallet address, encrypted wallet backup |
+| `workouts` | Check-ins (type, note, photo, public flag); public ones form the community feed |
+| `goals`, `tasks` | Goals and daily tasks with reminders |
+| `user_achievements` | Claimed milestone badges |
+| `push_subscriptions` | Web Push subscriptions |
+| `trainer_profiles`, `conversations`, `messages` | Coaching and messaging (feature-flagged) |
+
+`record_checkin(p_user_id)` updates the streak atomically, handling consecutive days and resets after a missed day.
+
+---
+
+## On-chain details
+
+### Contracts (Avalanche C-Chain mainnet)
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| HabitRegistry | [`0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597`](https://snowscan.xyz/address/0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597) | Core check-in registry, rate-limited to 1/wallet/UTC day |
-| HabitToken ($HABIT) | [`0xf392A21a7230a103271ecb88028aDE17B470A267`](https://snowscan.xyz/address/0xf392A21a7230a103271ecb88028aDE17B470A267) | ERC-20 reward token, 21M cap |
-| AchievementNFT (FITA) | [`0xc10e391172fE5E6723422F05197bBc95b35D9188`](https://snowscan.xyz/address/0xc10e391172fE5E6723422F05197bBc95b35D9188) | Soulbound ERC-721, non-transferable achievement badges |
+| HabitRegistry | [`0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597`](https://snowscan.xyz/address/0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597) | Check-in registry, limited to one per wallet per UTC day |
+| HabitToken ($HABIT) | [`0xf392A21a7230a103271ecb88028aDE17B470A267`](https://snowscan.xyz/address/0xf392A21a7230a103271ecb88028aDE17B470A267) | ERC-20, 21,000,000 cap, minted only by HabitRegistry |
+| AchievementNFT (FITA) | [`0xc10e391172fE5E6723422F05197bBc95b35D9188`](https://snowscan.xyz/address/0xc10e391172fE5E6723422F05197bBc95b35D9188) | Soulbound ERC-721 achievement badges |
 
-### Architecture
+### Flow
 
 ```
 User checks in
      │
      ▼
-Supabase (streak + workout record)
+Supabase (streak + check-in record)
      │
      ▼
 POST /api/web3/record-habit  ← server-side admin wallet
@@ -88,260 +214,92 @@ HabitRegistry.adminRecordHabitForUser(wallet, type, metadataUri)
      └── at 7/30/100 check-ins → AchievementNFT.mintAchievement()
 ```
 
-**Gasless design**: Only the admin server wallet pays gas. Users never need AVAX. This removes the #1 barrier to Web3 adoption for fitness users.
+Only the server wallet pays gas. Failed mints are queued and retried by the daily job.
 
-### Minting Flow
-1. User completes a check-in in the app
-2. App calls `POST /api/web3/record-habit` with the user's wallet address
-3. Admin wallet calls `adminRecordHabitForUser` on HabitRegistry
-4. Contract mints 10 $HABIT tokens and triggers NFT at milestone counts
-5. User sees a toast: "$HABIT tokens minted to your wallet ✨"
+### Badges
 
----
+| Badge | Trigger | Where |
+|-------|---------|-------|
+| Genesis | 1st check-in | App |
+| Iron Will | 7-day streak | App |
+| Three Weeks Strong | 21 check-ins | App |
+| Month Champion | 30-day streak | App |
+| Consistency Legend | 49-day streak | App |
+| Week Warrior | 7 on-chain check-ins | NFT (type 0) |
+| Iron Consistent | 30 on-chain check-ins | NFT (type 1) |
+| Century Club | 100 on-chain check-ins | NFT (type 2) |
 
-## 🪙 Tokenomics — $HABIT
+Badges can be claimed retroactively by users who built a streak before setting up a wallet.
 
-| Parameter | Value |
-|-----------|-------|
-| Token Name | HABIT |
-| Token Symbol | $HABIT |
-| Standard | ERC-20 on Avalanche C-Chain |
-| Total Supply Cap | **21,000,000 $HABIT** |
-| Distribution | 100% via usage rewards (no pre-mine, no VC allocation) |
-| Emission Rate | 10 $HABIT per verified daily check-in |
-| Minter | HabitRegistry contract only |
-| Utility | Future: in-app purchases, coach payments, governance, staking rewards |
+### Deploying contracts
 
-### Emission Schedule (Projections)
-At 21M cap and 10 tokens/check-in:
-- 2,100,000 check-ins to reach full supply
-- At 100 daily active users doing 1 check-in/day: ~57 years to cap
-- At 10,000 DAU: ~0.6 years to cap → triggers scarcity, demand for existing tokens
-
-### Why This Model Works
-- **No inflation risk** — hard cap enforced at contract level
-- **No pre-mine** — team earns tokens the same way users do
-- **Usage-backed value** — tokens are only created by real human activity
-- **Community-first** — largest holders are the most consistent users
-
----
-
-## 🏅 Achievement NFTs (FITA)
-
-Soulbound (non-transferable) ERC-721 tokens on Avalanche.
-
-| Badge | Trigger | On-chain Type |
-|-------|---------|---------------|
-| Week Warrior | 7 on-chain check-ins | Type 0 |
-| Iron Consistent | 30 on-chain check-ins | Type 1 |
-| Century Club | 100 on-chain check-ins | Type 2 |
-
-App-layer milestone badges (claimable in `/achievements`):
-
-| Badge | Threshold |
-|-------|-----------|
-| Genesis | 1st check-in |
-| Iron Will | 7-day streak |
-| Three Weeks Strong | 21 check-ins |
-| Month Champion | 30-day streak |
-| Consistency Legend | 49-day streak |
-
-Badges are **retroactively claimable** — users who built streaks before connecting a wallet can still claim earned milestones.
-
----
-
-## 🗺️ Roadmap
-
-### ✅ Phase 1 — Core App (Complete)
-- [x] Daily check-in with photo upload + IPFS pinning
-- [x] Streak tracking with Supabase RPC
-- [x] Community feed, likes, comments
-- [x] Trainer marketplace + real-time messaging
-- [x] Goals and tasks management
-- [x] Progress analytics + workout heatmap
-
-### ✅ Phase 2 — Web3 Integration (Complete)
-- [x] HabitRegistry, HabitToken, AchievementNFT deployed on Avalanche mainnet
-- [x] Admin wallet minting (zero gas for users)
-- [x] In-app self-custodial wallet (no MetaMask required)
-- [x] PIN-encrypted cloud key backup + cross-device restore
-- [x] Achievements page with Snowscan verification links
-- [x] Badge SVG download
-
-### 🔄 Phase 3 — Growth (Q2–Q3 2026)
-- [ ] $HABIT token listing on DEX (Trader Joe / Pangolin)
-- [x] Push notifications via service worker (task + streak reminders, hourly cron)
-- [ ] Mobile app (React Native / Expo)
-- [ ] Coach payment in $HABIT tokens
-- [ ] Nairobi gym partnerships and user onboarding
-
-### 🔮 Phase 4 — Ecosystem (Q4 2026+)
-- [ ] Governance: $HABIT holders vote on new badge types and emission rate
-- [ ] Staking: stake $HABIT to boost streak multiplier (earn 15 instead of 10)
-- [ ] Challenges: group fitness challenges with pooled $HABIT prizes
-- [ ] API for third-party fitness app integration
-- [ ] Africa-wide expansion beyond Kenya (Uganda, Tanzania, Rwanda)
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16, React 19, App Router |
-| Database / Auth | Supabase (PostgreSQL + RLS + Realtime) |
-| Smart Contracts | Solidity 0.8.20, Hardhat, OpenZeppelin |
-| Web3 Client | wagmi v2, RainbowKit v2, viem |
-| In-App Wallet | viem `generatePrivateKey`, AES-GCM 256-bit backup |
-| Storage | Supabase Storage (workout photos), Pinata IPFS (metadata) |
-| Styling | Tailwind CSS v3, shadcn/ui (Radix UI) |
-| State | TanStack Query v5 |
-| Testing | Vitest + Testing Library |
-| Deployment | Vercel (app), Avalanche C-Chain mainnet (contracts) |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ (LTS)
-- npm or bun
-- Supabase project
-- (Optional) WalletConnect Project ID from [cloud.walletconnect.com](https://cloud.walletconnect.com)
-
-### 1. Clone & Install
-```bash
-git clone https://github.com/mwihoti/daily-habit-hub.git
-cd daily-habit-hub
-npm install
-```
-
-### 2. Environment Variables
-Copy `.env.example` to `.env` and fill in:
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Web3 (Avalanche C-Chain mainnet contract addresses)
-NEXT_PUBLIC_HABIT_REGISTRY_ADDRESS=0xAb9d332EDeEAB63fc84B72dB7B48Ff81962A6597
-NEXT_PUBLIC_HABIT_TOKEN_ADDRESS=0xf392A21a7230a103271ecb88028aDE17B470A267
-NEXT_PUBLIC_ACHIEVEMENT_NFT_ADDRESS=0xc10e391172fE5E6723422F05197bBc95b35D9188
-
-# Admin wallet for gasless minting (server-only, never expose to client)
-PRIVATE_ADMIN_KEY=0xyour_admin_wallet_private_key
-
-# WalletConnect (get free ID at cloud.walletconnect.com)
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
-
-# IPFS (optional — Pinata)
-PINATA_JWT=your_pinata_jwt
-
-# Web Push reminders (generate keys: npx web-push generate-vapid-keys)
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
-VAPID_PRIVATE_KEY=your_vapid_private_key
-VAPID_SUBJECT=mailto:you@example.com
-PUSH_SEND_SECRET=random_secret_for_push_broadcasts
-CRON_SECRET=random_secret_for_vercel_cron
-```
-
-### 3. Database Migrations
-```bash
-# Link to your Supabase project
-npx supabase link --project-ref YOUR_PROJECT_REF
-
-# Apply all migrations
-npx supabase db push
-```
-
-Or run the SQL manually in Supabase SQL Editor — migration files are in `supabase/migrations/`.
-
-### 4. Run Dev Server
-```bash
-npm run dev
-```
-Open http://localhost:3000
-
-### 5. Run Tests
-```bash
-npm run test:run
-```
-
----
-
-## 📦 Smart Contract Deployment
-
-### Compile
 ```bash
 npx hardhat compile
-```
-
-### Deploy to Avalanche Mainnet
-```bash
 npx hardhat run scripts/deploy.ts --network avalanche
-```
-Copy the deployed addresses into your `.env` file.
-
-### Verify on Snowscan
-```bash
 npx hardhat verify --network avalanche <CONTRACT_ADDRESS> [constructor args]
 ```
 
 ---
 
-## 🗄️ Database Schema
+## Security
 
-| Table | Key Columns | Purpose |
-|-------|-------------|---------|
-| `profiles` | `id`, `streak`, `total_workouts`, `wallet_address`, `encrypted_wallet_key` | User profile, streak state, wallet |
-| `workouts` | `id`, `user_id`, `type`, `note`, `photo_url`, `is_public` | Logged workouts |
-| `trainer_profiles` | `user_id`, `bio`, `specialties`, `hourly_rate` | Coach profiles |
-| `conversations` | `id`, `user_id`, `trainer_id` | Messaging threads |
-| `messages` | `conversation_id`, `sender_id`, `content` | Real-time chat messages |
-| `goals` | `user_id`, `title`, `target_date`, `completed` | User fitness goals |
-| `tasks` | `user_id`, `title`, `due_date`, `completed` | Daily workout tasks |
-| `community_posts` | — | (via workouts with `is_public=true`) |
-| `user_achievements` | `user_id`, `milestone`, `claimed_at` | Claimed NFT milestone badges |
-
-### Key Database Functions
-- `record_checkin(p_user_id)` — atomic streak update (handles consecutive-day logic, resets on missed day)
+- `PRIVATE_ADMIN_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are server-only and never sent to the client.
+- User wallet keys stay in the browser. Cloud backups are encrypted with AES-GCM 256-bit using a PIN-derived key (PBKDF2, 100k iterations); the PIN is never stored.
+- Row-level security is enforced on all Supabase tables.
+- Sessions are validated server-side.
+- `adminRecordHabitForUser` is `onlyOwner`, and NFT minting is restricted to the minter role.
 
 ---
 
-## 🔐 Security
+## Roadmap
 
-- **Admin private key** (`PRIVATE_ADMIN_KEY`) is server-only — never exposed to the client
-- **User wallet keys** never leave the browser — only the public address is stored in Supabase
-- **Cloud backup keys** are AES-GCM 256-bit encrypted with PBKDF2 (100k iterations) before upload — the PIN is never stored
-- **RLS (Row Level Security)** enforced on all Supabase tables
-- **Auth** via Supabase Auth (email/password + Google OAuth) with server-side session validation
-- **Contract access control** — `adminRecordHabitForUser` is `onlyOwner`, NFT minting is `minter`-gated
+### ✅ Phase 1 — Core app (complete)
+- [x] Daily check-in with photo upload and IPFS pinning
+- [x] Streak tracking with an atomic database function
+- [x] Community feed with likes and comments
+- [x] Leaderboard and graffiti wall
+- [x] Goals and tasks management
+- [x] Progress analytics and heatmap
+- [x] Trainer marketplace and real-time messaging (now feature-flagged off)
+
+### ✅ Phase 2 — On-chain record (complete)
+- [x] HabitRegistry, HabitToken and AchievementNFT deployed on Avalanche mainnet
+- [x] Admin wallet minting (zero gas for users)
+- [x] In-app self-custodial wallet (no MetaMask required)
+- [x] PIN-encrypted cloud key backup and cross-device restore
+- [x] Achievements page with explorer verification links
+- [x] Badge SVG download
+- [x] Mint queue with daily retry of failed mints
+
+### 🔄 Phase 3 — Growth (in progress)
+- [x] Push notifications via service worker (task and streak reminders)
+- [x] Check-ins for any goal, not only workouts
+- [x] Weekly accountability summaries
+- [x] Shareable public achievement pages
+- [x] Installable web app and Android wrapper
+- [x] Dark-first redesign with check-in as the primary action
+- [x] Canonical domain moved to fittribe.club
+- [ ] Group challenges
+- [ ] Nairobi gym and community partnerships
+- [ ] Mobile app (React Native / Expo)
+- [ ] $HABIT token listing on a DEX
+- [ ] Coach payment in $HABIT tokens
+
+### 🔮 Phase 4 — Ecosystem (planned)
+- [ ] Governance: $HABIT holders vote on new badge types and emission rate
+- [ ] Staking: stake $HABIT to boost the streak multiplier
+- [ ] API for third-party app integration
+- [ ] Expansion beyond Kenya (Uganda, Tanzania, Rwanda)
 
 ---
 
-## 🌍 Market & Traction
+## License
 
-**Target market:** Kenya (primary), East Africa (expansion)
-- Kenya has 54M population, ~40% smartphone penetration and rapidly growing
-- Fitness app market in Sub-Saharan Africa projected to grow 15% YoY
-- Crypto adoption in Kenya ranks among the highest in Africa (Chainalysis 2023)
-
-**Why Web3 works here:**
-- Users are already familiar with mobile money (M-Pesa) — digital value transfer is second nature
-- $HABIT tokens create tangible financial incentive for consistency
-- NFT badges provide social proof and community status
+All rights reserved. © 2025–2026 FitTribe.
 
 ---
 
-## 📄 License
+## Contact
 
-Private — Daily Habit Hub © 2025. All rights reserved.
-
----
-
-## 📬 Contact
-
-- **GitHub**: [github.com/mwihoti/daily-habit-hub](https://github.com/mwihoti/daily-habit-hub)
-- **Live App**: [fittribe.club](https://fittribe.club)
-- **Contracts (Avalanche mainnet)**: See [Smart Contracts](#smart-contracts-avalanche-c-chain-mainnet) section above
+- **Live app:** [fittribe.club](https://fittribe.club)
+- **GitHub:** [github.com/mwihoti/daily-habit-hub](https://github.com/mwihoti/daily-habit-hub)
