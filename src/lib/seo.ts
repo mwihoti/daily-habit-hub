@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const SITE_NAME = "FitTribe";
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://daily-habit-hub.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://fittribe.club";
 export const DEFAULT_OG_IMAGE = "/og-fittribe-share.png";
 
 type PublicMetadataInput = {

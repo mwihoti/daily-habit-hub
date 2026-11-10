@@ -137,7 +137,7 @@ const faqSchema = {
 const XHARE_URL =
   "https://x.com/intent/post?text=" +
   encodeURIComponent("Show up. Stay consistent. Prove it on-chain. 🔥 fittribe.club");
-const REDDIT_URL = "https://www.reddit.com/submit?url=https%3A%2F%2Fdaily-habit-hub.vercel.app";
+const REDDIT_URL = "https://www.reddit.com/submit?url=https%3A%2F%2Ffittribe.club";
 
 function Logo() {
   return (

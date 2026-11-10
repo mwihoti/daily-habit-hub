@@ -61,7 +61,7 @@ export function generateBadgeSVG(
     : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const walletShort = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-    : 'daily-habit-hub.vercel.app'
+    : 'fittribe.club'
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="440" viewBox="0 0 400 440">
   <defs>

@@ -76,7 +76,7 @@ export default async function OGImage({ params }: Props) {
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 18, color: "#64748b" }}>daily-habit-hub.vercel.app</div>
+          <div style={{ fontSize: 18, color: "#64748b" }}>fittribe.club</div>
           <div style={{ fontSize: 18, color: "#f97316" }}>Workout consistency, publicly shareable</div>
         </div>
       </div>
