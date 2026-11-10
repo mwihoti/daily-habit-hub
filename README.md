@@ -253,18 +253,43 @@ npx hardhat verify --network avalanche <CONTRACT_ADDRESS> [constructor args]
 
 ## Roadmap
 
-**Done**
-- Daily check-ins, streaks, goals and tasks, progress analytics
-- Community feed, leaderboard, graffiti wall, shareable achievements
-- Push reminders, installable web app, Android wrapper
-- Contracts on Avalanche mainnet, gasless minting, in-app wallet with encrypted backup
-- Trainer marketplace and messaging (feature-flagged off)
+### ✅ Phase 1 — Core app (complete)
+- [x] Daily check-in with photo upload and IPFS pinning
+- [x] Streak tracking with an atomic database function
+- [x] Community feed with likes and comments
+- [x] Leaderboard and graffiti wall
+- [x] Goals and tasks management
+- [x] Progress analytics and heatmap
+- [x] Trainer marketplace and real-time messaging (now feature-flagged off)
 
-**Next**
-- Group challenges
-- Gym and community partnerships, starting in Nairobi
-- Mobile app
-- Expansion across East Africa
+### ✅ Phase 2 — On-chain record (complete)
+- [x] HabitRegistry, HabitToken and AchievementNFT deployed on Avalanche mainnet
+- [x] Admin wallet minting (zero gas for users)
+- [x] In-app self-custodial wallet (no MetaMask required)
+- [x] PIN-encrypted cloud key backup and cross-device restore
+- [x] Achievements page with explorer verification links
+- [x] Badge SVG download
+- [x] Mint queue with daily retry of failed mints
+
+### 🔄 Phase 3 — Growth (in progress)
+- [x] Push notifications via service worker (task and streak reminders)
+- [x] Check-ins for any goal, not only workouts
+- [x] Weekly accountability summaries
+- [x] Shareable public achievement pages
+- [x] Installable web app and Android wrapper
+- [x] Dark-first redesign with check-in as the primary action
+- [x] Canonical domain moved to fittribe.club
+- [ ] Group challenges
+- [ ] Nairobi gym and community partnerships
+- [ ] Mobile app (React Native / Expo)
+- [ ] $HABIT token listing on a DEX
+- [ ] Coach payment in $HABIT tokens
+
+### 🔮 Phase 4 — Ecosystem (planned)
+- [ ] Governance: $HABIT holders vote on new badge types and emission rate
+- [ ] Staking: stake $HABIT to boost the streak multiplier
+- [ ] API for third-party app integration
+- [ ] Expansion beyond Kenya (Uganda, Tanzania, Rwanda)
 
 ---
 
