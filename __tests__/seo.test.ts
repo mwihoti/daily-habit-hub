@@ -32,7 +32,12 @@ import { metadata as profileMetadata } from '../app/profile/layout';
 import { metadata as progressMetadata } from '../app/progress/layout';
 import { metadata as tasksMetadata } from '../app/tasks/layout';
 import { metadata as authTestMetadata } from '../app/auth-test/layout';
+import { metadata as thirtyDayChallengeMetadata } from '../app/30-day-workout-challenge/page';
+import { metadata as seventyFiveHardMetadata } from '../app/75-hard-alternative/page';
+import { metadata as studyStreakMetadata } from '../app/study-streak-tracker/page';
+import { metadata as accountabilityAppMetadata } from '../app/accountability-app/page';
 import robots from '../app/robots';
+import sitemap from '../app/sitemap';
 import {
   organizationSchema,
   websiteSchema,
@@ -89,6 +94,13 @@ describe('Root layout metadata', () => {
     const kw = keywordsArray(rootMetadata).join(' ');
     for (const term of ['habit tracker', 'streak', 'accountability', 'goal tracker']) {
       expect(kw, `Missing keyword: ${term}`).toContain(term);
+    }
+  });
+
+  it('keywords and description do not lead with crypto terms', () => {
+    const text = (keywordsArray(rootMetadata).join(' ') + ' ' + descriptionString(rootMetadata)).toLowerCase();
+    for (const term of ['crypto', 'web3', 'on-chain', 'nft']) {
+      expect(text, `Unexpected term: ${term}`).not.toContain(term);
     }
   });
 
@@ -227,6 +239,27 @@ describe('SEO landing page metadata', () => {
     expect(title).toContain('nft fitness badges');
   });
 
+  const guidePages = [
+    { name: '30-day workout challenge', metadata: thirtyDayChallengeMetadata, path: '/30-day-workout-challenge', term: '30-day workout challenge' },
+    { name: '75 Hard alternative', metadata: seventyFiveHardMetadata, path: '/75-hard-alternative', term: '75 hard alternative' },
+    { name: 'study streak tracker', metadata: studyStreakMetadata, path: '/study-streak-tracker', term: 'study streak tracker' },
+    { name: 'accountability app', metadata: accountabilityAppMetadata, path: '/accountability-app', term: 'accountability app' },
+  ];
+
+  for (const { name, metadata, path, term } of guidePages) {
+    it(`${name} page targets its search term`, () => {
+      expect(titleString(metadata).toLowerCase()).toContain(term);
+    });
+
+    it(`${name} page has a canonical URL and a usable description`, () => {
+      const alt = metadata.alternates as Record<string, unknown>;
+      expect(String(alt?.canonical)).toContain(path);
+      const desc = descriptionString(metadata);
+      expect(desc.length).toBeGreaterThanOrEqual(120);
+      expect(desc.length).toBeLessThanOrEqual(160);
+    });
+  }
+
   it('about page targets FitTribe brand/entity terms', () => {
     const title = titleString(aboutFittribeMetadata).toLowerCase();
     expect(title).toContain('about fittribe');
@@ -241,8 +274,10 @@ describe('Register page metadata', () => {
     expect(title).toMatch(/join|register|sign up|free/);
   });
 
-  it('description mentions Nairobi', () => {
-    expect(hasAnyNairobiArea(descriptionString(registerMetadata))).toBe(true);
+  it('description is goal-neutral and makes no local-only claim', () => {
+    const desc = descriptionString(registerMetadata);
+    expect(desc.toLowerCase()).toContain('streak');
+    expect(hasAnyNairobiArea(desc)).toBe(false);
   });
 
   it('is indexable (no noindex)', () => {
@@ -309,25 +344,20 @@ describe('Organization JSON-LD schema', () => {
     expect(addr.addressLocality).toBe('Nairobi');
   });
 
-  it('areaServed includes all target Nairobi areas', () => {
-    const areas = (organizationSchema.areaServed as Array<{ name: string }>)
-      .map((a) => a.name);
-    for (const area of NAIROBI_AREAS) {
-      expect(areas.join(' '), `Missing area: ${area}`).toContain(area);
-    }
+  it('describes the product as streak accountability, not a trainer marketplace', () => {
+    const desc = organizationSchema.description.toLowerCase();
+    expect(desc).toContain('streak accountability');
+    expect(desc).not.toContain('trainer');
   });
 });
 
 describe('WebSite JSON-LD schema', () => {
-  it('has SearchAction potentialAction', () => {
-    const action = websiteSchema.potentialAction as Record<string, unknown>;
-    expect(action['@type']).toBe('SearchAction');
+  it('describes a streak accountability app', () => {
+    expect(websiteSchema.description.toLowerCase()).toContain('streak');
   });
 
-  it('search URL targets /trainers', () => {
-    const action = websiteSchema.potentialAction as Record<string, unknown>;
-    const target = action.target as Record<string, unknown>;
-    expect(String(target.urlTemplate)).toContain('/trainers');
+  it('advertises no site search while trainers are flagged off', () => {
+    expect('potentialAction' in websiteSchema).toBe(false);
   });
 });
 
@@ -370,6 +400,12 @@ describe('WebApplication JSON-LD schema', () => {
   it('uses a health app category', () => {
     expect(webApplicationSchema.applicationCategory).toBe('HealthApplication');
   });
+
+  it('is free and not limited to one city', () => {
+    expect(webApplicationSchema.offers.price).toBe('0');
+    expect('areaServed' in webApplicationSchema).toBe(false);
+    expect(webApplicationSchema.description.toLowerCase()).not.toContain('trainer');
+  });
 });
 
 // ── robots route ──────────────────────────────────────────────────────────────
@@ -394,5 +430,27 @@ describe('robots route', () => {
     const disallow = globalRule.disallow as string[];
     expect(disallow).toContain('/dashboard');
     expect(disallow).toContain('/api/');
+  });
+});
+
+// ── sitemap route ─────────────────────────────────────────────────────────────
+
+describe('sitemap route', () => {
+  it('lists public pages and leaves out sign-in pages', async () => {
+    const urls = (await sitemap()).map((entry) => new URL(entry.url).pathname);
+    for (const path of [
+      '/30-day-workout-challenge',
+      '/75-hard-alternative',
+      '/study-streak-tracker',
+      '/accountability-app',
+      '/fitness-habit-tracker',
+      '/leaderboard',
+      '/register',
+    ]) {
+      expect(urls, `Missing from sitemap: ${path}`).toContain(path);
+    }
+    for (const path of ['/goals', '/community', '/dashboard']) {
+      expect(urls, `Should not be in sitemap: ${path}`).not.toContain(path);
+    }
   });
 });

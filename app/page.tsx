@@ -494,6 +494,17 @@ export default function LandingPage() {
           </nav>
           <p className="text-[#71717a]">© 2026 FitTribe · fittribe.club</p>
         </div>
+        <nav
+          aria-label="Guides"
+          className="container flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pb-8 text-xs font-medium"
+        >
+          <Link href="/30-day-workout-challenge" className="hover:text-[#f5f5f4] transition-colors">30-day workout challenge</Link>
+          <Link href="/75-hard-alternative" className="hover:text-[#f5f5f4] transition-colors">75 Hard alternative</Link>
+          <Link href="/study-streak-tracker" className="hover:text-[#f5f5f4] transition-colors">Study streak tracker</Link>
+          <Link href="/accountability-app" className="hover:text-[#f5f5f4] transition-colors">Accountability app</Link>
+          <Link href="/fitness-habit-tracker" className="hover:text-[#f5f5f4] transition-colors">Fitness habit tracker</Link>
+          <Link href="/about-fittribe" className="hover:text-[#f5f5f4] transition-colors">About</Link>
+        </nav>
       </footer>
     </div>
   );

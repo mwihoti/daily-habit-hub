@@ -81,6 +81,18 @@ export default function AboutFitTribePage() {
                 <Link href="/fitness-habit-tracker" className="text-primary hover:underline">
                   Fitness habit tracker
                 </Link>
+                <Link href="/30-day-workout-challenge" className="text-primary hover:underline">
+                  30-day workout challenge
+                </Link>
+                <Link href="/75-hard-alternative" className="text-primary hover:underline">
+                  75 Hard alternative
+                </Link>
+                <Link href="/study-streak-tracker" className="text-primary hover:underline">
+                  Study streak tracker
+                </Link>
+                <Link href="/accountability-app" className="text-primary hover:underline">
+                  Accountability app
+                </Link>
                 <Link href="/crypto-fitness-app" className="text-primary hover:underline">
                   Crypto fitness app
                 </Link>

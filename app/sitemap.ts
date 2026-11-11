@@ -21,22 +21,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }] as MetadataRoute.Sitemap)
       : []),
     {
-      url: absoluteUrl("/community"),
-      lastModified: new Date(),
-      changeFrequency: "hourly",
-      priority: 0.8,
-    },
-    {
       url: absoluteUrl("/leaderboard"),
       lastModified: new Date(),
       changeFrequency: "hourly",
       priority: 0.7,
-    },
-    {
-      url: absoluteUrl("/goals"),
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.6,
     },
     {
       url: absoluteUrl("/fitness-habit-tracker"),
@@ -45,22 +33,46 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: absoluteUrl("/crypto-fitness-app"),
+      url: absoluteUrl("/30-day-workout-challenge"),
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/75-hard-alternative"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/study-streak-tracker"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/accountability-app"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl("/crypto-fitness-app"),
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
     {
       url: absoluteUrl("/blockchain-fitness-rewards"),
       lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
     {
       url: absoluteUrl("/nft-fitness-badges"),
       lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
     {
       url: absoluteUrl("/about-fittribe"),
