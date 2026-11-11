@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { buildPublicMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPublicMetadata({
-  title: "Fitness Leaderboard Nairobi | Top Workout Streaks on FitTribe",
+  title: "Streak Leaderboard | Longest Daily Streaks on FitTribe",
   description:
-    "See the top workout streaks in Nairobi on FitTribe. Explore community rankings, daily consistency leaders, and the most active fitness members.",
+    "See who is holding the longest daily streaks on FitTribe. Public rankings of the most consistent members, updated through the day.",
   keywords: [
-    "fitness leaderboard Nairobi",
-    "workout streak leaderboard Kenya",
-    "fitness challenge Nairobi",
-    "top workout streaks Nairobi",
+    "streak leaderboard",
+    "habit streak ranking",
+    "workout streak leaderboard",
+    "consistency leaderboard",
     "FitTribe leaderboard",
   ],
   path: "/leaderboard",

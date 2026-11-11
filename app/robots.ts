@@ -16,6 +16,8 @@ export default function robots(): MetadataRoute.Robots {
           "/progress",
           "/tasks",
           "/achievements",
+          "/community",
+          "/goals",
           "/api/",
         ],
       },

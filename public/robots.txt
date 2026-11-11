@@ -8,6 +8,8 @@ Disallow: /onboarding
 Disallow: /progress
 Disallow: /tasks
 Disallow: /achievements
+Disallow: /community
+Disallow: /goals
 Disallow: /api/
 
 Sitemap: https://fittribe.club/sitemap.xml

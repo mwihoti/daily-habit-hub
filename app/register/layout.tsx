@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { buildPublicMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPublicMetadata({
-  title: "Join FitTribe | Free Fitness Community in Nairobi",
+  title: "Join FitTribe Free | Start Your Streak Today",
   description:
-    "Create your free FitTribe account and join thousands of fitness enthusiasts across Nairobi — Kilimani, Karen, Ngong Road, CBD, Thika Road, Roysambu and Allsops.",
+    "Create your free FitTribe account in under a minute. Pick a goal, check in once a day, and keep your streak alive with a community that notices.",
   keywords: [
-    "join fitness community Nairobi",
-    "free fitness app Kenya",
-    "register FitTribe Nairobi",
-    "workout app Kenya",
+    "free habit tracker",
+    "streak app sign up",
+    "accountability app free",
+    "daily check-in app",
+    "join FitTribe",
   ],
   path: "/register",
 });

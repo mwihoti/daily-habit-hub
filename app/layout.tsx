@@ -14,6 +14,7 @@ import {
 } from "@/components/JsonLd";
 import { PWAManager } from "./components/PWAManager";
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seo";
+import { FEATURE_TRAINERS } from "@/lib/featureFlags";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     template: "%s | FitTribe",
   },
   description:
-    "FitTribe keeps you consistent on any goal — fitness, study, or building a business. Daily check-ins, streaks, a tribe that notices, and on-chain proof.",
+    "FitTribe keeps you consistent on any goal — fitness, study, or building a business. Daily check-ins, streaks, and a community that notices when you show up.",
   keywords: [
     "habit tracker",
     "streak app",
@@ -54,9 +55,9 @@ export const metadata: Metadata = {
     "consistency app",
     "habit streaks",
     "streak accountability",
-    "crypto habit tracker",
-    "web3 habit app",
-    "on-chain achievements",
+    "habit tracker with friends",
+    "group streak challenge",
+    "accountability partner app",
     "workout accountability app",
     "study streak tracker",
     "FitTribe",
@@ -68,7 +69,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "FitTribe | Streak Accountability for Any Goal",
     description:
-      "Chase your goal, keep your streak, and prove you showed up — with a tribe that notices and rewards recorded on-chain.",
+      "Chase your goal, keep your streak, and prove you showed up — daily check-ins with a tribe that notices.",
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
@@ -138,11 +139,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-KE" className={`${spaceGrotesk.variable} ${nunito.variable} dark`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${nunito.variable} dark`}>
       <body className="font-body">
         <JsonLd schema={organizationSchema} />
         <JsonLd schema={websiteSchema} />
-        <JsonLd schema={localBusinessSchema} />
+        {FEATURE_TRAINERS && <JsonLd schema={localBusinessSchema} />}
         <JsonLd schema={webApplicationSchema} />
         <Providers>
           <TooltipProvider>
